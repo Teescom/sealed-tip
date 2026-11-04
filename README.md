@@ -18,7 +18,8 @@ _To be written (A-13.4)._
 
 ## Contributing
 - Read `AGENTS.md` first (agents and humans alike).
-- **Every contribution must update [`ROADMAP.md`](ROADMAP.md) in the same change**: task status and date, header progress, and a Changelog line (procedure: `ROADMAP.md` §1).
+- Work is tracked in GitHub issues (index: [`docs/ISSUES.md`](docs/ISSUES.md)). Contributions are from collaborators only.
+- **Every contribution must update [`ROADMAP.md`](ROADMAP.md) in the same change**: your task row and a Changelog line. The header is recomputed after merge (procedure: `ROADMAP.md` §1).
 - Keep `project_structure.md`, `ARCHITECTURE.md` and `ARCHITECTURE_ESSENTIALS.md` in sync with the code.
 
 ## License

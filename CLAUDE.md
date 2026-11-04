@@ -11,5 +11,5 @@ Everything in `AGENTS.md` applies. These notes cover Claude Code only.
 - **Subagents:** don't spawn them for routine tasks. Search and read directly.
 - **`VERIFY` items:** look them up in the official docs first (docs.near.org, docs.near-intents.org, docs.near.ai). Update the docs with the answer.
 - **Commits and side effects:** don't commit, push, deploy to mainnet or post anything unless explicitly asked in the current conversation.
-- **ROADMAP.md:** update it in the same change as every contribution (status, header progress, Changelog line), following `ROADMAP.md` §1. Before starting work, read the header to find the current phase and next task.
+- **ROADMAP.md:** update it in the same change as every contribution (your task row + a Changelog line; never the header, which the maintainer recomputes after merge with `python3 tools/roadmap.py ROADMAP.md`), following `ROADMAP.md` §1. Before starting work, read the header to find the current phase and next task.
 - **No Claude trace in git:** no `Co-Authored-By: Claude` trailer, no "Generated with Claude Code" line, and no Claude or Anthropic mention in commits or PRs. This overrides the default attribution.

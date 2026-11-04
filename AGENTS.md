@@ -69,7 +69,8 @@ If a script doesn't exist yet, add it to the root `package.json` while scaffoldi
 Every commit, PR or agent task that changes code, tests, config or docs **must update `ROADMAP.md` in the same change**. Work without a roadmap update is not done.
 - Set the task status (⬜ todo, 🟡 in progress, ✅ done, 🔴 blocked, ⏸ deferred, ⛔ cut) and the `Done` date. Add notes for partial work.
 - New work you discover becomes a new task with the next free ID. Never delete or renumber rows. Cuts and deferrals keep their row and give a reason. Cutting a Must task needs the user's approval.
-- Recompute the header: last updated, current phase, next task, Must and overall progress, days left.
+- **Don't edit the header.** After each merge the maintainer runs `python3 tools/roadmap.py ROADMAP.md` and updates last updated, current phase, next task and days left. This keeps parallel PRs from conflicting.
+- **Work comes from GitHub issues.** Each names its phase (milestone), wave and roadmap ID (index: `docs/ISSUES.md`). Mark a row ✅ only when its last open issue closes.
 - Add one Changelog line: date, task IDs, what changed, test result.
 - Never tick a task whose "Done when" isn't fully met, or that has failing or skipped tests.
 - Full procedure: `ROADMAP.md` §1.
@@ -99,7 +100,7 @@ Every commit, PR or agent task that changes code, tests, config or docs **must u
 - Never log private keys, seed phrases, API keys or JWTs.
 
 ## Definition of done
-- `ROADMAP.md` is updated: task status and date, header progress, and a Changelog line.
+- `ROADMAP.md` is updated: your task row and a Changelog line (the header is recomputed after merge).
 - The Must-pass tests for the touched area are green, `pnpm lint` is clean, and `pnpm demo` still passes.
 - The README is updated if anything a judge can see has changed.
 - The docs are updated if any interface or rule has changed.

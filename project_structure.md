@@ -2,7 +2,7 @@
 
 > This is where every file lives and what it's responsible for. Read it before creating a file.
 > If you add, move or rename a file, update this document in the same change.
-> Every contribution must also update `ROADMAP.md` (task status, header progress, Changelog line). See `ROADMAP.md` §1.
+> Every contribution must also update `ROADMAP.md` (your task row + Changelog line). See `ROADMAP.md` §1.
 > **Privacy is the product.** The "browser-only" and "ciphertext-only" labels below are invariants, not suggestions.
 
 ---
@@ -15,6 +15,8 @@ sealed-tip/
 ├── PRD.md  ARCHITECTURE.md  ARCHITECTURE_ESSENTIALS.md
 ├── project_structure.md          # this file
 ├── ROADMAP.md                    # live task list + status — UPDATE IN EVERY CONTRIBUTION
+├── tools/roadmap.py              # updates ROADMAP rows; recomputes the header after merges
+├── docs/ISSUES.md                # index of GitHub issues by phase, wave and roadmap ID
 ├── README.md  LICENSE
 ├── package.json  pnpm-workspace.yaml  tsconfig.base.json  tsconfig.json
 ├── eslint.config.mjs  .prettierrc  .editorconfig  .nvmrc  .gitignore
@@ -123,7 +125,7 @@ Tests use `node:test` via `tsx`. Web tests use Vitest.
 ## 6. Where new code goes
 | You're adding… | Put it in… | Also update |
 |---|---|---|
-| **Anything at all** | — | **`ROADMAP.md`**: task status, header progress, Changelog line |
+| **Anything at all** | — | **`ROADMAP.md`**: your task row + Changelog line |
 | A contract method | its module (`tip.rs`, `switch.rs`, …) | tests, `contract.ts`, ARCHITECTURE §5 |
 | A signed action field | `types.rs` + `actions.rs` + `crypto/actions.ts` | `pnpm gen-vectors`, ARCHITECTURE §4 |
 | A cleaning step | `packages/clean` + fixture + test | ARCHITECTURE §6, PRD T2 |
