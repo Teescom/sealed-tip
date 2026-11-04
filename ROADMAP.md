@@ -6,10 +6,10 @@
 | | |
 |---|---|
 | **Last updated** | 2026-11-04 |
-| **Current phase** | P0–P1 (scaffold written; decisions + day-1 spikes pending) |
-| **Next task** | S-0.2 (approve Vitest + near-contract-standards), then S-1.2 `pnpm install` |
-| **Must progress** | 6 / 102 Must tasks done (6%) |
-| **Overall progress** | 6 / 108 tasks done (6%) — 102 Must · 5 Should · 1 Could |
+| **Current phase** | P1 — Scaffolding (toolchain installed, everything builds) |
+| **Next task** | S-1.5 (mock-ft NEP-141), S-1.6 (sandbox smoke test), then P2 |
+| **Must progress** | 11 / 102 Must tasks done (11%) |
+| **Overall progress** | 11 / 108 tasks done (10%) — 102 Must · 5 Should · 1 Could |
 | **Submission deadline** | 14 Nov 2026, 23:59 UTC (internal target: **14 Nov 18:00 UTC**) |
 | **Days left** | 10 |
 
@@ -83,13 +83,13 @@ Sealed Tip is **100% ready** when all of these are true:
 | ID | Pri | Task | Done when | Depends | Status | Done | Notes |
 |---|---|---|---|---|---|---|---|
 | S-0.1 | M | Confirm git identity | Recorded in AGENTS.md | — | ✅ | 2026-11-04 | Teescom <317993064+Teescom@users.noreply.github.com>; GitHub Teescom |
-| S-0.2 | M | Approve extra deps: Vitest, `near-contract-standards` | User approves | — | ⬜ |  |  |
+| S-0.2 | M | Approve extra deps: Vitest, `near-contract-standards` | User approves | — | ✅ | 2026-11-04 | Vitest 5.1 + near-contract-standards 5.30 approved and added |
 | S-0.3 | M | Spike: NEAR AI Cloud attestation + response signature verification end to end | Script verifies a real report + signature | — | ⬜ |  |  |
 | S-0.4 | M | Spike: is E2EE to the model usable from the browser? | Decision recorded in ARCHITECTURE §14 (proxy stays if no) | S-0.3 | ⬜ |  |  |
 | S-0.5 | M | Spike: TS↔Rust borsh + ed25519 vectors round-trip | One vector verifies in both | S-1.4 | ⬜ |  |  |
 | S-0.6 | M | $1 mainnet check of the 1Click NEP-141 deposit method | Result recorded; **only with explicit OK** | — | ⬜ |  |  |
 | S-0.7 | M | Verify Sputnik factory + pin wasm | Recorded; wasm in `res/` | — | ⬜ |  |  |
-| S-0.8 | M | Verify `cargo-near` build subcommand | Recorded | — | 🟡 |  | near-sdk 5.30.0 + near-workspaces 0.24.0 chosen; cargo-near not installed |
+| S-0.8 | M | Verify `cargo-near` build subcommand | Recorded | — | ✅ | 2026-11-04 | cargo-near 0.22.0: `cargo near build non-reproducible-wasm` confirmed; near-cli-rs installed |
 | S-0.9 | M | Testnet accounts: deployer, sealedtip, tusdc, 2 relayers, keeper, funder, 3 panel members | In `.env` | — | ⬜ |  |  |
 | S-0.10 | S | Check OutLayer as a TEE host for the keeper | Finding recorded | — | ⬜ |  |  |
 
@@ -97,12 +97,12 @@ Sealed Tip is **100% ready** when all of these are true:
 | ID | Pri | Task | Done when | Depends | Status | Done | Notes |
 |---|---|---|---|---|---|---|---|
 | S-1.1 | M | `git init`, ignores, LICENSE | No AI attribution | S-0.1 | ✅ | 2026-11-04 | git init; private repo Teescom/sealed-tip |
-| S-1.2 | M | pnpm workspace + root scripts + config | `pnpm install` works | S-1.1 | 🟡 |  | files written; install not run |
+| S-1.2 | M | pnpm workspace + root scripts + config | `pnpm install` works | S-1.1 | ✅ | 2026-11-04 | pnpm 11.17 install OK; allowBuilds = esbuild only; next pinned 16.4.4 (release-age policy) |
 | S-1.3 | M | Rust workspace | `cargo check --target wasm32` passes | S-1.1 | ✅ | 2026-11-04 | cargo check --target wasm32 passes |
-| S-1.4 | M | `contracts/sealedtip` skeleton | `pnpm build:contract` produces wasm | S-0.8 | 🟡 |  | compiles for wasm |
+| S-1.4 | M | `contracts/sealedtip` skeleton | `pnpm build:contract` produces wasm | S-0.8 | ✅ | 2026-11-04 | contract wasm builds with cargo-near |
 | S-1.5 | M | `contracts/mock-ft` | Mint + transfer test | S-0.2 | 🟡 |  | stub compiles |
 | S-1.6 | M | Sandbox harness | Smoke test | S-1.4, S-1.5, S-0.7 | 🟡 |  | harness + 32 named #[ignore] test skeletons |
-| S-1.7 | M | packages (core, crypto, clean), apps (web, api, keeper), scripts skeletons | `pnpm build` + `pnpm -r test` pass | S-1.2 | 🟡 |  | written; not built |
+| S-1.7 | M | packages (core, crypto, clean), apps (web, api, keeper), scripts skeletons | `pnpm build` + `pnpm -r test` pass | S-1.2 | ✅ | 2026-11-04 | tsc -b, eslint, next build, pnpm -r test all pass (tests are todo placeholders) |
 | S-1.8 | M | `.env.example` (source of truth) | Matches code | S-1.2 | ✅ | 2026-11-04 |  |
 | S-1.9 | M | CI workflow | Green on first push | S-1.6, S-1.7 | 🟡 |  | ci.yml drafted; manual-only (workflow_dispatch) until lockfile + cargo-near step exist |
 | S-1.10 | M | README stub + Contributing (ROADMAP rule) | Present | S-1.1 | ✅ | 2026-11-04 |  |
@@ -257,5 +257,6 @@ Sealed Tip is **100% ready** when all of these are true:
 ## 6. Changelog (newest first)
 | Date | Tasks | Change | Tests |
 |---|---|---|---|
+| 2026-11-04 | S-0.2, S-0.8, S-1.2, S-1.4, S-1.7 | Approved deps added (Vitest, near-contract-standards); installed cargo-near 0.22.0 + near-cli-rs; pnpm install with build-script allow-list; pinned next 16.4.4 to respect pnpm's minimum release age; ignored next-env.d.ts; docs updated (AGENTS toolchain, ARCHITECTURE §2, project_structure). | cargo near build ✅ (2 contracts) · cargo test ✅ 0 failed (scaffold tests ignored) · tsc -b ✅ · eslint ✅ · next build ✅ · pnpm -r test ✅ 0 failed (todo placeholders) |
 | 2026-11-04 | S-0.1, S-1.1, S-1.9 | Git initialised; identity recorded in AGENTS.md; CI set to manual-only; first push to private repo Teescom/sealed-tip. | n/a (no code change) |
 | 2026-11-04 | S-1.1–S-1.10, S-2.1, S-6.1, S-D.4, S-D.5 | Created ROADMAP.md and project_structure.md; scaffolded the repo (root config, Rust workspace, sealedtip data model + method stubs, mock-ft stub, 32 named integration-test skeletons, @sealedtip/core, crypto, clean packages, api with noLogs + strict-CSP web, keeper, scripts, fixtures). Added packages/core (not in v2 layout) for the zod mirror + view client. Added the ROADMAP rule to all docs. | `cargo check --target wasm32-unknown-unknown` ✅; TS not installed yet |

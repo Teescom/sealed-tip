@@ -100,12 +100,12 @@ res/                     # pinned sputnikdao2.wasm + SPUTNIK_VERSION.txt
 | `apps/keeper/src/{heartbeat,watch,release}.ts` | heartbeat, trigger watch, re-seal to non-recused | holds keeper key only |
 | `scripts/*` | deploy, seed, demo, spam, verify-attestation, sign-statement, gen-vectors | fictional data only |
 
-Tests use `node:test` via `tsx`. Web tests wait on Vitest approval.
+Tests use `node:test` via `tsx`. Web tests use Vitest.
 
 ## 4. Root scripts
 | Script | Runs |
 |---|---|
-| `build` / `build:contract` | `cargo near build non-reproducible-wasm` per contract (**VERIFY**), then TS builds |
+| `build` / `build:contract` | `cargo near build non-reproducible-wasm` per contract (verified with cargo-near 0.22.0), then TS builds |
 | `check:contract` | `cargo check --workspace --target wasm32-unknown-unknown` |
 | `test` / `test:contract` | contract build + `cargo test`, then `pnpm -r test` |
 | `test:vectors` | crypto package tests + `cargo test -p sealedtip vectors` |

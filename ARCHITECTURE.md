@@ -53,6 +53,7 @@ Tipster browser (no wallet, Tor recommended)           Panel browser (wallet)
 |---|---|
 | Contract | Rust, `near-sdk` 5.30 (`env::ed25519_verify`, `env::sha256`), `cargo-near`, borsh |
 | Tests | `near-workspaces`, unit tests; shared borsh + signature vectors with TS |
+| Approved extra deps (2026-11-04) | `near-contract-standards` 5.30 (mock-ft NEP-141/145) · Vitest 5.1 (web tests) |
 | Token | Mock NEP-141 `tusdc.<you>.testnet` (NEP-145 storage); mainnet USDC **VERIFY** id |
 | Panel | Sputnik DAO v2 (factory **VERIFY**) |
 | Frontend | Next.js 16, TypeScript, Tailwind; wallet-selector for panel/funders only |

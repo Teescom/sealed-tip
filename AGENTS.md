@@ -38,7 +38,8 @@ Tipsters have no account: they sign actions with a key derived from a 24-word se
 ## Toolchain
 - Rust stable with the `wasm32-unknown-unknown` target, `cargo-near`, `near-cli-rs`.
 - **Type-check contracts with `cargo check --target wasm32-unknown-unknown`.** near-sdk 5.30 deliberately fails a plain host `cargo check`. Build with `cargo near build`.
-- Node ≥22, pnpm ≥9 (checked on Node 26, pnpm 10).
+- Node ≥22, pnpm ≥9 (checked on Node 26, pnpm 11.17).
+- **pnpm supply-chain settings** live in `pnpm-workspace.yaml`. `allowBuilds` lists the only dependencies allowed to run install scripts (esbuild); approve new ones with `pnpm approve-builds <pkg>`, never `--all`. Keep pnpm's minimum release age on: don't add `minimumReleaseAgeExclude` entries. Pin to an older version instead (e.g., `next` is pinned to 16.4.4).
 - Check subcommand names with `cargo near --help` rather than guessing.
 
 ## Commands

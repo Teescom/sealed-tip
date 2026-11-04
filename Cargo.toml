@@ -4,6 +4,7 @@ members = ["contracts/sealedtip", "contracts/mock-ft"]
 
 [workspace.dependencies]
 near-sdk = "5.30.0"
+near-contract-standards = "5.30.0"
 
 [profile.release]
 codegen-units = 1

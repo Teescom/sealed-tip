@@ -10,4 +10,4 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 near-sdk = { workspace = true }
-# near-contract-standards = "5.30.0"   # pending approval (A-0.2); will provide NEP-141/145
+near-contract-standards = { workspace = true }   # NEP-141 + NEP-145 (approved 2026-11-04)
