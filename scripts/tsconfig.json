@@ -1,0 +1,1 @@
+{ "extends": "../tsconfig.base.json", "compilerOptions": { "composite": true, "outDir": "dist" }, "include": ["*.ts", "lib"], "references": [{ "path": "../packages/core" }, { "path": "../packages/crypto" }] }

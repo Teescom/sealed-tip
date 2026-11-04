@@ -1,0 +1,4 @@
+source_repo: https://github.com/near-daos/sputnik-dao-contract
+source_commit: TODO
+file: sputnikdao2.wasm
+sha256: TODO

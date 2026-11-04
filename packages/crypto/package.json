@@ -1,0 +1,13 @@
+{
+  "name": "@sealedtip/crypto",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "test": "node --import tsx --test test/*.test.ts"
+  },
+  "dependencies": { "@noble/ed25519": "^3.2.0", "@noble/hashes": "^2.4.0", "@scure/bip39": "^2.4.0", "@sealedtip/core": "workspace:*", "borsh": "^2.0.0", "libsodium-wrappers": "^0.8.4" }
+}

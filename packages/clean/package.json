@@ -1,0 +1,13 @@
+{
+  "name": "@sealedtip/clean",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "test": "node --import tsx --test test/*.test.ts"
+  },
+  "dependencies": { "exifr": "^7.1.3", "pdf-lib": "^1.17.1", "pdfjs-dist": "^6.5.438" }
+}

@@ -1,0 +1,19 @@
+# CI — lint + unit tests + contract tests (A-1.9). Draft: finish once the toolchain is verified (A-0.5).
+name: ci
+# Manual-only until the toolchain + lockfile exist (ROADMAP S-1.9); then switch back to [push, pull_request].
+on: [workflow_dispatch]
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - uses: dtolnay/rust-toolchain@stable
+        with: { targets: wasm32-unknown-unknown, components: "rustfmt, clippy" }
+      # TODO(A-1.9): install cargo-near (prebuilt binary) and cache it
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm test

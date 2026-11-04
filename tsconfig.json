@@ -1,0 +1,7 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/core" }, { "path": "packages/crypto" }, { "path": "packages/clean" },
+    { "path": "apps/api" }, { "path": "apps/keeper" }, { "path": "apps/web" }, { "path": "scripts" }
+  ]
+}

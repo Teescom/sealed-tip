@@ -1,0 +1,18 @@
+[package]
+name = "sealedtip"
+version = "0.1.0"
+edition = "2021"
+description = "Sealed Tip: anonymous whistleblower rewards with locked funds and a dead man's switch"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+near-sdk = { workspace = true }
+
+[dev-dependencies]
+near-sdk = { workspace = true, features = ["unit-testing"] }
+near-workspaces = { version = "0.24.0", features = ["unstable"] }   # VERIFY with cargo-near toolchain (A-0.5)
+tokio = { version = "1", features = ["full"] }
+serde_json = "1"

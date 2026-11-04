@@ -1,0 +1,21 @@
+# Rust
+target/
+*.wasm
+!contracts/sealedtip/res/*.wasm
+
+# Node
+node_modules/
+dist/
+.next/
+*.tsbuildinfo
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+*.pem
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/

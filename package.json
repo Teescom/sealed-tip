@@ -1,0 +1,36 @@
+{
+  "name": "sealed-tip",
+  "private": true,
+  "description": "Pay whistleblowers without ever learning who they are — on NEAR",
+  "license": "MIT",
+  "engines": { "node": ">=22", "pnpm": ">=9" },
+  "scripts": {
+    "build": "pnpm build:contract && pnpm -r --filter ./packages/* --filter ./apps/* build",
+    "build:contract": "cargo near build non-reproducible-wasm --manifest-path contracts/sealedtip/Cargo.toml && cargo near build non-reproducible-wasm --manifest-path contracts/mock-ft/Cargo.toml",
+    "check:contract": "cargo check --workspace --target wasm32-unknown-unknown",
+    "test": "pnpm test:contract && pnpm -r test",
+    "test:contract": "pnpm build:contract && cargo test --workspace",
+    "test:vectors": "pnpm --filter @sealedtip/crypto test && cargo test -p sealedtip vectors",
+    "test:clean": "pnpm --filter @sealedtip/clean test",
+    "lint": "cargo fmt --all --check && cargo clippy --workspace -- -D warnings && eslint . && tsc -b",
+    "format": "cargo fmt --all && prettier --write .",
+    "dev": "pnpm --parallel --filter @sealedtip/web --filter @sealedtip/api --filter @sealedtip/keeper dev",
+    "relayer": "pnpm --filter @sealedtip/api dev",
+    "keeper": "pnpm --filter @sealedtip/keeper dev",
+    "deploy:testnet": "pnpm --filter @sealedtip/scripts exec tsx deploy-testnet.ts",
+    "seed": "pnpm --filter @sealedtip/scripts exec tsx seed.ts",
+    "demo": "pnpm --filter @sealedtip/scripts exec tsx demo.ts",
+    "spam": "pnpm --filter @sealedtip/scripts exec tsx spam.ts",
+    "verify-attestation": "pnpm --filter @sealedtip/scripts exec tsx verify-attestation.ts",
+    "sign-statement": "pnpm --filter @sealedtip/scripts exec tsx sign-statement.ts",
+    "gen-vectors": "pnpm --filter @sealedtip/scripts exec tsx gen-vectors.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "eslint": "^10.14.0",
+    "prettier": "^3.9.10",
+    "tsx": "^4.23.15",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.72.1"
+  }
+}
