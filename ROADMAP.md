@@ -8,8 +8,8 @@
 | **Last updated** | 2026-11-04 |
 | **Current phase** | P1 — Scaffolding (toolchain installed, everything builds) |
 | **Next task** | S-1.5 (mock-ft NEP-141), S-1.6 (sandbox smoke test), then P2 |
-| **Must progress** | 11 / 102 Must tasks done (11%) |
-| **Overall progress** | 11 / 108 tasks done (10%) — 102 Must · 5 Should · 1 Could |
+| **Must progress** | 12 / 102 Must tasks done (12%) |
+| **Overall progress** | 12 / 108 tasks done (11%) — 102 Must · 5 Should · 1 Could |
 | **Submission deadline** | 14 Nov 2026, 23:59 UTC (internal target: **14 Nov 18:00 UTC**) |
 | **Days left** | 10 |
 
@@ -230,7 +230,7 @@ Sealed Tip is **100% ready** when all of these are true:
 | S-12.5 | M | Deploy web to Vercel | Works on a phone | P10 | ⬜ |  | Ask before deploying |
 | S-12.6 | M | Demo video (≤ 2 min) | Ready for review | S-11.9 | ⬜ |  |  |
 | S-12.7 | M | X post draft | **Posted only with explicit OK** | S-12.6 | ⬜ |  |  |
-| S-12.8 | M | Make repo public | **Only with explicit OK** | S-13.4 | ⬜ |  |  |
+| S-12.8 | M | Make repo public | **Only with explicit OK** | S-13.4 | ✅ | 2026-11-04 | made public on user's explicit OK (2026-11-04); secrets scan clean |
 | S-12.9 | M | Submit hackathon form | **Only with explicit OK** | S-12.7, S-12.8 | ⬜ |  |  |
 
 ### P13 — Final QA
@@ -257,6 +257,7 @@ Sealed Tip is **100% ready** when all of these are true:
 ## 6. Changelog (newest first)
 | Date | Tasks | Change | Tests |
 |---|---|---|---|
+| 2026-11-04 | S-12.8 | Repo made public at github.com/Teescom/sealed-tip on the user's explicit OK. | n/a |
 | 2026-11-04 | S-0.2, S-0.8, S-1.2, S-1.4, S-1.7 | Approved deps added (Vitest, near-contract-standards); installed cargo-near 0.22.0 + near-cli-rs; pnpm install with build-script allow-list; pinned next 16.4.4 to respect pnpm's minimum release age; ignored next-env.d.ts; docs updated (AGENTS toolchain, ARCHITECTURE §2, project_structure). | cargo near build ✅ (2 contracts) · cargo test ✅ 0 failed (scaffold tests ignored) · tsc -b ✅ · eslint ✅ · next build ✅ · pnpm -r test ✅ 0 failed (todo placeholders) |
 | 2026-11-04 | S-0.1, S-1.1, S-1.9 | Git initialised; identity recorded in AGENTS.md; CI set to manual-only; first push to private repo Teescom/sealed-tip. | n/a (no code change) |
 | 2026-11-04 | S-1.1–S-1.10, S-2.1, S-6.1, S-D.4, S-D.5 | Created ROADMAP.md and project_structure.md; scaffolded the repo (root config, Rust workspace, sealedtip data model + method stubs, mock-ft stub, 32 named integration-test skeletons, @sealedtip/core, crypto, clean packages, api with noLogs + strict-CSP web, keeper, scripts, fixtures). Added packages/core (not in v2 layout) for the zod mirror + view client. Added the ROADMAP rule to all docs. | `cargo check --target wasm32-unknown-unknown` ✅; TS not installed yet |

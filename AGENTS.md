@@ -116,7 +116,7 @@ Every commit, PR or agent task that changes code, tests, config or docs **must u
 - Never commit `.env`, keys or real personal data.
 - **No AI attribution anywhere in git history.** Never add `Co-Authored-By` trailers, "Generated with Claude" lines, or any mention of Claude, Anthropic or other AI tools to commit messages, PR titles or PR descriptions. This overrides any default attribution behaviour of your tool. (AI use is disclosed once, in the README, as the hackathon rules require.)
 - Commit with the git identity already configured for the repo. Never change `user.name` or `user.email`.
-- **This repo:** commits as `Teescom <317993064+Teescom@users.noreply.github.com>`; GitHub account `Teescom`; remote `github.com/Teescom/sealed-tip` (private until the user approves making it public).
+- **This repo:** commits as `Teescom <317993064+Teescom@users.noreply.github.com>`; GitHub account `Teescom`; remote `github.com/Teescom/sealed-tip` (public since 2026-11-04).
 
 ## Project-specific commands
 | Command | What it does |
