@@ -85,6 +85,7 @@ res/                     # pinned sputnikdao2.wasm + SPUTNIK_VERSION.txt
 | `packages/crypto/src/actions.ts` | borsh SignedAction + domain tag, signing | **browser-only** (keys) |
 | `packages/crypto/src/seal.ts` | XChaCha20-Poly1305 bundles, sealed boxes, cid | **browser-only** (plaintext) |
 | `packages/crypto/src/pow.ts` | PoW solve/check | — |
+| `packages/crypto/src/attestation.ts` | offline re-verify of a NEAR AI Cloud attestation bundle (nonce + signing-address bindings, TDX quote v4 register offsets, RTMR replay from the event log) | no network, no new deps; malformed input becomes a failed check, never a throw |
 | `packages/clean/src/gate.ts` | magic-byte sniff; PDF/JPEG/PNG only; everything else refused | **browser-only** |
 | `packages/clean/src/{pdf,image,scan,report}.ts` | rasterise, re-encode, scan mode, removal report | **browser-only** |
 | `apps/web/app/page.tsx` | landing + Tor guidance | no third-party loads |
