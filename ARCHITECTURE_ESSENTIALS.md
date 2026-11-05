@@ -87,4 +87,7 @@
 - Whether E2EE works from the browser (day-1 spike).
 - The 1Click NEP-141 deposit method (day 2).
 - Whether OutLayer can host the keeper.
-- Sputnik factory names.
+
+## Confirmed
+- Sputnik DAO v2 factories: testnet `sputnik-v2.testnet`, mainnet `sputnik-dao.near`. Wasm pinned
+  with sha256 + on-chain code hash in `contracts/sealedtip/res/SPUTNIK_VERSION.txt` (S-0.7).

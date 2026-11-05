@@ -85,9 +85,9 @@ Sealed Tip is **100% ready** when all of these are true:
 | S-0.2 | M | Approve extra deps: Vitest, `near-contract-standards` | User approves | — | ✅ | 2026-11-04 | Vitest 5.1 + near-contract-standards 5.30 approved and added |
 | S-0.3 | M | Spike: NEAR AI Cloud attestation + response signature verification end to end | Script verifies a real report + signature | — | ⬜ |  |  |
 | S-0.4 | M | Spike: is E2EE to the model usable from the browser? | Decision recorded in ARCHITECTURE §14 (proxy stays if no) | S-0.3 | ⬜ |  |  |
-| S-0.5 | M | Spike: TS↔Rust borsh + ed25519 vectors round-trip | One vector verifies in both | S-1.4 | ⬜ |  |  |
+| S-0.5 | M | Spike: TS↔Rust borsh + ed25519 vectors round-trip | One vector verifies in both | S-1.4 | 🟡 | 2026-11-05 | Done in substance: `pnpm test:vectors` green — 5 action + 2 submit + 3 key vectors in `fixtures/vectors.json`, re-encoded byte-identical by the Rust derive and accepted by `env::ed25519_verify` (dalek) over @noble signatures; HKDF-SHA256 recomputed in Rust matches too. Generator is deterministic (two runs, same sha256). Row stays 🟡 until issue #4 closes. |
 | S-0.6 | M | $1 mainnet check of the 1Click NEP-141 deposit method | Result recorded; **only with explicit OK** | — | ⬜ |  |  |
-| S-0.7 | M | Verify Sputnik factory + pin wasm | Recorded; wasm in `res/` | — | ⬜ |  |  |
+| S-0.7 | M | Verify Sputnik factory + pin wasm | Recorded; wasm in `res/` | — | ✅ | 2026-11-05 | Factories live: testnet `sputnik-v2.testnet`, mainnet `sputnik-dao.near`. `res/sputnikdao2.wasm` (469,804 B, sha256 0844…dd56) taken from 6 independently owned testnet DAOs, all with code hash `ZGdM2TFdQpcXrxPxvq25514EViyi9xBSboetDiB3Uiq`; matches Admit A-0.4. `source_commit` is asserted from tag 2.0.0, not proven by reproducible build (no release assets upstream) — recorded in `res/SPUTNIK_VERSION.txt`. Issue #6 still open. |
 | S-0.8 | M | Verify `cargo-near` build subcommand | Recorded | — | ✅ | 2026-11-04 | cargo-near 0.22.0: `cargo near build non-reproducible-wasm` confirmed; near-cli-rs installed |
 | S-0.9 | M | Testnet accounts: deployer, sealedtip, tusdc, 2 relayers, keeper, funder, 3 panel members | In `.env` | — | ⬜ |  |  |
 | S-0.10 | S | Check OutLayer as a TEE host for the keeper | Finding recorded | — | ⬜ |  |  |
@@ -112,7 +112,7 @@ Sealed Tip is **100% ready** when all of these are true:
 | S-2.1 | M | `types.rs` per ARCHITECTURE §4 | Compiles; mirrored in TS | S-1.4 | ✅ | 2026-11-04 | SealedKey struct instead of tuples; Base64VecU8 signatures; SwitchInput; TipPublic; ProgrammeStats |
 | S-2.2 | M | `errors.rs`, `events.rs` | Event JSON test; no tipster data | S-2.1 | ⬜ |  |  |
 | S-2.3 | M | `time.rs` | Unit tests | S-2.1 | ⬜ |  |  |
-| S-2.4 | M | `actions.rs`: domain tag + borsh + ed25519 verify | Unit tests + vectors | S-0.5 | ⬜ |  |  |
+| S-2.4 | M | `actions.rs`: domain tag + borsh + ed25519 verify | Unit tests + vectors | S-0.5 | 🟡 | 2026-11-05 | `action_message`, `submit_message`, `assert_signature` implemented; 5 unit tests + the vectors suite green, wasm target type-checks. Issues #21 #22 #23 still open. |
 | S-2.5 | M | `pow.rs` | Unit tests | S-2.1 | ⬜ |  |  |
 | S-2.6 | M | Programmes: create (ops_balance), fund via ft_on_transfer, withdraw_unreserved, close | Integration tests | S-2.1, S-1.6 | ⬜ |  |  |
 | S-2.7 | M | `access.rs` guards | Unit tests | S-2.1 | ⬜ |  |  |
@@ -150,7 +150,7 @@ Sealed Tip is **100% ready** when all of these are true:
 | S-5.5 | M | `tests/claims.rs` | Green | S-3.5 | ⬜ |  |  |
 | S-5.6 | M | `tests/switch.rs` | Green | S-3.6–S-3.8 | ⬜ |  |  |
 | S-5.7 | M | `tests/access_control.rs` | Green | S-2.9 | ⬜ |  |  |
-| S-5.8 | M | `tests/vectors.rs` against fixtures/vectors.json | Green | S-6.4 | ⬜ |  |  |
+| S-5.8 | M | `tests/vectors.rs` against fixtures/vectors.json | Green | S-6.4 | 🟡 | 2026-11-05 | 5 tests green (bytes, signatures, tamper/replay/wrong-contract negatives, submit, HKDF). Fixture read with `near_sdk::serde` + the already-present `serde_json` dev-dep, so no new dependency. Issues #79 #80 still open. |
 | S-5.9 | M | clippy + fmt clean | Green | P2–P3 | ⬜ |  |  |
 
 ### P6 — Shared packages
@@ -158,8 +158,8 @@ Sealed Tip is **100% ready** when all of these are true:
 |---|---|---|---|---|---|---|---|
 | S-6.1 | M | `@sealedtip/core` types (zod) | Parses real views | S-4.1 | 🟡 |  | schemas written; not validated against chain |
 | S-6.2 | M | `@sealedtip/core` view client | Used by web + keeper | S-6.1 | ⬜ |  |  |
-| S-6.3 | M | crypto/keys: 24 words ↔ secret, HKDF keys, passphrase | Unit tests | S-1.7 | ⬜ |  |  |
-| S-6.4 | M | crypto/actions: borsh + domain tag + sign; `gen-vectors` | Vectors match Rust | S-0.5 | ⬜ |  |  |
+| S-6.3 | M | crypto/keys: 24 words ↔ secret, HKDF keys, passphrase | Unit tests | S-1.7 | 🟡 | 2026-11-05 | `newSecret`, `secretToWords`, `wordsToSecret`, `deriveKeys` implemented; 10 tests green incl. absent==empty passphrase, label separation, tampered-checksum refusal. noble HKDF cross-checked against Node/OpenSSL. Issues #88 #89 #90 #91 still open. |
+| S-6.4 | M | crypto/actions: borsh + domain tag + sign; `gen-vectors` | Vectors match Rust | S-0.5 | 🟡 | 2026-11-05 | Hand-rolled `BorshWriter` (the `borsh` npm package can't encode fieldless enum variants); 9 tests green against the fixture. `pnpm gen-vectors` is deterministic. Issues #92 #93 #94 #105 still open. |
 | S-6.5 | M | crypto/seal: XChaCha bundles, sealed boxes, cid | Round-trip tests | S-1.7 | ⬜ |  |  |
 | S-6.6 | M | crypto/pow: solve + check (matches Rust) | Tests | S-2.5 | ⬜ |  |  |
 | S-6.7 | M | clean/gate: magic-byte sniff, refuse non PDF/JPEG/PNG | DOCX fixture refused | S-6.12 | ⬜ |  |  |
@@ -257,6 +257,8 @@ Sealed Tip is **100% ready** when all of these are true:
 ## 6. Changelog (newest first)
 | Date | Tasks | Change | Tests |
 |---|---|---|---|
+| 2026-11-05 | S-0.5, S-2.4, S-5.8, S-6.3, S-6.4 | Closed the borsh/ed25519 gap: `actions.rs` (`action_message`, `submit_message`, `assert_signature`), `packages/crypto` (`keys.ts`, `actions.ts`, new `borsh.ts` + `ed25519.ts`), `scripts/gen-vectors.ts` and `tests/vectors.rs`. `fixtures/vectors.json` now holds 5 action + 2 submit + 3 key vectors; the Rust derive re-encodes them byte-for-byte and dalek accepts the @noble signatures. `borsh` npm is unused (it cannot encode fieldless enum variants) and noble's `hashes.sha512` is bound in `ed25519.ts` so browser and Node sign identically. No dependency or Cargo.toml change. | `pnpm test:vectors` ✅ (crypto 19 pass / 0 fail / 2 todo, cargo 5 unit + 5 vectors pass) · `cargo test -p sealedtip` ✅ 0 failed (30 scaffold tests still `#[ignore]`) · `cargo check --target wasm32-unknown-unknown` ✅ · `tsc -b --force` ✅ · `eslint .` ✅ · `rustfmt --check` clean on both touched Rust files · generator deterministic (two runs, identical sha256) · pre-existing red: `pnpm lint` (clippy on host) and 10 fmt-dirty scaffold files, untouched |
+| 2026-11-05 | S-0.7 | Pinned Sputnik DAO v2: `res/sputnikdao2.wasm` + provenance in `res/SPUTNIK_VERSION.txt` (sha256, on-chain code hash, 6-DAO cross-check). Cleared the **VERIFY** tags on the factory accounts in ARCHITECTURE §2, ARCHITECTURE_ESSENTIALS (moved to a new Confirmed section) and `.env.example`. Recorded that upstream publishes no release wasm, so `source_commit` is asserted from tag 2.0.0 rather than proven. | `shasum -a 256` on the installed file = the value computed from chain bytes ✅ · repo lint/test unchanged (docs + asset only) |
 | 2026-11-04 | S-2.12 (new) | Created 163 GitHub issues covering every open roadmap task (milestone per phase; labels phase/area/size/wave/maintainer; index in docs/ISSUES.md). Repo interaction limited to collaborators. Header rule changed: contributions update their row + Changelog only; maintainer recomputes the header with tools/roadmap.py. Added S-2.12 (test-state builders) so wave issues stay independent. | n/a (docs and process) |
 | 2026-11-04 | S-12.8 | Repo made public at github.com/Teescom/sealed-tip on the user's explicit OK. | n/a |
 | 2026-11-04 | S-0.2, S-0.8, S-1.2, S-1.4, S-1.7 | Approved deps added (Vitest, near-contract-standards); installed cargo-near 0.22.0 + near-cli-rs; pnpm install with build-script allow-list; pinned next 16.4.4 to respect pnpm's minimum release age; ignored next-env.d.ts; docs updated (AGENTS toolchain, ARCHITECTURE §2, project_structure). | cargo near build ✅ (2 contracts) · cargo test ✅ 0 failed (scaffold tests ignored) · tsc -b ✅ · eslint ✅ · next build ✅ · pnpm -r test ✅ 0 failed (todo placeholders) |
