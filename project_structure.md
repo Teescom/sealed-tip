@@ -25,7 +25,7 @@ sealed-tip/
 ├── .github/workflows/ci.yml
 ├── contracts/
 │   ├── sealedtip/                # the product contract
-│   └── mock-ft/                  # testnet tUSDC
+│   └── mock-ft/                  # testnet tUSDC — NEP-141/145/148 via near-contract-standards + open mint
 ├── packages/
 │   ├── core/                     # @sealedtip/core — zod mirror of contract types, view client
 │   ├── crypto/                   # @sealedtip/crypto — keys, borsh actions, sealing, PoW (browser-only secrets)

@@ -99,7 +99,7 @@ Sealed Tip is **100% ready** when all of these are true:
 | S-1.2 | M | pnpm workspace + root scripts + config | `pnpm install` works | S-1.1 | ✅ | 2026-11-04 | pnpm 11.17 install OK; allowBuilds = esbuild only; next pinned 16.4.4 (release-age policy) |
 | S-1.3 | M | Rust workspace | `cargo check --target wasm32` passes | S-1.1 | ✅ | 2026-11-04 | cargo check --target wasm32 passes |
 | S-1.4 | M | `contracts/sealedtip` skeleton | `pnpm build:contract` produces wasm | S-0.8 | ✅ | 2026-11-04 | contract wasm builds with cargo-near |
-| S-1.5 | M | `contracts/mock-ft` | Mint + transfer test | S-0.2 | 🟡 |  | stub compiles |
+| S-1.5 | M | `contracts/mock-ft` | Mint + transfer test | S-0.2 | 🟡 |  | #8 open: NEP-141/145/148 on near-contract-standards + open mint; 18 unit tests (mint, transfer, events, storage bounds, 8 rejection paths) |
 | S-1.6 | M | Sandbox harness | Smoke test | S-1.4, S-1.5, S-0.7 | 🟡 |  | harness + 32 named #[ignore] test skeletons |
 | S-1.7 | M | packages (core, crypto, clean), apps (web, api, keeper), scripts skeletons | `pnpm build` + `pnpm -r test` pass | S-1.2 | ✅ | 2026-11-04 | tsc -b, eslint, next build, pnpm -r test all pass (tests are todo placeholders) |
 | S-1.8 | M | `.env.example` (source of truth) | Matches code | S-1.2 | ✅ | 2026-11-04 |  |
@@ -257,6 +257,7 @@ Sealed Tip is **100% ready** when all of these are true:
 ## 6. Changelog (newest first)
 | Date | Tasks | Change | Tests |
 |---|---|---|---|
+| 2026-11-05 | S-1.5 | `contracts/mock-ft` implemented for real: NEP-141 core + resolver, NEP-145 storage management, NEP-148 metadata, and an open testnet-only `mint` that registers the receiver if it is missing (a faucet can't assume a prior `storage_deposit`). Delegates to `near-contract-standards` `FungibleToken`; metadata kept inline instead of `LazyOption`. Added the `unit-testing` near-sdk dev-dependency. | `cargo test -p mock-ft` ✅ 18 passed (mint + transfer, supply, both event logs, storage bounds, 8 rejection paths) · mutation-checked mint guard, auto-register and mint event · clippy `-D warnings` ✅ · `cargo near build` ✅ 151.2 KB wasm, ABI exposes 14 methods · `cargo test --workspace` ✅ 0 failed |
 | 2026-11-04 | S-2.12 (new) | Created 163 GitHub issues covering every open roadmap task (milestone per phase; labels phase/area/size/wave/maintainer; index in docs/ISSUES.md). Repo interaction limited to collaborators. Header rule changed: contributions update their row + Changelog only; maintainer recomputes the header with tools/roadmap.py. Added S-2.12 (test-state builders) so wave issues stay independent. | n/a (docs and process) |
 | 2026-11-04 | S-12.8 | Repo made public at github.com/Teescom/sealed-tip on the user's explicit OK. | n/a |
 | 2026-11-04 | S-0.2, S-0.8, S-1.2, S-1.4, S-1.7 | Approved deps added (Vitest, near-contract-standards); installed cargo-near 0.22.0 + near-cli-rs; pnpm install with build-script allow-list; pinned next 16.4.4 to respect pnpm's minimum release age; ignored next-env.d.ts; docs updated (AGENTS toolchain, ARCHITECTURE §2, project_structure). | cargo near build ✅ (2 contracts) · cargo test ✅ 0 failed (scaffold tests ignored) · tsc -b ✅ · eslint ✅ · next build ✅ · pnpm -r test ✅ 0 failed (todo placeholders) |
