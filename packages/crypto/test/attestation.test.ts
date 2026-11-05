@@ -1,19 +1,28 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
+import * as ed25519 from "@noble/ed25519";
+import { sha512 } from "@noble/hashes/sha2.js";
+
 import {
   addressFromPublicKey,
+  composeManifestHash,
   fromHex,
+  parseComposeManifest,
   parseEventLog,
   quoteHeader,
   quoteRegisters,
   quoteReportData,
   replayRegisters,
   verifyAttestationBundle,
+  verifyEd25519,
   type AttestationBundle,
   type AttestedParty,
+  type ComposeManagerAttestation,
   type EventLogEntry,
 } from "../src/attestation.js";
+
+ed25519.hashes.sha512 = sha512;
 
 const NONCE = "11".repeat(32);
 const REGISTER_BYTES = 48;
@@ -246,3 +255,208 @@ test("a nonce that is not 32 lowercase hex bytes is the caller's bug", () => {
     assert.throws(() => verifyAttestationBundle(buildBundle(), bad), RangeError);
   }
 });
+
+// --- the in-band bindings beyond the quote ---------------------------------------------------
+
+const PINNED_IMAGE = `ghcr.io/sealed-tip/worker@sha256:${"0f".repeat(32)}`;
+
+/** A fictional dstack manifest: the shape the report actually ships, with our own image strings. */
+const composeManifest = (overrides: Record<string, unknown> = {}): string =>
+  JSON.stringify({
+    manifest_version: 2,
+    name: "sealed-tip-spike",
+    runner: "docker-compose",
+    docker_compose_file: `services:\n  worker:\n    image: ${PINNED_IMAGE}\n`,
+    kms_enabled: false,
+    gateway_enabled: true,
+    public_logs: false,
+    public_sysinfo: true,
+    ...overrides,
+  });
+
+/** Attach a manifest and the hash the party states for it, the way the live report does. */
+const withManifest = (bundle: AttestationBundle, appCompose = composeManifest(), stated?: string): AttestationBundle => {
+  const tcb = bundle.model_attestations[0]!.info!.tcb_info!;
+  tcb.app_compose = appCompose;
+  tcb.compose_hash = stated ?? composeManifestHash(appCompose);
+  return bundle;
+};
+
+/** A real ed25519 pair, so a passing OHTTP check means a signature was actually verified. */
+const ohttpKey = (seed: number) => ed25519.keygen(Uint8Array.from({ length: 32 }, (_, i) => seed + i));
+const KEY_CONFIG = "19004300a1" + "5e".repeat(45 - 5);
+
+const withOhttp = (bundle: AttestationBundle, seed = 5): AttestationBundle => {
+  const { publicKey, secretKey } = ohttpKey(seed);
+  bundle.model_attestations[0]!.ohttp_attestation = {
+    signing_algo: "ed25519",
+    signing_key: hex(publicKey),
+    key_config: KEY_CONFIG,
+    signature: hex(ed25519.sign(fromHex(KEY_CONFIG), secretKey)),
+  };
+  return bundle;
+};
+
+const withManager = (bundle: AttestationBundle, overrides: Partial<ComposeManagerAttestation> = {}): AttestationBundle => {
+  const party = bundle.model_attestations[0]!;
+  const registers = quoteRegisters(party.intel_quote);
+  const actionsHash = "ab".repeat(32);
+  // The manager's quote measures the same VM but RTMR3 has moved on with each action.
+  const quote = buildQuote(actionsHash, NONCE, registers.mrtd, [...registers.rtmr.slice(0, 3), "cd".repeat(REGISTER_BYTES)]);
+  party.compose_manager_attestation = {
+    actions: [{ action: "pull" }, { action: "start" }],
+    actions_hash: actionsHash,
+    nonce: NONCE,
+    nonce_source: "client",
+    quote: hex(quote),
+    report_data: quoteReportData(hex(quote)),
+    ...overrides,
+  };
+  return bundle;
+};
+
+test("the compose hash is sha256 over the manifest, and a swapped manifest is caught", () => {
+  assert.equal(composeManifestHash(composeManifest()), composeManifestHash(composeManifest()));
+  assert.notEqual(composeManifestHash(composeManifest()), composeManifestHash(composeManifest({ public_logs: true })));
+
+  const ok = withManifest(buildBundle());
+  assert.equal(verifyAttestationBundle(ok, NONCE).ok, true, JSON.stringify(ok.model_attestations[0]!.info));
+
+  // The party states a hash for a different manifest than the one it shipped.
+  const swapped = withManifest(buildBundle(), composeManifest({ name: "some-other-app" }));
+  const tamperedManifest = composeManifest({ name: "sealed-tip-spike" });
+  swapped.model_attestations[0]!.info!.tcb_info!.app_compose = tamperedManifest;
+  assert.equal(verifyAttestationBundle(swapped, NONCE).ok, false);
+  assert.ok(failing(swapped, "compose_hash_matches_manifest").length > 0);
+});
+
+test("a manifest that publishes logs, or ships images by tag, fails its check", () => {
+  const leaky = withManifest(buildBundle(), composeManifest({ public_logs: true }));
+  assert.equal(verifyAttestationBundle(leaky, NONCE).ok, false);
+  assert.ok(failing(leaky, "manifest_keeps_logs_private").length > 0);
+
+  const tagOnly = withManifest(
+    buildBundle(),
+    composeManifest({ docker_compose_file: "services:\n  worker:\n    image: ghcr.io/sealed-tip/worker:latest\n" }),
+  );
+  assert.equal(verifyAttestationBundle(tagOnly, NONCE).ok, false);
+  assert.ok(failing(tagOnly, "manifest_pins_image_digests").length > 0);
+  assert.deepEqual(parseComposeManifest(composeManifest()).images, [PINNED_IMAGE]);
+});
+
+test("the OHTTP key config is signed by the key it publishes, and nowhere else", () => {
+  const bundle = withOhttp(buildBundle());
+  assert.equal(verifyAttestationBundle(bundle, NONCE).ok, true);
+  assert.ok(
+    bundle.model_attestations[0]!.ohttp_attestation !== undefined,
+    "the live report carries this per party",
+  );
+
+  const wrongKey = withOhttp(buildBundle(), 6);
+  wrongKey.model_attestations[0]!.ohttp_attestation!.signing_key = hex(ohttpKey(5).publicKey);
+  assert.equal(verifyAttestationBundle(wrongKey, NONCE).ok, false);
+  assert.ok(failing(wrongKey, "ohttp_key_config_signed").length > 0);
+
+  const flipped = withOhttp(buildBundle());
+  const signature = flipped.model_attestations[0]!.ohttp_attestation!;
+  signature.signature = hex(Uint8Array.from(fromHex(signature.signature), (b, i) => (i === 0 ? b ^ 1 : b)));
+  assert.equal(verifyAttestationBundle(flipped, NONCE).ok, false);
+
+  const notEd25519 = withOhttp(buildBundle());
+  notEd25519.model_attestations[0]!.ohttp_attestation!.signing_algo = "ecdsa";
+  assert.ok(failing(notEd25519, "ohttp_algo_is_ed25519").length > 0);
+});
+
+test("the top-level OHTTP attestation is checked once, not repeated per party", () => {
+  const bundle = withOhttp(buildBundle());
+  const ohttp = bundle.model_attestations[0]!.ohttp_attestation!;
+  bundle.ohttp_attestation = ohttp;
+  delete bundle.model_attestations[0]!.ohttp_attestation;
+  const result = verifyAttestationBundle(bundle, NONCE);
+  assert.equal(result.ok, true, result.checks.filter((c) => !c.ok).map((c) => c.name).join(","));
+  assert.deepEqual(
+    result.checks.filter((c) => c.name.endsWith("key_config_signed")).map((c) => c.name),
+    ["ohttp.key_config_signed"],
+  );
+});
+
+test("verifyEd25519 is a boolean, never an exception", () => {
+  const { publicKey, secretKey } = ohttpKey(9);
+  const signature = hex(ed25519.sign(fromHex(KEY_CONFIG), secretKey));
+  assert.equal(verifyEd25519(signature, KEY_CONFIG, hex(publicKey)), true);
+  assert.equal(verifyEd25519(signature, KEY_CONFIG.slice(0, -2) + "11", hex(publicKey)), false);
+  for (const bad of ["", "zz", "ab".repeat(63), "0xzz", "ab".repeat(64)]) {
+    assert.equal(verifyEd25519(bad, KEY_CONFIG, hex(publicKey)), false, bad);
+  }
+  assert.equal(verifyEd25519(signature, KEY_CONFIG, "ab".repeat(33)), false);
+});
+
+test("the GPU evidence nonce is the one we sent", () => {
+  const bundle = buildBundle();
+  bundle.model_attestations[0]!.nvidia_payload = JSON.stringify({ nonce: NONCE, evidence_list: [{ spa_data: {} }], arch: "hopper" });
+  assert.equal(verifyAttestationBundle(bundle, NONCE).ok, true);
+
+  const stale = buildBundle();
+  stale.model_attestations[0]!.nvidia_payload = JSON.stringify({ nonce: "22".repeat(32), evidence_list: [{}] });
+  assert.ok(failing(stale, "gpu_evidence_binds_our_nonce").length > 0);
+
+  const empty = buildBundle();
+  empty.model_attestations[0]!.nvidia_payload = JSON.stringify({ nonce: NONCE, evidence_list: [] });
+  assert.ok(failing(empty, "gpu_evidence_present").length > 0);
+});
+
+test("the compose manager quotes the same VM and binds its action hash to our nonce", () => {
+  const bundle = withManager(buildBundle());
+  const result = verifyAttestationBundle(bundle, NONCE);
+  assert.equal(result.ok, true, result.checks.filter((c) => !c.ok).map((c) => `${c.name}: ${c.detail}`).join(" | "));
+  const manager = bundle.model_attestations[0]!.compose_manager_attestation!;
+  assert.equal(quoteReportData(manager.quote).slice(64), NONCE);
+  assert.equal(quoteRegisters(manager.quote).rtmr[3], "cd".repeat(REGISTER_BYTES));
+
+  const notOurs = withManager(buildBundle(), { nonce: "22".repeat(32) });
+  assert.ok(failing(notOurs, "compose_manager_binds_our_nonce").length > 0);
+
+  const hashSwapped = withManager(buildBundle(), { actions_hash: "ee".repeat(32) });
+  assert.ok(failing(hashSwapped, "compose_manager_quote_binds_actions_hash").length > 0);
+
+  const otherVm = withManager(buildBundle());
+  const registers = quoteRegisters(otherVm.model_attestations[0]!.compose_manager_attestation!.quote);
+  otherVm.model_attestations[0]!.compose_manager_attestation!.quote = hex(
+    buildQuote("ab".repeat(32), NONCE, registers.mrtd, ["01".repeat(REGISTER_BYTES), registers.rtmr[1]!, registers.rtmr[2]!, registers.rtmr[3]!]),
+  );
+  assert.ok(failing(otherVm, "compose_manager_measured_the_same_vm").length > 0);
+});
+
+test("hostile extras fail a check instead of crashing the verifier", () => {
+  const cases: ((bundle: AttestationBundle) => void)[] = [
+    (bundle) => withManifest(bundle, composeManifest(), "zz".repeat(32)),
+    (bundle) => withManifest(bundle, "not json"),
+    (bundle) => withManifest(bundle, JSON.stringify([])),
+    (bundle) => {
+      bundle.model_attestations[0]!.nvidia_payload = "{ broken";
+    },
+    (bundle) => {
+      const party = bundle.model_attestations[0]!;
+      party.ohttp_attestation = { signing_algo: "ed25519", signing_key: "zz", key_config: "zz", signature: "zz" };
+      party.compose_manager_attestation = {
+        actions: [],
+        actions_hash: "zz",
+        nonce: NONCE,
+        nonce_source: "client",
+        quote: "0400",
+        report_data: "zz",
+      };
+    },
+  ];
+  for (const hostile of cases) {
+    const bundle = buildBundle();
+    hostile(bundle);
+    const result = verifyAttestationBundle(bundle, NONCE);
+    assert.equal(result.ok, false);
+    assert.ok(
+      result.checks.some((c) => !c.ok),
+      "a malformed field has to show up as a failed check",
+    );
+  }
+});
+
