@@ -72,7 +72,7 @@ res/                     # pinned sputnikdao2.wasm + SPUTNIK_VERSION.txt
 ```
 **Rules**
 - **Funds are never reserved in `submit_tip`.** Reservation happens only in `triage(credible=true)`.
-- **Changing `SignedAction` or `Action`** means running `pnpm gen-vectors` and updating `actions.rs` and `packages/crypto/src/actions.ts` in the same change.
+- **Changing `SignedAction` or `Action`** means running `pnpm gen-vectors` and updating `actions.rs` and `packages/crypto/src/actions.ts` in the same change. Changing `keys.ts` derivation means re-running `pnpm gen-vectors` too: `fixtures/vectors.json` carries the HKDF/BIP39 key vectors that `tests/vectors.rs` and `packages/crypto/test/fixture.ts` both read.
 - **Signatures are passed as `Base64VecU8`**, because serde can't handle `[u8; 64]`.
 
 ## 3. TypeScript workspace
@@ -83,6 +83,8 @@ res/                     # pinned sputnikdao2.wasm + SPUTNIK_VERSION.txt
 | `packages/core/src/contract.ts` | view client; the only place with method names | — |
 | `packages/crypto/src/keys.ts` | 24-word secret, HKDF → ed25519 + x25519 | **browser-only** |
 | `packages/crypto/src/actions.ts` | borsh SignedAction + domain tag, signing | **browser-only** (keys) |
+| `packages/crypto/src/borsh.ts` | minimal borsh writer; must match the Rust derive, checked by `fixtures/vectors.json` | — |
+| `packages/crypto/src/ed25519.ts` | @noble/ed25519 with `hashes.sha512` bound (browser and Node must sign identically) | — |
 | `packages/crypto/src/seal.ts` | XChaCha20-Poly1305 bundles, sealed boxes, cid | **browser-only** (plaintext) |
 | `packages/crypto/src/pow.ts` | PoW solve/check | — |
 | `packages/crypto/src/attestation.ts` | offline re-verify of a NEAR AI Cloud attestation bundle (nonce + signing-address bindings, TDX quote v4 register offsets, RTMR replay from the event log, compose-manifest hash, OHTTP ed25519 wrapper, GPU evidence nonce, compose-manager action-log quote) | no network, no new deps; malformed input becomes a failed check, never a throw |
