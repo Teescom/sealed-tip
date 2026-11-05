@@ -22,7 +22,7 @@
    - PDFs are rasterised; images are re-encoded.
    - An optional scan mode (grayscale + threshold) helps against printer tracking dots.
    - DOCX and other types are refused.
-5. **The AI step is optional and goes through a stateless proxy** to a NEAR AI Cloud TEE model. The tipster picks which text to send. The UI says plainly that the proxy sees that text. E2EE replaces the proxy only if the day-1 spike succeeds.
+5. **The AI step is optional.** The day-1 spike settled it (ARCHITECTURE §14.4): a browser can encrypt straight to the attested NEAR AI Cloud TEE with no library and no server of ours in the path, so the text the tipster chooses to send does not pass through our proxy. The proxy stays anyway, for two things encryption cannot do: it holds our API key and rate limits, and it is the only step that hides the tipster's IP. The UI must still say plainly who can read the text.
 6. **The dead man's switch releases a cleaned "switch bundle" by default.** Raw files go only with an explicit opt-in. The keeper re-seals it to non-recused panel members.
 7. **Recusal:** the tipster can exclude panel members, who then get no sealed keys. Each tip needs ≥2 sealed keys.
 8. **Claim:** `storage_deposit` on the destination plus a NEAR gas drip from the programme's `ops_balance`.
@@ -84,7 +84,7 @@
 - The keeper is trusted in the hackathon build (production: TEE).
 
 ## Verify
-- Whether E2EE works from the browser (day-1 spike).
+- **E2EE from the browser: settled 2026-11-05** (ARCHITECTURE §14.4).
 - The 1Click NEP-141 deposit method (day 2).
 - Whether OutLayer can host the keeper.
 
