@@ -1,4 +1,28 @@
+# Pinned Sputnik DAO v2 wasm — sandbox/testnet panel (S-0.7).
+# Verified 2026-11-05 against live testnet; see the provenance block below.
+
 source_repo: https://github.com/near-daos/sputnik-dao-contract
-source_commit: TODO
+source_commit: c2cf1553b070 (tag 2.0.0) — ASSERTED, not proven. The repo publishes no release
+  artifacts (`releases/latest` = 3.0.0, 2022-05-10, zero assets), so the deployed bytes cannot be
+  matched to a commit without a reproducible build. The authoritative identifier is the on-chain
+  code hash below; re-verify after any factory upgrade by repeating the provenance steps.
 file: sputnikdao2.wasm
-sha256: TODO
+size_bytes: 469804
+sha256: 084441471c11099d78e2eecda571dd4d8c29153282807edd415935c97355dd56
+on_chain_code_hash: ZGdM2TFdQpcXrxPxvq25514EViyi9xBSboetDiB3Uiq
+
+# Factories (confirmed live via `near view <factory> get_dao_list`):
+testnet_factory: sputnik-v2.testnet
+mainnet_factory: sputnik-dao.near
+
+# Provenance — how the sha256 above was obtained (no trust in a downloaded file):
+# 1. `near view sputnik-v2.testnet get_dao_list {} --network-id testnet` -> live DAO list.
+# 2. JSON-RPC `query / view_code` (rpc.testnet.near.org, finality optimistic) against 6
+#    independently created DAOs — testdao, genesis, hack-dao, herald-dao, ne-dao-mw23pytm,
+#    bursar-coldjudge-93469618 (all *.sputnik-v2.testnet).
+# 3. All six returned the same code_hash ZGdM2TFdQpcXrxPxvq25514EViyi9xBSboetDiB3Uiq and the same
+#    469,804-byte wasm whose SHA-256 is the value above. Independent owners, identical bytes.
+# 4. Cross-check: matches the wasm pinned in the sister project Admit (task A-0.4, 2026-11-04).
+# 5. No `get_version`/`get_wasm_hash` view method exists on the factory or the DAO (both returned
+#    MethodNotFound), so the "2.0.0" label comes from the upstream tag list, not from the chain.
+downloaded: 2026-11-05 by `query view_code` against testdao.sputnik-v2.testnet

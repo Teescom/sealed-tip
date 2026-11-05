@@ -55,7 +55,7 @@ Tipster browser (no wallet, Tor recommended)           Panel browser (wallet)
 | Tests | `near-workspaces`, unit tests; shared borsh + signature vectors with TS |
 | Approved extra deps (2026-11-04) | `near-contract-standards` 5.30 (mock-ft NEP-141/145) · Vitest 5.1 (web tests) |
 | Token | Mock NEP-141 `tusdc.<you>.testnet` (NEP-145 storage); mainnet USDC **VERIFY** id |
-| Panel | Sputnik DAO v2 (factory **VERIFY**) |
+| Panel | Sputnik DAO v2 — testnet factory `sputnik-v2.testnet`, mainnet `sputnik-dao.near`; wasm pinned in `contracts/sealedtip/res/` (S-0.7, verified 2026-11-05) |
 | Frontend | Next.js 16, TypeScript, Tailwind; wallet-selector for panel/funders only |
 | Client crypto | `libsodium-wrappers` (sealed boxes, XChaCha20-Poly1305), `@noble/ed25519`, `@noble/hashes` (HKDF, sha256), `@scure/bip39` (entropy ↔ words), `@dao-xyz/borsh` or hand-rolled borsh encoder |
 | Client cleaning | `pdfjs-dist` (render pages), `pdf-lib` (rebuild PDF from images), canvas re-encode, `exifr` (show what's removed) |
