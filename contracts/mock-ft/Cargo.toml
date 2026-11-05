@@ -11,3 +11,6 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 near-sdk = { workspace = true }
 near-contract-standards = { workspace = true }   # NEP-141 + NEP-145 (approved 2026-11-04)
+
+[dev-dependencies]
+near-sdk = { workspace = true, features = ["unit-testing"] }   # mocked VM for the mint + transfer tests
