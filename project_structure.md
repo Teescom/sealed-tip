@@ -59,7 +59,8 @@ src/
 ├── token.rs      # promises + on_claim_paid rollback
 └── views.rs      # get_programme, list_programmes, get_programme_stats, get_tip_public (no CIDs), get_tip_for_panel
 tests/
-├── common/mod.rs
+├── common/mod.rs  # S-1.6 sandbox harness: boots a node, deploys both contracts, mint/register/transfer/views/advance
+├── smoke.rs       # S-1.6 — the harness gate every other integration test runs on
 ├── reservations.rs      # S-5.1
 ├── submission.rs        # S-5.2
 ├── signed_actions.rs    # S-5.3
