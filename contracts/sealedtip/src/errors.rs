@@ -24,3 +24,4 @@ pub const E21_WRONG_TOKEN: &str = "E21_WRONG_TOKEN: token is not this programme'
 pub const E22_INVALID_MESSAGE: &str = "E22_INVALID_MESSAGE: ft_on_transfer message is invalid";
 pub const E23_TIME_SCALE_IMMUTABLE: &str = "E23_TIME_SCALE_IMMUTABLE: time_scale cannot be changed";
 pub const E24_INSUFFICIENT_DEPOSIT: &str = "E24_INSUFFICIENT_DEPOSIT: attached deposit does not cover storage and ops balance";
+pub const E25_INVALID_TIME_SCALE: &str = "E25_INVALID_TIME_SCALE: time_scale must be at least 1 nanosecond per nanosecond";

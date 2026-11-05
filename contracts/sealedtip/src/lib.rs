@@ -17,6 +17,8 @@ pub mod time;
 pub mod tip;
 pub mod token;
 pub mod types;
+#[cfg(test)]
+pub mod test_utils;
 pub mod views;
 
 use types::{Programme, ProgrammeId, Tip, TipId, X25519PublicKey};
