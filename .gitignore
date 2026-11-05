@@ -22,3 +22,6 @@ dist/
 
 # Next.js generated
 next-env.d.ts
+
+# A live GET /v1/attestation/report snapshot: public data, but a network cache rather than a fixture
+fixtures/attestation.json

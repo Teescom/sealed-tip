@@ -87,6 +87,7 @@ res/                     # pinned sputnikdao2.wasm + SPUTNIK_VERSION.txt
 | `packages/crypto/src/ed25519.ts` | @noble/ed25519 with `hashes.sha512` bound (browser and Node must sign identically) | — |
 | `packages/crypto/src/seal.ts` | XChaCha20-Poly1305 bundles, sealed boxes, cid | **browser-only** (plaintext) |
 | `packages/crypto/src/pow.ts` | PoW solve/check | — |
+| `packages/crypto/src/attestation.ts` | offline re-verify of a NEAR AI Cloud attestation bundle (nonce + signing-address bindings, TDX quote v4 register offsets, RTMR replay from the event log, compose-manifest hash, OHTTP ed25519 wrapper, GPU evidence nonce, compose-manager action-log quote) | no network, no new deps; malformed input becomes a failed check, never a throw |
 | `packages/clean/src/gate.ts` | magic-byte sniff; PDF/JPEG/PNG only; everything else refused | **browser-only** |
 | `packages/clean/src/{pdf,image,scan,report}.ts` | rasterise, re-encode, scan mode, removal report | **browser-only** |
 | `apps/web/app/page.tsx` | landing + Tor guidance | no third-party loads |
@@ -102,6 +103,7 @@ res/                     # pinned sputnikdao2.wasm + SPUTNIK_VERSION.txt
 | `apps/api/src/routes/relay.ts`, `relay/{queue,submit,ratelimit}.ts` | random-delay queue, 2 relayers, limits keyed by claim pubkey | no IP keys |
 | `apps/api/src/routes/ai.ts` | stateless NEAR AI Cloud proxy + attestation bundle | keeps nothing |
 | `apps/keeper/src/{heartbeat,watch,release}.ts` | heartbeat, trigger watch, re-seal to non-recused | holds keeper key only |
+| `scripts/lib/app-cert.ts` | Node-only verify of the dstack X.509 chain in `info.app_cert`: leaf → App CA → KMS CA, validity, and the quote's MRTD + RTMR0-3 + compose hash embedded in the signed leaf | stays out of `packages/crypto` because that package must be browser-safe |
 | `scripts/*` | deploy, seed, demo, spam, verify-attestation, sign-statement, gen-vectors | fictional data only |
 
 Tests use `node:test` via `tsx`. Web tests use Vitest.
