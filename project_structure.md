@@ -35,6 +35,7 @@ sealed-tip/
 │   ├── api/                      # Hono: blobs (ciphertext only), relayer queue, AI proxy, quotes — noLogs everywhere
 │   └── keeper/                   # switch keeper: heartbeat, watch triggers, re-seal keys
 ├── scripts/                      # deploy, seed, demo, spam, verify-attestation, sign-statement, gen-vectors
+├── spikes/                       # day-1 verification (ohttp-browser: WebCrypto OHTTP), hand-run, in no workspace
 ├── fixtures/                     # vectors.json (TS↔Rust), fictional files
 └── docs/screenshots/
 ```
@@ -131,6 +132,7 @@ Tests use `node:test` via `tsx`. Web tests use Vitest.
 | A cleaning step | `packages/clean` + fixture + test | ARCHITECTURE §6, PRD T2 |
 | An API route | `apps/api/src/routes/` behind `noLogs` | ARCHITECTURE §9, no-logs test |
 | Anything loaded by a web page | bundled locally only | CSP in `next.config.ts` |
+| A spike that settles a roadmap question | `spikes/<name>/` — plain files, no workspace, no dependency | that ROADMAP row, and ARCHITECTURE §14 if it settles a hard question |
 | An env var | where it's read | `.env.example` |
 
 ## 7. Naming
