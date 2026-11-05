@@ -84,5 +84,10 @@
 - The keeper is trusted in the hackathon build (production: TEE).
 
 ## Verify
-- **E2EE from the browser: settled 2026-11-05** (ARCHITECTURE §14.4). Still open: the 1Click deposit method, and whether OutLayer can host the keeper.
-- Sputnik factory names.
+- **E2EE from the browser: settled 2026-11-05** (ARCHITECTURE §14.4).
+- The 1Click NEP-141 deposit method (day 2).
+- Whether OutLayer can host the keeper.
+
+## Confirmed
+- Sputnik DAO v2 factories: testnet `sputnik-v2.testnet`, mainnet `sputnik-dao.near`. Wasm pinned
+  with sha256 + on-chain code hash in `contracts/sealedtip/res/SPUTNIK_VERSION.txt` (S-0.7).
