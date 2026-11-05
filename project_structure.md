@@ -35,6 +35,7 @@ sealed-tip/
 │   ├── api/                      # Hono: blobs (ciphertext only), relayer queue, AI proxy, quotes — noLogs everywhere
 │   └── keeper/                   # switch keeper: heartbeat, watch triggers, re-seal keys
 ├── scripts/                      # deploy, seed, demo, spam, verify-attestation, sign-statement, gen-vectors
+├── spikes/                       # day-1 verification (ohttp-browser: WebCrypto OHTTP), hand-run, in no workspace
 ├── fixtures/                     # vectors.json (TS↔Rust), fictional files
 └── docs/screenshots/
 ```
@@ -73,7 +74,7 @@ res/                     # pinned sputnikdao2.wasm + SPUTNIK_VERSION.txt
 ```
 **Rules**
 - **Funds are never reserved in `submit_tip`.** Reservation happens only in `triage(credible=true)`.
-- **Changing `SignedAction` or `Action`** means running `pnpm gen-vectors` and updating `actions.rs` and `packages/crypto/src/actions.ts` in the same change.
+- **Changing `SignedAction` or `Action`** means running `pnpm gen-vectors` and updating `actions.rs` and `packages/crypto/src/actions.ts` in the same change. Changing `keys.ts` derivation means re-running `pnpm gen-vectors` too: `fixtures/vectors.json` carries the HKDF/BIP39 key vectors that `tests/vectors.rs` and `packages/crypto/test/fixture.ts` both read.
 - **Signatures are passed as `Base64VecU8`**, because serde can't handle `[u8; 64]`.
 
 ## 3. TypeScript workspace
@@ -84,8 +85,11 @@ res/                     # pinned sputnikdao2.wasm + SPUTNIK_VERSION.txt
 | `packages/core/src/contract.ts` | view client; the only place with method names | — |
 | `packages/crypto/src/keys.ts` | 24-word secret, HKDF → ed25519 + x25519 | **browser-only** |
 | `packages/crypto/src/actions.ts` | borsh SignedAction + domain tag, signing | **browser-only** (keys) |
+| `packages/crypto/src/borsh.ts` | minimal borsh writer; must match the Rust derive, checked by `fixtures/vectors.json` | — |
+| `packages/crypto/src/ed25519.ts` | @noble/ed25519 with `hashes.sha512` bound (browser and Node must sign identically) | — |
 | `packages/crypto/src/seal.ts` | XChaCha20-Poly1305 bundles, sealed boxes, cid | **browser-only** (plaintext) |
 | `packages/crypto/src/pow.ts` | PoW solve/check | — |
+| `packages/crypto/src/attestation.ts` | offline re-verify of a NEAR AI Cloud attestation bundle (nonce + signing-address bindings, TDX quote v4 register offsets, RTMR replay from the event log, compose-manifest hash, OHTTP ed25519 wrapper, GPU evidence nonce, compose-manager action-log quote) | no network, no new deps; malformed input becomes a failed check, never a throw |
 | `packages/clean/src/gate.ts` | magic-byte sniff; PDF/JPEG/PNG only; everything else refused | **browser-only** |
 | `packages/clean/src/{pdf,image,scan,report}.ts` | rasterise, re-encode, scan mode, removal report | **browser-only** |
 | `apps/web/app/page.tsx` | landing + Tor guidance | no third-party loads |
@@ -101,6 +105,7 @@ res/                     # pinned sputnikdao2.wasm + SPUTNIK_VERSION.txt
 | `apps/api/src/routes/relay.ts`, `relay/{queue,submit,ratelimit}.ts` | random-delay queue, 2 relayers, limits keyed by claim pubkey | no IP keys |
 | `apps/api/src/routes/ai.ts` | stateless NEAR AI Cloud proxy + attestation bundle | keeps nothing |
 | `apps/keeper/src/{heartbeat,watch,release}.ts` | heartbeat, trigger watch, re-seal to non-recused | holds keeper key only |
+| `scripts/lib/app-cert.ts` | Node-only verify of the dstack X.509 chain in `info.app_cert`: leaf → App CA → KMS CA, validity, and the quote's MRTD + RTMR0-3 + compose hash embedded in the signed leaf | stays out of `packages/crypto` because that package must be browser-safe |
 | `scripts/*` | deploy, seed, demo, spam, verify-attestation, sign-statement, gen-vectors | fictional data only |
 
 Tests use `node:test` via `tsx`. Web tests use Vitest.
@@ -132,6 +137,7 @@ Tests use `node:test` via `tsx`. Web tests use Vitest.
 | A cleaning step | `packages/clean` + fixture + test | ARCHITECTURE §6, PRD T2 |
 | An API route | `apps/api/src/routes/` behind `noLogs` | ARCHITECTURE §9, no-logs test |
 | Anything loaded by a web page | bundled locally only | CSP in `next.config.ts` |
+| A spike that settles a roadmap question | `spikes/<name>/` — plain files, no workspace, no dependency | that ROADMAP row, and ARCHITECTURE §14 if it settles a hard question |
 | An env var | where it's read | `.env.example` |
 
 ## 7. Naming

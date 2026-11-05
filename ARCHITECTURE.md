@@ -55,7 +55,7 @@ Tipster browser (no wallet, Tor recommended)           Panel browser (wallet)
 | Tests | `near-workspaces`, unit tests; shared borsh + signature vectors with TS |
 | Approved extra deps (2026-11-04) | `near-contract-standards` 5.30 (mock-ft NEP-141/145) · Vitest 5.1 (web tests) |
 | Token | Mock NEP-141 `tusdc.<you>.testnet` (NEP-145 storage); mainnet USDC **VERIFY** id |
-| Panel | Sputnik DAO v2 (factory **VERIFY**) |
+| Panel | Sputnik DAO v2 — testnet factory `sputnik-v2.testnet`, mainnet `sputnik-dao.near`; wasm pinned in `contracts/sealedtip/res/` (S-0.7, verified 2026-11-05) |
 | Frontend | Next.js 16, TypeScript, Tailwind; wallet-selector for panel/funders only |
 | Client crypto | `libsodium-wrappers` (sealed boxes, XChaCha20-Poly1305), `@noble/ed25519`, `@noble/hashes` (HKDF, sha256), `@scure/bip39` (entropy ↔ words), `@dao-xyz/borsh` or hand-rolled borsh encoder |
 | Client cleaning | `pdfjs-dist` (render pages), `pdf-lib` (rebuild PDF from images), canvas re-encode, `exifr` (show what's removed) |
@@ -271,7 +271,7 @@ The full list lives in `.env.example` (source of truth). Change both together.
 | B1 | Spam reserves all rewards | PoW verified by the contract, relayer rate limits, reserve on triage | Applied |
 | B2 | Switch releases the identifying raw files | Cleaned switch bundle by default; raw only by explicit opt-in | Applied |
 | B3 | Cleaning gaps (incremental PDF updates, embedded EXIF, rsid, printer dots) | Rasterise PDFs; re-encode images; scan mode; refuse DOCX | Applied |
-| B4 | E2EE availability | Decision: stateless proxy, optional AI step, honest UI copy; E2EE replaces it if the day-1 spike succeeds | Applied |
+| B4 | E2EE availability | Decision: stateless proxy, optional AI step, honest UI copy; E2EE replaces it if the day-1 spike succeeds | Applied — spike succeeded, see §14.4 |
 | B5 | Fresh payout account unusable | `storage_deposit` plus `gas_drip` from `ops_balance` | Applied |
 | B6 | 1Click NEP-141 deposit method | $1 mainnet test on day 2; fall back to `Payout::Near` | Pending verification |
 | B7 | Timestamp linkage | Random relayer delay | Applied |
@@ -303,4 +303,35 @@ The full list lives in `.env.example` (source of truth). Change both together.
 | Keeper sealing to a single shared panel key | **Not adopted.** Per-member sealing is kept, because recusal needs it |
 | BIP39 HD derivation | Replaced by BIP39 entropy plus HKDF |
 | `.onion` static export | README guidance only |
-| Dual E2EE and proxy paths | Single path (proxy) unless the day-1 spike succeeds |
+| Dual E2EE and proxy paths | **Adopted, with the proxy kept for a different job.** The browser can speak OHTTP on its own (§14.4), so the AI step no longer needs a server of ours to keep the content confidential. The proxy stays for key custody, rate limits and — the part OHTTP cannot do — hiding the tipster's IP |
+
+### 14.4 S-0.4 result: browser-side OHTTP works (spike, 2026-11-05)
+`spikes/ohttp-browser/` speaks HPKE (RFC 9180 base mode, DHKEM(X25519, HKDF-SHA256) + HKDF-SHA256 +
+AES-128-GCM), BHTTP (RFC 9292) and OHTTP (RFC 9458) using **`crypto.subtle` only** — no bundler, no npm
+package. The same `ohttp.js` passes under Node and in a Chromium tab.
+
+Measured today, not assumed:
+- X25519 in WebCrypto is its own algorithm (`{name:"X25519"}`), not ECDH with a `namedCurve`; a public key
+  imports with no usages and the private key does the derivation. Chrome 133+, Edge, Firefox 130+, Safari 17+.
+- `/.well-known/ohttp-gateway`, `POST /ohttp` and `GET /v1/attestation/report` all answer a browser origin:
+  preflight returns `access-control-allow-methods: *` and `access-control-allow-headers: content-type`, and the
+  key endpoint sends `access-control-allow-origin: <origin>` with `access-control-expose-headers: *`.
+- The 45-byte published key config is byte-identical to the one the TEE attests. Its first symmetric suite is
+  AES-128-GCM — the one WebCrypto has. The second (ChaCha20-Poly1305) has no WebCrypto binding, so pin suite 1.
+- One live round trip to `deepseek-ai/DeepSeek-V4.1-Flash-1017`: 240-byte inner BHTTP request → 295-byte
+  encapsulated request → `POST /ohttp` → HTTP 200 `message/ohttp-res` → decapsulated to inner **status 401,
+  `invalid_auth_header`**. A request with no key still proves both directions of the codec, and the bearer token
+  travels inside the ciphertext rather than on the wire.
+
+**Decision.** The optional AI redaction step goes browser → attested TEE directly. B4's condition is met, so the
+stateless proxy is no longer the confidentiality path.
+
+**What this does not buy.** OHTTP separates *who asked* from *what was asked* only when the forwarder is not also
+the gateway. A browser that posts straight to `cloud-api.near.ai` makes that host both: it holds the receiver key,
+so it reads the plaintext (inside a TEE whose measurements `pnpm verify-attestation` checks — S-0.3), and it sees
+the tipster's IP. For a tipster whose IP matters, the proxy or a Tor hop in front of the relay stays mandatory, and
+the proxy is where our NEAR AI key and rate limits live — handing a key to every browser is not an option. Two
+checks cannot run in a tab: `keccak256` for the signing address and secp256k1 for the response signature are absent
+from WebCrypto, so attestation verification stays in the offline verifier and in-browser pinning would need a
+dependency. Chunked OHTTP (streaming) is implemented by the relay but unproven in the browser — irrelevant here,
+because redaction is one non-streaming call.

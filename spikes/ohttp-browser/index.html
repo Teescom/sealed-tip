@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sealed Tip — S-0.4 OHTTP from the browser</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+      }
+      body {
+        font:
+          15px/1.55 ui-sans-serif,
+          system-ui,
+          sans-serif;
+        max-width: 78ch;
+        margin: 3rem auto;
+        padding: 0 1rem;
+      }
+      h1 {
+        font-size: 1.3rem;
+      }
+      .row {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-block: 0.9rem;
+      }
+      input,
+      button {
+        font: inherit;
+        padding: 0.4rem 0.6rem;
+      }
+      input[type="text"] {
+        flex: 1 1 24rem;
+      }
+      button {
+        cursor: pointer;
+      }
+      pre {
+        background: color-mix(in srgb, CanvasText 6%, Canvas);
+        border: 1px solid color-mix(in srgb, CanvasText 15%, Canvas);
+        border-radius: 6px;
+        padding: 0.9rem;
+        overflow-wrap: anywhere;
+        white-space: pre-wrap;
+        min-height: 14rem;
+      }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      .note {
+        font-size: 0.88rem;
+        opacity: 0.75;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>S-0.4 — can a tipster's browser reach the attested model directly?</h1>
+    <p>
+      This page speaks HPKE (RFC 9180) + BHTTP (RFC 9292) + OHTTP (RFC 9458) using
+      <strong>only <code>crypto.subtle</code></strong> — see <code>ohttp.js</code> beside it. No
+      bundler, no npm package, no server of ours in the loop.
+    </p>
+
+    <div class="row">
+      <label for="base">Relay</label>
+      <input id="base" type="text" value="https://cloud-api.near.ai" />
+    </div>
+    <div class="row">
+      <label for="model">Model</label>
+      <input id="model" type="text" value="deepseek-ai/DeepSeek-V4.1-Flash-1017" />
+    </div>
+    <div class="row">
+      <label for="key">API key</label>
+      <input
+        id="key"
+        type="text"
+        placeholder="empty on purpose — a 401 read back through the decrypted channel is still proof"
+      />
+    </div>
+    <div class="row">
+      <button id="go" type="button">Run the round trip</button>
+    </div>
+
+    <pre id="log" aria-live="polite">idle</pre>
+
+    <p class="note">
+      Key config published by <code>/.well-known/ohttp-gateway</code> on 2026-11-05, byte-for-byte
+      equal to the one inside the TEE attestation report (re-check it with
+      <code>pnpm verify-attestation</code>):<br />
+      <code
+        >010020e4e354364111f2295e2d2ed97ce1103c9fdcb261459ec626d9bd8a6e15f0d11600080001000100010003</code
+      >
+    </p>
+
+    <script type="module">
+      import { ohttpChat, supportsWebCryptoOhttp, toHex } from "./ohttp.js";
+
+      const ATTESTED =
+        "010020e4e354364111f2295e2d2ed97ce1103c9fdcb261459ec626d9bd8a6e15f0d11600080001000100010003";
+
+      const log = document.getElementById("log");
+      const say = (msg) => {
+        log.textContent += `${msg}\n`;
+        console.log(msg);
+      };
+
+      document.getElementById("go").addEventListener("click", async () => {
+        log.textContent = "";
+        say(`browser: ${navigator.userAgent}`);
+        const support = await supportsWebCryptoOhttp();
+        say(
+          `WebCrypto: ${support.ok ? "all three primitives available" : "MISSING —"} ${support.detail}`,
+        );
+        if (!support.ok) return;
+
+        const keyResponse = await fetch(
+          `${document.getElementById("base").value.replace(/\/$/, "")}/.well-known/ohttp-gateway`,
+        );
+        const kc = toHex(new Uint8Array(await keyResponse.arrayBuffer()));
+        say(
+          kc === ATTESTED
+            ? "✔ published key config matches the attested one"
+            : `⚠ published key config differs: ${kc}`,
+        );
+
+        try {
+          await ohttpChat(
+            {
+              base: document.getElementById("base").value.trim(),
+              model: document.getElementById("model").value.trim(),
+              apiKey: document.getElementById("key").value.trim(),
+            },
+            say,
+          );
+          say(
+            "\nround trip complete — this tab talked to the attested model with no dependency and no proxy of ours",
+          );
+        } catch (error) {
+          say(`✖ ${error instanceof Error ? error.stack : String(error)}`);
+        }
+      });
+    </script>
+  </body>
+</html>
