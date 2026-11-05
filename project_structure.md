@@ -46,19 +46,20 @@ src/
 ├── lib.rs        # state (programmes, tips, relayers, keeper, keeper_last_seen, owner), init, ft_on_transfer {"fund": id}
 ├── types.rs      # PanelMember, Programme, TipStatus, SealedKey, Switch, Tip, SwitchInput, Payout, SignedAction,
 │                 # Action, FtMessage, TipPublic, ProgrammeStats
-├── errors.rs     # E01…E24 (messages never include tipster data)
-├── events.rs     # NEP-297 `sealedtip` events (no tipster data)
-├── time.rs       # time_scale helpers
+├── errors.rs     # E01…E25 (messages never include tipster data)
+├── events.rs     # NEP-297 `sealedtip` events, native `event_json` derive (no tipster data)
+├── time.rs       # scaled / deadline — the only place durations are computed
 ├── actions.rs    # DOMAIN_TAG ‖ borsh(SignedAction); submit message; ed25519 verification
 ├── pow.rs        # leading-zero-bit check
-├── access.rs     # assert_funder / assert_panel_dao / assert_panel_member (non-recused)
+├── access.rs     # assert_funder / assert_panel_dao / assert_panel_member (non-recused) / assert_relayer / assert_keeper / assert_owner
 ├── programme.rs  # create_programme, withdraw_unreserved, close_programme, set_panel (DAO)
 ├── tip.rs        # submit_tip (relayer), triage (panel member), resolve_tip (DAO), retract (signed)
 ├── claim.rs      # claim (signed; storage_deposit + gas drip + ft_transfer)
 ├── switch.rs     # checkin (signed), trigger (anyone), post_released_keys + heartbeat (keeper)
 ├── admin.rs      # owner: set_relayers, set_keeper — never funds or tips
 ├── token.rs      # promises + on_claim_paid rollback
-└── views.rs      # get_programme, list_programmes, get_programme_stats, get_tip_public (no CIDs), get_tip_for_panel
+├── views.rs      # get_programme, list_programmes, get_programme_stats, get_tip_public (no CIDs), get_tip_for_panel
+└── test_utils.rs # #[cfg(test)] only: fictional make_programme / make_tip / make_contract + as_caller (S-2.12)
 tests/
 ├── common/mod.rs
 ├── reservations.rs      # S-5.1
