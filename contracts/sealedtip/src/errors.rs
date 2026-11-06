@@ -50,3 +50,9 @@ pub const E30_BALANCE_OVERFLOW: &str = "E30_BALANCE_OVERFLOW: token amount would
 /// a number attached to it is either a caller who thinks rejection is negotiable or a caller that has
 /// mixed up the two branches. Refusing beats reading it as zero and carrying on.
 pub const E31_REWARD_ON_REJECT: &str = "E31_REWARD_ON_REJECT: a rejected tip cannot carry a reward";
+/// `storage_deposit` has to be paid out of the programme's NEAR before the token will accept the
+/// reward transfer, so this is the one NEAR shortage a claim cannot work around. The gas drip is a
+/// separate case: it shrinks to what is left rather than refusing the payout, because being paid
+/// matters more than being able to move it.
+pub const E32_OPS_BALANCE_TOO_LOW: &str =
+    "E32_OPS_BALANCE_TOO_LOW: the programme cannot pay for the storage deposit this claim needs";
