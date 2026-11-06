@@ -14,8 +14,8 @@ use crate::events::{emit, SealedTipEvent};
 use crate::pow;
 use crate::time;
 use crate::types::{
-    Cid, CryptoHash, Ed25519PublicKey, Programme, ProgrammeId, SealedKey, Switch, SwitchInput, Tip,
-    TipId, TipStatus,
+    Action, Cid, CryptoHash, Ed25519PublicKey, Programme, ProgrammeId, SealedKey, Switch,
+    SwitchInput, Tip, TipId, TipStatus,
 };
 use crate::{Contract, ContractExt};
 
@@ -37,8 +37,9 @@ impl Contract {
     /// The programme and tip behind `tip_id` together, for the guards that need both. They live in
     /// separate maps, so the two mutable borrows are of different fields and can coexist — which is
     /// what lets `assert_panel_member` take `(&Programme, &Tip)` as one call. Going through
-    /// `need_programme`/`need_tip` here would not compile: each takes `&mut self`.
-    fn programme_and_tip(&mut self, tip_id: TipId) -> (&mut Programme, &mut Tip) {
+    /// `need_programme`/`need_tip` here would not compile: each takes `&mut self`. Used by `switch.rs`
+    /// too, because a trigger needs the programme's time scale and the tip's switch in one breath.
+    pub(crate) fn programme_and_tip(&mut self, tip_id: TipId) -> (&mut Programme, &mut Tip) {
         let programme_id = self
             .tips
             .get(&tip_id)
@@ -241,8 +242,37 @@ impl Contract {
 
     /// Relayer, signed by the tipster; only before a decision.
     pub fn retract(&mut self, tip_id: TipId, nonce: u64, signature: Base64VecU8) {
-        let _ = (tip_id, nonce, signature);
-        todo!("S-3.4")
+        access::assert_relayer(self);
+        // "Before a decision" means before the DAO has spoken: `Submitted`, `Unfunded` and
+        // `UnderReview` are all still the tipster's to withdraw. `Accepted` and `Rejected` are the
+        // panel's answer and a tipster cannot undo it, `Dismissed` and `Retracted` have nothing left
+        // to retract, and `Paid` has spent the money.
+        let (programme_id, max_reward, reserved) = {
+            let (programme, tip) = self.programme_and_tip(tip_id);
+            require!(
+                matches!(
+                    tip.status,
+                    TipStatus::Submitted | TipStatus::Unfunded | TipStatus::UnderReview
+                ),
+                E14_INVALID_STATUS
+            );
+            (
+                tip.programme_id,
+                programme.max_reward.0,
+                matches!(tip.status, TipStatus::UnderReview),
+            )
+        };
+        self.assert_signed(tip_id, nonce, Action::Retract, &signature);
+        // The one piece of money this method can move. `triage` reserved `max_reward` for this tip and
+        // no vote has been cast since, so all of it is unused: a tipster walking away must not strand
+        // the reservation they were the only reason for.
+        if reserved {
+            self.release_reservation(programme_id, max_reward);
+        }
+        let tip = self.need_tip(tip_id);
+        tip.nonce = nonce;
+        tip.status = TipStatus::Retracted;
+        emit(SealedTipEvent::TipRetracted { tip_id });
     }
 }
 
@@ -250,9 +280,9 @@ impl Contract {
 mod tests {
     use super::*;
     use crate::test_utils::{
-        as_caller, contract_with, contract_with_tip, funder, make_programme, make_tip, member_1,
-        member_2, member_3, panel_dao, programme_balances, relayer_1, tip_with_status, token,
-        CLAIM_PUBKEY, CLEANING_REPORT_HASH, EVIDENCE_HASH, HOUR_NS,
+        as_caller, claim_pubkey, contract_with, contract_with_tip, funder, make_programme,
+        make_tip, member_1, member_2, member_3, panel_dao, programme_balances, relayer_1,
+        tip_with_status, token, CLEANING_REPORT_HASH, EVIDENCE_HASH, HOUR_NS,
     };
     use near_sdk::json_types::Base64VecU8;
 
@@ -276,7 +306,7 @@ mod tests {
     ) -> TipId {
         contract.submit_tip(
             0,
-            CLAIM_PUBKEY,
+            claim_pubkey(),
             "0a1b2c".to_string(),
             EVIDENCE_HASH,
             sealed_keys,
@@ -311,7 +341,7 @@ mod tests {
         as_caller(relayer_1());
         contract.submit_tip(
             9,
-            CLAIM_PUBKEY,
+            claim_pubkey(),
             "0a1b2c".to_string(),
             EVIDENCE_HASH,
             keys(),
