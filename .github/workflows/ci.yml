@@ -1,19 +1,74 @@
-# CI — lint + unit tests + contract tests (A-1.9). Draft: finish once the toolchain is verified (A-0.5).
+# CI — the two repo gates on every push and PR (S-1.9 / A-1.9).
+# `pnpm lint` and `pnpm test` are the same commands AGENTS.md tells a contributor to run locally,
+# so a green check here means the README's quickstart works on a clean Linux checkout.
+# Toolchain versions are pinned by measurement, not by taste: cargo-near 0.22.0 and near-sandbox
+# 2.14.0 are what `main` was built and tested with. cargo-near is fetched by tag and its sha256 is
+# verified against the release asset before the binary is put on PATH.
 name: ci
-# Manual-only until the toolchain + lockfile exist (ROADMAP S-1.9); then switch back to [push, pull_request].
-on: [workflow_dispatch]
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  CARGO_NEAR_VERSION: 0.22.0
+  CARGO_NEAR_SHA256: 9429064e30a427e96523f539cb255f3688d2345e5000d7d4e4873a8247247d1a
+  # near-sandbox 0.4.0 resolves this from its own DEFAULT_NEAR_SANDBOX_VERSION constant;
+  # bump it together with the crate, or the cache key below stops matching and every run re-downloads.
+  NEAR_SANDBOX_VERSION: 2.14.0
 
 jobs:
   checks:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+
+      # pnpm before setup-node: setup-node's `cache: pnpm` needs the binary to locate the store.
       - uses: pnpm/action-setup@v4
+        with: { version: 11 }
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: pnpm }
+
       - uses: dtolnay/rust-toolchain@stable
         with: { targets: wasm32-unknown-unknown, components: "rustfmt, clippy" }
-      # TODO(A-1.9): install cargo-near (prebuilt binary) and cache it
+
+      # One entry per Cargo.lock state, keyed so a rebuild only happens when the lockfile changes.
+      # `target` is ~4 GB here (debug + the two release wasm builds), and GitHub gives a repository
+      # 10 GB of cache total, so the key deliberately excludes the commit SHA: an exact-key hit means
+      # the post step does not re-upload, and the repo cannot evict its own cache every push.
+      - name: Cache cargo registry and build artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo-${{ runner.os }}-${{ hashFiles('Cargo.lock', '**/Cargo.toml', '.github/workflows/ci.yml') }}
+
+      - name: Install cargo-near (pinned, digest-checked)
+        run: |
+          set -euo pipefail
+          asset="cargo-near-x86_64-unknown-linux-gnu"
+          curl -fsSL -o cargo-near.tar.gz \
+            "https://github.com/near/cargo-near/releases/download/cargo-near-v${CARGO_NEAR_VERSION}/${asset}.tar.gz"
+          echo "${CARGO_NEAR_SHA256}  cargo-near.tar.gz" | sha256sum -c -
+          mkdir -p "$HOME/.cargo/bin"
+          tar xzf cargo-near.tar.gz --strip-components=1 -C "$HOME/.cargo/bin" "$asset/cargo-near"
+          cargo near --version
+
+      - name: Cache the near-sandbox binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.near
+          key: near-sandbox-${{ env.NEAR_SANDBOX_VERSION }}-${{ runner.os }}-x86_64
+
       - run: pnpm install --frozen-lockfile
+
+      # fmt + clippy (--all-targets) + eslint + tsc
       - run: pnpm lint
+
+      # Builds both contracts with cargo-near, runs the Rust unit tests and the near-sandbox
+      # integration suite, then every TypeScript package's tests.
       - run: pnpm test
