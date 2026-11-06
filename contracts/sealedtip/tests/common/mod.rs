@@ -1,4 +1,4 @@
-//! Sandbox harness (S-1.6): deploy sealedtip + mock-ft + pinned Sputnik DAO; relayers, keeper, panel, funder.
+//! Sandbox harness (S-1.6): deploy sealedtip + mock-ft; relayers, keeper, panel, funder.
 //!
 //! Every test gets its own sandbox node (`near_workspaces::sandbox()`), its own accounts and its own
 //! pair of deployed contracts, so tests can run in parallel without sharing state. Account names mirror
@@ -58,7 +58,8 @@ pub struct Env {
     pub keeper: Account,
     pub funder: Account,
     /// The Sputnik DAO that triages and resolves. Still a plain account: the pinned
-    /// `sputnikdao2.wasm` is not on `main` yet (PR #164), so this is where it plugs in.
+    /// `sputnikdao2.wasm` is on `main` (`contracts/sealedtip/res/`) but the harness doesn't deploy
+    /// it yet, so `panel_dao` is where it plugs in (S-2.6 / S-2.8).
     pub panel_dao: Account,
     pub member_1: Account,
     pub member_2: Account,
