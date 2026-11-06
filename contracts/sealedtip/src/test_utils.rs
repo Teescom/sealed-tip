@@ -129,13 +129,58 @@ pub fn make_contract() -> Contract {
     )
 }
 
+/// A contract with the given programmes and tips already in state, and the id counters advanced
+/// past them — i.e. the shape `create_programme` / `submit_tip` would leave behind.
+pub fn contract_with(programmes: Vec<Programme>, tips: Vec<Tip>) -> Contract {
+    let mut contract = make_contract();
+    for programme in programmes {
+        contract.next_programme_id = contract.next_programme_id.max(programme.id + 1);
+        contract.programmes.insert(programme.id, programme);
+    }
+    for tip in tips {
+        contract.next_tip_id = contract.next_tip_id.max(tip.id + 1);
+        contract.tips.insert(tip.id, tip);
+    }
+    contract
+}
+
+/// The single default programme and tip, as `contract_with` would hold them.
+pub fn contract_with_programme() -> Contract {
+    contract_with(vec![make_programme()], vec![])
+}
+
+pub fn contract_with_tip() -> Contract {
+    contract_with(vec![make_programme()], vec![make_tip()])
+}
+
+pub fn programme_balances(balance: u128, reserved: u128) -> Programme {
+    let mut programme = make_programme();
+    programme.balance = U128(balance);
+    programme.reserved = U128(reserved);
+    programme
+}
+
+pub fn tip_with_status(id: u64, programme_id: u64, status: TipStatus) -> Tip {
+    let mut tip = make_tip();
+    tip.id = id;
+    tip.programme_id = programme_id;
+    tip.status = status;
+    tip
+}
+
 /// The next call in this test runs as `caller` (the predecessor, i.e. the relayer or member).
 pub fn as_caller(caller: AccountId) {
+    as_caller_with_deposit(caller, NearToken::from_yoctonear(0));
+}
+
+/// As above, carrying `attached` NEAR — what `create_programme` turns into `ops_balance`.
+pub fn as_caller_with_deposit(caller: AccountId, attached: NearToken) {
     let mut context = VMContextBuilder::new();
     context
         .current_account_id(contract_account())
         .signer_account_id(caller.clone())
         .predecessor_account_id(caller)
+        .attached_deposit(attached)
         .block_timestamp(HOUR_NS);
     testing_env!(context.build());
 }

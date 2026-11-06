@@ -31,3 +31,18 @@ pub const E24_INSUFFICIENT_DEPOSIT: &str =
     "E24_INSUFFICIENT_DEPOSIT: attached deposit does not cover storage and ops balance";
 pub const E25_INVALID_TIME_SCALE: &str =
     "E25_INVALID_TIME_SCALE: time_scale must be at least 1 nanosecond per nanosecond";
+/// NEP-141: the receiver may get 0 yoctoNEAR (our token) or the 1 yoctoNEAR a sender is required to
+/// attach, and it is gas, never value. Anything more means the caller thinks NEAR buys a reservation.
+pub const E26_RECEIVER_DEPOSIT: &str =
+    "E26_RECEIVER_DEPOSIT: ft_on_transfer may carry at most the 1 yoctoNEAR NEP-141 forwards";
+/// B9: one relayer is a single point of failure and can censor every tipster action.
+pub const E27_TOO_FEW_RELAYERS: &str =
+    "E27_TOO_FEW_RELAYERS: relayers must contain at least 2 distinct accounts";
+/// A tip needs ≥2 sealed keys (B10), so a programme can never be reviewable by fewer than 2 people.
+pub const E28_TOO_FEW_PANEL_MEMBERS: &str =
+    "E28_TOO_FEW_PANEL_MEMBERS: panel must contain at least 2 distinct members";
+/// Releasing more than is reserved means the reservation bookkeeping is already wrong; it is never
+/// a caller's fault, so it must stop the transaction rather than quietly hand the funder a balance.
+pub const E29_RESERVATION_UNDERFLOW: &str =
+    "E29_RESERVATION_UNDERFLOW: reservation accounting is inconsistent";
+pub const E30_BALANCE_OVERFLOW: &str = "E30_BALANCE_OVERFLOW: token amount would overflow";

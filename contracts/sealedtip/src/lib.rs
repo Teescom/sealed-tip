@@ -68,14 +68,19 @@ impl Contract {
         }
     }
 
-    /// NEP-141 receiver. `msg` = `{"fund": programme_id}`; retries reservation for Unfunded tips.
+    /// NEP-141 receiver. `msg` = `{"fund": programme_id}`; credits `balance` and retries
+    /// reservations for `Unfunded` tips. Returns 0 — the whole transfer is taken, and a closed or
+    /// missing programme panics instead, which makes the token refund the sender itself.
     pub fn ft_on_transfer(
         &mut self,
         sender_id: AccountId,
         amount: U128,
         msg: String,
     ) -> PromiseOrValue<U128> {
-        let _ = (sender_id, amount, msg);
-        todo!("S-2.6")
+        // `sender_id` is deliberately unread: a funder's identity is not needed to credit a
+        // programme (the tokens are already in our account) and must never reach an event.
+        let _ = sender_id;
+        self.fund(amount, msg);
+        PromiseOrValue::Value(U128(0))
     }
 }
