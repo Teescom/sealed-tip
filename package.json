@@ -12,7 +12,7 @@
     "test:contract": "pnpm build:contract && cargo test --workspace",
     "test:vectors": "pnpm --filter @sealedtip/crypto test && cargo test -p sealedtip vectors",
     "test:clean": "pnpm --filter @sealedtip/clean test",
-    "lint": "cargo fmt --all --check && cargo clippy --workspace -- -D warnings && eslint . && tsc -b",
+    "lint": "cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings && eslint . && tsc -b",
     "format": "cargo fmt --all && prettier --write .",
     "dev": "pnpm --parallel --filter @sealedtip/web --filter @sealedtip/api --filter @sealedtip/keeper dev",
     "relayer": "pnpm --filter @sealedtip/api dev",

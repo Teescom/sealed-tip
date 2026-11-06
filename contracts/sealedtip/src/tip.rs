@@ -24,8 +24,19 @@ impl Contract {
         pow_nonce: u64,
         signature: Base64VecU8,
     ) -> TipId {
-        let _ = (programme_id, claim_pubkey, evidence_cid, evidence_hash, sealed_keys, recused,
-                 cleaning_report_hash, attestation_hash, switch, pow_nonce, signature);
+        let _ = (
+            programme_id,
+            claim_pubkey,
+            evidence_cid,
+            evidence_hash,
+            sealed_keys,
+            recused,
+            cleaning_report_hash,
+            attestation_hash,
+            switch,
+            pow_nonce,
+            signature,
+        );
         todo!("S-3.1")
     }
 

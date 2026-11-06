@@ -49,7 +49,7 @@ Tipsters have no account: they sign actions with a key derived from a 24-word se
 | `pnpm build` | Build contract wasm(s) and apps |
 | `pnpm test` | All tests (contract unit + integration, packages, apps) |
 | `pnpm test:contract` | Build wasm, then `cargo test` (unit + `near-workspaces` integration) |
-| `pnpm lint` | `cargo clippy -- -D warnings`, `cargo fmt --check`, ESLint, `tsc --noEmit` |
+| `pnpm lint` | `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D warnings`, `eslint .`, `tsc -b`. The `--all-targets` is required, not stylistic: `near-sdk` refuses a host build of a contract crate, so the shorter form errors inside the dependency and never lints this repo's code. |
 | `pnpm dev` | Web app and API locally against testnet |
 | `pnpm deploy:testnet` | Deploy contracts to the accounts in `.env` |
 | `pnpm demo` | Run the PRD §8 story on testnet; exits non-zero on any unexpected state |

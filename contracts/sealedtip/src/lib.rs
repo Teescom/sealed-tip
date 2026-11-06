@@ -13,12 +13,12 @@ pub mod events;
 pub mod pow;
 pub mod programme;
 pub mod switch;
+#[cfg(test)]
+pub mod test_utils;
 pub mod time;
 pub mod tip;
 pub mod token;
 pub mod types;
-#[cfg(test)]
-pub mod test_utils;
 pub mod views;
 
 use types::{Programme, ProgrammeId, Tip, TipId, X25519PublicKey};
@@ -49,7 +49,12 @@ pub struct Contract {
 #[near]
 impl Contract {
     #[init]
-    pub fn new(owner: AccountId, relayers: Vec<AccountId>, keeper: AccountId, keeper_x25519_pub: X25519PublicKey) -> Self {
+    pub fn new(
+        owner: AccountId,
+        relayers: Vec<AccountId>,
+        keeper: AccountId,
+        keeper_x25519_pub: X25519PublicKey,
+    ) -> Self {
         Self {
             programmes: IterableMap::new(StorageKey::Programmes),
             tips: IterableMap::new(StorageKey::Tips),
@@ -64,7 +69,12 @@ impl Contract {
     }
 
     /// NEP-141 receiver. `msg` = `{"fund": programme_id}`; retries reservation for Unfunded tips.
-    pub fn ft_on_transfer(&mut self, sender_id: AccountId, amount: U128, msg: String) -> PromiseOrValue<U128> {
+    pub fn ft_on_transfer(
+        &mut self,
+        sender_id: AccountId,
+        amount: U128,
+        msg: String,
+    ) -> PromiseOrValue<U128> {
         let _ = (sender_id, amount, msg);
         todo!("S-2.6")
     }
