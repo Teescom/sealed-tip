@@ -52,8 +52,8 @@ Tipster browser (no wallet, Tor recommended)           Panel browser (wallet)
 | Layer | Choice |
 |---|---|
 | Contract | Rust, `near-sdk` 5.30 (`env::ed25519_verify`, `env::sha256`), `cargo-near`, borsh |
-| Tests | `near-workspaces`, unit tests; shared borsh + signature vectors with TS |
-| Approved extra deps (2026-11-04) | `near-contract-standards` 5.30 (mock-ft NEP-141/145) · Vitest 5.1 (web tests) |
+| Tests | `near-workspaces`, unit tests; shared borsh + signature vectors with TS. Sandbox tests sign tipster messages with `ed25519-dalek` 2.2 (dev-dependency only): `near-workspaces::types::SecretKey` has no `sign` and `near_crypto::Signature` gives out no raw bytes, and the crate is already in the tree via `near-crypto`, which is what the runtime's own `env::ed25519_verify` uses — so the tests verify with the same implementation the chain will, and a dev-dependency cannot reach the wasm. |
+| Approved extra deps (2026-11-04) | `near-contract-standards` 5.30 (mock-ft NEP-141/145) · Vitest 5.1 (web tests) · `ed25519-dalek` 2.2 (2026-11-06, **dev/test only**, rationale in the Tests row above; flag to the owner if a non-test use is ever proposed) |
 | Token | Mock NEP-141 `tusdc.<you>.testnet` (NEP-145 storage); mainnet USDC **VERIFY** id |
 | Panel | Sputnik DAO v2 — testnet factory `sputnik-v2.testnet`, mainnet `sputnik-dao.near`; wasm pinned in `contracts/sealedtip/res/` (S-0.7, verified 2026-11-05) |
 | Frontend | Next.js 16, TypeScript, Tailwind; wallet-selector for panel/funders only |
@@ -335,3 +335,27 @@ checks cannot run in a tab: `keccak256` for the signing address and secp256k1 fo
 from WebCrypto, so attestation verification stays in the offline verifier and in-browser pinning would need a
 dependency. Chunked OHTTP (streaming) is implemented by the relay but unproven in the browser — irrelevant here,
 because redaction is one non-streaming call.
+
+### 14.5 S-3 tip-lifecycle decisions (2026-11-06)
+
+Five decisions that a reader of `tip.rs` would otherwise have to re-derive, each now carried by a test:
+
+- **Refusals run cheapest-first.** `submit_tip` checks relayer, programme, openness, PoW, recusal and
+  quorum before it verifies the ed25519 signature, because signature verification is the most expensive
+  refusal on the path and `submit_tip` is the only method an anonymous caller can reach at volume. The
+  order is proven by a test that gets all the way to E09 with everything else honest.
+- **"Not enough money" is not "not credible".** A credible `triage` on a short programme yields
+  `Unfunded`, keeps the judgement, and is retried by the next `fund` in ascending tip-id order. A panel
+  that has to re-vote when a funder tops up would be a panel that gets asked again under pressure.
+- **The ≥2 sealed-key quorum counts distinct members.** Duplicate entries naming one reviewer are one
+  reviewer, matching E28 in `set_panel`. Without this, "sealed to two keys" describes a tip sealed to one
+  person and the whole recusal model quietly becomes single-handed.
+- **`resolve_tip` with `reward: None` means the maximum.** The funder committed `max_reward` per tip at
+  `triage`, so "accept at the cap" is the answer that needs no number, and no number can exceed the cap
+  that was already reserved (E15). A reward attached to a *reject* is refused outright (E31) rather than
+  ignored, because silently dropping a payment instruction is how a DAO's intent gets lost.
+- **Tests sign with `ed25519-dalek`, contracts do not.** A dev-dependency only, chosen because the two
+  near-rs types reachable from a test expose no raw signature bytes; the crate is already in the tree via
+  `near-crypto`, which is what the runtime's own `env::ed25519_verify` is built on, so a test that passes
+  is a signature the chain would also accept. Verified by measuring the artifact: 266 623 bytes of wasm,
+  built from a target that has no test code in it.

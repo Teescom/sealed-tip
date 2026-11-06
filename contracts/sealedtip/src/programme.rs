@@ -63,11 +63,8 @@ impl Contract {
     }
 
     /// The tip reached a decision, so the commitment is no longer needed (dismiss, reject, pay).
-    /// Its callers are `triage`/`resolve_tip`/`claim` (S-3.2, S-3.3, S-3.5), not written yet, so no
-    /// non-test build has a path to it. Suppressed only outside tests, and with a reason, rather
-    /// than a plain `#[allow(dead_code)]`: the reservation-accounting tests below do exercise it,
-    /// and an unconditional allow would stay quiet if they were ever dropped.
-    #[cfg_attr(not(test), allow(dead_code))]
+    /// `triage` and `resolve_tip` call it now; `claim` (S-3.5) is the caller that releases what an
+    /// accepted tip actually paid.
     pub(crate) fn release_reservation(&mut self, programme_id: ProgrammeId, amount: u128) {
         let programme = self.need_programme(programme_id);
         require!(programme.reserved.0 >= amount, E29_RESERVATION_UNDERFLOW);
@@ -97,6 +94,13 @@ impl Contract {
             if let Some(tip) = self.tips.get_mut(&tip_id) {
                 tip.status = TipStatus::UnderReview;
             }
+            // AGENTS: every state change gets an event. This one is a status change nobody called
+            // for — the tip became reviewable because money arrived, not because a member re-voted —
+            // and a panel watching events is how it learns the tip is now actionable.
+            emit(SealedTipEvent::TipTriaged {
+                tip_id,
+                credible: true,
+            });
         }
     }
 

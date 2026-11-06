@@ -12,10 +12,13 @@ words ↔ secret ↔ HKDF-derived ed25519/X25519 keys), the borsh + ed25519 acti
 be byte-identical in Rust and TypeScript from one shared fixture — the contract's access guards, PoW
 check, time scaling and NEP-297 events, programme accounting (open, fund over NEP-141, withdraw what is
 not backing a live tip, close), panel appointment, the owner's relayer and keeper rotation, the paginated
-views and their privacy boundary, the offline attestation verifier, the `tUSDC` test token, and a
-`near-sandbox` harness that boots a chain and drives both contracts. Not built yet: the tip lifecycle in
-the contract (`submit_tip` → `triage` → `resolve_tip` → `claim`, and the claim-side callback that goes
-with it), browser-side
+views and their privacy boundary, the offline attestation verifier, the `tUSDC` test token, a
+`near-sandbox` harness that boots a chain and drives both contracts, and the tip lifecycle in the
+contract — `submit_tip` (PoW, signature, quorum and recusal refusals, reserving nothing), `triage`
+(the only place a reservation is created), `resolve_tip` (DAO-only, reward ceiling, unused reservation
+released) and the retry that promotes an `Unfunded` tip when money arrives — all tested against the
+deployed wasm rather than only in-process. Not built yet: the tipster-signed half of the lifecycle
+(`retract`, `checkin`, `trigger`, `post_released_keys`), `claim` with its callbacks, browser-side
 cleaning, sealing, the API, the keeper, the web UI and the demo script. The last column of the table
 below gives each protection its real state; [`ROADMAP.md`](ROADMAP.md) tracks every piece by task ID.
 
@@ -50,13 +53,13 @@ is designed but not built yet. Task IDs point into [`ROADMAP.md`](ROADMAP.md).
 
 | Threat | What the code does | State |
 |---|---|---|
-| "Who is the tipster?" | **No account.** The tipster holds 32 random bytes shown as 24 words. Every action is a borsh struct signed with an ed25519 key derived via HKDF from those bytes; a relayer submits it. The contract verifies the signature and never sees an identity. | words ↔ secret, HKDF, borsh + ed25519 encoding and `env::ed25519_verify` all implemented and cross-tested against each other; `submit_tip` itself is P3 |
+| "Who is the tipster?" | **No account.** The tipster holds 32 random bytes shown as 24 words. Every action is a borsh struct signed with an ed25519 key derived via HKDF from those bytes; a relayer submits it. The contract verifies the signature and never sees an identity. | words ↔ secret, HKDF, borsh + ed25519 encoding and `env::ed25519_verify` all implemented and cross-tested against each other; `submit_tip` checks that signature on-chain and a sandbox test signs the same bytes with the wrong key to prove the tip is refused and never stored (S-3.1) |
 | Metadata in the evidence | Cleaning runs **in the browser** before anything is uploaded: PDFs are rasterised and rebuilt, images are re-encoded, EXIF/GPS, XMP, `Author`/`Producer` and incremental revisions are gone, and an optional scan mode suppresses printer tracking dots. DOCX and other types are refused. The tipster gets a report of exactly what was removed. | **not built yet** (`packages/clean` is five stubs, S-6.7–S-6.11). The design is fixed and the refusal rule is documented; the code is the next big block |
 | "The AI read my text" | The optional AI redaction step can go **browser → attested NEAR AI Cloud TEE** directly over OHTTP with no server of ours in the path — proven in `spikes/ohttp-browser/`. The proxy stays for the API key, rate limiting and IP hiding, and the UI says plainly who can read the text. | the OHTTP/HPKE/BHTTP path is proven live from a Chromium tab with no library and no dependency; the proxy route and its UI copy are P8 |
 | Is that really the enclave? | `pnpm verify-attestation` re-verifies an attestation report offline: the TDX quote parses and its `report_data` binds *our* nonce and the signing address, RTMR0-2 replay from the event log, the dstack X.509 app-cert chain is walked and pins the compose hash, and the OHTTP key config carries a valid ed25519 signature. What it cannot do alone is named in its own output: the Intel collateral chain over the quote, NVIDIA's GPU attestation, and the response signature (needs an API key). | works today (54 checks on a live report) except the response signature |
-| The outlet disappears | A **dead man's switch**: `checkin` keeps it armed; missing `deadline + grace` lets anyone `trigger` it, and the keeper releases the *cleaned* switch bundle key to non-recused panel members (raw files only on explicit opt-in). | `time.rs` (scaled deadlines) and the guard helpers exist; `checkin`/`trigger`/`post_released_keys` are P3, keeper is P9 |
-| A panel member is compromised | The tipster **recuses** members; recused members get no sealed key and are barred from triage. Every tip needs ≥2 sealed keys. | recusal guards implemented and unit-tested; sealing to a per-member key set needs `seal` (S-6.5) |
-| Nobody pays | The programme's reward is **locked on-chain before tips arrive** and reserved only when a panel member marks a tip credible — so a dismissal never strands funds, and a funder cannot withdraw money that is already backing a live tip. | `mock-ft` is a real NEP-141 token; opening, funding, closing and `withdraw_unreserved` are implemented, and the ceiling that stops a funder taking reserved funds is tested through the sandbox with a rollback when the token itself refuses (S-2.6, S-2.10). The reservation is created by `triage`, which is S-3.2 |
+| The outlet disappears | A **dead man's switch**: `checkin` keeps it armed; missing `deadline + grace` lets anyone `trigger` it, and the keeper releases the *cleaned* switch bundle key to non-recused panel members (raw files only on explicit opt-in). | `time.rs` (scaled deadlines), the arming of a switch at `submit_tip` and its first deadline are built and tested — in demo mode a 1-day interval arms 1 minute out; `checkin`/`trigger`/`post_released_keys` are P3, keeper is P9 |
+| A panel member is compromised | The tipster **recuses** members; recused members get no sealed key and are barred from triage. Every tip needs ≥2 sealed keys. | recusal guards implemented, unit-tested and proven through the sandbox (a recused member is refused at `triage`, E06, with the reservation left at zero); sealing to a per-member key set needs `seal` (S-6.5). The ≥2-key rule counts *distinct* members, so two entries naming one reviewer is one reviewer |
+| Nobody pays | The programme's reward is **locked on-chain before tips arrive** and reserved only when a panel member marks a tip credible — so a dismissal never strands funds, and a funder cannot withdraw money that is already backing a live tip. | `mock-ft` is a real NEP-141 token; opening, funding, closing and `withdraw_unreserved` are implemented, and the ceiling that stops a funder taking reserved funds is tested through the sandbox with a rollback when the token itself refuses (S-2.6, S-2.10). The reservation is created by `triage` and released by `resolve_tip`, both tested through the sandbox: ten submissions leave the full balance withdrawable, one credible triage does not (S-3.2, S-3.3) |
 | Payout to a bank/burner wallet | `Payout::Near{fresh implicit}` on testnet; on mainnet a 1Click Intents quote pays USDC on NEAR to any chain, and the destination is inside the signed `Claim`, so a relayer cannot redirect it. | the signed `Claim` encoding exists; `claim`, its callbacks and the mainnet quote check are S-3.5 / S-0.6 |
 
 ```
@@ -86,8 +89,8 @@ Expected today:
 
 | Do X | See Y |
 |---|---|
-| `pnpm build:contract` | two wasm files, 263 KB (`sealedtip`) and 151 KB (`mock_ft`), reported by `cargo-near` |
-| `pnpm test` | 121 Rust tests + 43 TypeScript tests pass: 18 `mock-ft` unit, 89 `sealedtip` unit, 5 wire-format parity, 1 sandbox smoke test (~9 s) and 8 sandbox programme tests (~10 s) — `contracts/sealedtip/tests/{smoke,programmes}.rs`, which boot a `near-sandbox` node, deploy both contracts and drive them over RPC — and 43 `packages/crypto` tests for the key model and action encoding. Also in the run, and reported rather than hidden: **30 Rust integration tests marked `#[ignore]`** (the named skeletons for flows not written yet, P3/P5) and **9 TypeScript tests marked TODO** (the `core`/`clean`/`api`/`keeper` scaffolds). Nothing fails. |
+| `pnpm build:contract` | two wasm files, 267 KB (`sealedtip`) and 151 KB (`mock_ft`), reported by `cargo-near` |
+| `pnpm test` | 163 Rust tests + 43 TypeScript tests pass: 18 `mock-ft` unit, 115 `sealedtip` unit, 5 wire-format parity, and **25 sandbox integration tests** — 8 programme, 6 submission, 6 reservation, 4 triage-and-resolve, 1 smoke (`contracts/sealedtip/tests/{smoke,programmes,submission,reservations,triage_and_resolve}.rs`), which boot a `near-sandbox` node, deploy both contracts and drive them over RPC — plus 43 `packages/crypto` tests for the key model and action encoding. Also in the run, and reported rather than hidden: **14 Rust tests marked `#[ignore]`** (the named skeletons for flows not written yet — `tests/signed_actions.rs`, `tests/switch.rs`, `tests/claims.rs`, `tests/access_control.rs`) and **9 TypeScript tests marked TODO** (the `core`/`clean`/`api`/`keeper` scaffolds). Nothing fails. |
 | `pnpm lint` | exit 0 — `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D warnings`, `eslint .` and `tsc -b` are all clean (S-5.9, 2026-11-06). The clippy step needs `--all-targets`: `near-sdk` 5.30 deliberately refuses a host build of a contract crate, so `cargo clippy --workspace -- -D warnings` errors inside the dependency before reaching our code and can never pass. `--all-targets` unifies the `unit-testing` dev-feature, which makes `near-sdk` host-compilable, so clippy actually lints the contracts and the tests. |
 | `pnpm gen-vectors` then `pnpm test:vectors` | `fixtures/vectors.json` regenerated byte-for-byte, and the Rust tests confirm the TS and Rust borsh + ed25519 encodings agree |
 | `pnpm verify-attestation -- --fetch <model>` | a live report fetched from `cloud-api.near.ai`, then every DCAP quote, X.509 app-cert chain, compose hash and OHTTP key-config signature checked — 54+ ✔ lines, exit 0, with the model's answer never requested. Add `--pin-ca <fingerprint>` to anchor the chain. |
@@ -140,9 +143,11 @@ the design, and `ROADMAP.md` says which rows are still stubs.
 - The panel is a Sputnik DAO: a **recused member can still vote in the DAO**; only the contract's
   triage path enforces recusal.
 - **A funder cannot renege, but the panel can still reject.** Reservations only ever block the funder's
-  `withdraw_unreserved`; they do not guarantee a payout decision. The blocking half is built and tested
-  (S-2.6, S-2.10): a withdrawal that reaches into reserved funds panics E16, and one the token refuses is
-  rolled back. The half that *creates* a reservation is `triage`, which is S-3.2.
+  `withdraw_unreserved`; they do not guarantee a payout decision. Both halves are now built and tested:
+  a withdrawal that reaches into reserved funds panics E16, one the token refuses is rolled back, and the
+  reservation itself is created only by a credible `triage` and released by `resolve_tip` — including the
+  case the rule exists for: accepting at 200 of a 500 reservation frees the unused 300, so the funder can
+  withdraw 800 today while the 200 behind the claim is still held (S-2.6, S-2.10, S-3.2, S-3.3).
 - Everything runs on **testnet** with a mock token. The mainnet payout path is designed
   (`Payout::Intents` from a 1Click quote) but unverified: the $1 on-chain check of the 1Click NEP-141
   deposit method (S-0.6) has not been run, because it spends real funds and needs your go-ahead. Until
@@ -152,7 +157,11 @@ the design, and `ROADMAP.md` says which rows are still stubs.
 ## Libraries and AI disclosure
 
 **Rust (contracts):** `near-sdk` and `near-contract-standards` 5.30, `serde_json` 1 (dev),
-`near-workspaces` 0.24 + `near-sandbox` 2.14 with `features = ["unstable"]` (dev, integration tests).
+`near-workspaces` 0.24 + `near-sandbox` 2.14 with `features = ["unstable"]` (dev, integration tests),
+and `ed25519-dalek` 2.2 (dev, integration tests only — the tipster signs *messages*, and neither
+`near-workspaces::types::SecretKey` nor `near_crypto::Signature` gives out the raw 64 bytes a
+`Base64VecU8` argument needs; this is the same crate the chain's own `env::ed25519_verify` is built on,
+already in the lockfile via `near-workspaces`, and a dev-dependency cannot reach the wasm).
 Contracts build with `cargo-near`; nothing else.
 
 **TypeScript, in use:** `@noble/hashes` 2.4 (HKDF-SHA256, sha256, keccak-256), `@noble/ed25519` 3.2,

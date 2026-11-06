@@ -46,3 +46,7 @@ pub const E28_TOO_FEW_PANEL_MEMBERS: &str =
 pub const E29_RESERVATION_UNDERFLOW: &str =
     "E29_RESERVATION_UNDERFLOW: reservation accounting is inconsistent";
 pub const E30_BALANCE_OVERFLOW: &str = "E30_BALANCE_OVERFLOW: token amount would overflow";
+/// `resolve_tip(tip_id, false, Some(reward))` has no honest meaning: a rejected tip pays nothing, so
+/// a number attached to it is either a caller who thinks rejection is negotiable or a caller that has
+/// mixed up the two branches. Refusing beats reading it as zero and carrying on.
+pub const E31_REWARD_ON_REJECT: &str = "E31_REWARD_ON_REJECT: a rejected tip cannot carry a reward";
