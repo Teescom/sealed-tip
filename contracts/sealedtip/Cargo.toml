@@ -14,5 +14,10 @@ near-sdk = { workspace = true }
 [dev-dependencies]
 near-sdk = { workspace = true, features = ["unit-testing"] }
 near-workspaces = { version = "0.24.0", features = ["unstable"] }   # VERIFY with cargo-near toolchain (A-0.5)
+# Tests only: the tipster signs *messages*, and neither `near_workspaces::types::SecretKey` (a
+# newtype with no `sign`) nor `near_crypto::Signature` gives out the raw bytes a `Base64VecU8`
+# argument needs. This is the same crate the chain's `env::ed25519_verify` is built on, already in
+# the lockfile via `near-workspaces`, and it is a dev-dependency, so nothing here reaches the wasm.
+ed25519-dalek = "2.2.0"
 tokio = { version = "1", features = ["full"] }
 serde_json = "1"
