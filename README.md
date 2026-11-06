@@ -5,12 +5,17 @@
 > NEAR Hackathon 2026 · track **Privacy & Private AI** · deadline 14 Nov 2026, 23:59 UTC.
 > Live plan and progress: [`ROADMAP.md`](ROADMAP.md) · decisions: [`ARCHITECTURE.md`](ARCHITECTURE.md) §14 · product spec: [`PRD.md`](PRD.md).
 
-**Status: mid-build, 14 / 103 Must tasks done.** Working and tested today: the tipster key model (24
+**Status: mid-build, 14 / 103 Must tasks done** (the tally counts a task as done only once its GitHub
+issues are closed, and closing them is the owner's call — 21 more Must rows are code-complete and
+tested behind that rule). Working and tested today: the tipster key model (24
 words ↔ secret ↔ HKDF-derived ed25519/X25519 keys), the borsh + ed25519 action wire format — verified to
 be byte-identical in Rust and TypeScript from one shared fixture — the contract's access guards, PoW
-check, time scaling and NEP-297 events, the offline attestation verifier, the `tUSDC` test token, and a
+check, time scaling and NEP-297 events, programme accounting (open, fund over NEP-141, withdraw what is
+not backing a live tip, close), panel appointment, the owner's relayer and keeper rotation, the paginated
+views and their privacy boundary, the offline attestation verifier, the `tUSDC` test token, and a
 `near-sandbox` harness that boots a chain and drives both contracts. Not built yet: the tip lifecycle in
-the contract (`submit_tip` → `triage` → `resolve_tip` → `claim`, plus programmes and views), browser-side
+the contract (`submit_tip` → `triage` → `resolve_tip` → `claim`, and the claim-side callback that goes
+with it), browser-side
 cleaning, sealing, the API, the keeper, the web UI and the demo script. The last column of the table
 below gives each protection its real state; [`ROADMAP.md`](ROADMAP.md) tracks every piece by task ID.
 
@@ -40,7 +45,7 @@ evidence stays sealed and nobody gets paid.
 
 ## How Sealed Tip protects you
 
-The right-hand column is the honest state of this repository as of 2026-11-05: what runs today, and what
+The right-hand column is the honest state of this repository as of 2026-11-06: what runs today, and what
 is designed but not built yet. Task IDs point into [`ROADMAP.md`](ROADMAP.md).
 
 | Threat | What the code does | State |
@@ -51,7 +56,7 @@ is designed but not built yet. Task IDs point into [`ROADMAP.md`](ROADMAP.md).
 | Is that really the enclave? | `pnpm verify-attestation` re-verifies an attestation report offline: the TDX quote parses and its `report_data` binds *our* nonce and the signing address, RTMR0-2 replay from the event log, the dstack X.509 app-cert chain is walked and pins the compose hash, and the OHTTP key config carries a valid ed25519 signature. What it cannot do alone is named in its own output: the Intel collateral chain over the quote, NVIDIA's GPU attestation, and the response signature (needs an API key). | works today (54 checks on a live report) except the response signature |
 | The outlet disappears | A **dead man's switch**: `checkin` keeps it armed; missing `deadline + grace` lets anyone `trigger` it, and the keeper releases the *cleaned* switch bundle key to non-recused panel members (raw files only on explicit opt-in). | `time.rs` (scaled deadlines) and the guard helpers exist; `checkin`/`trigger`/`post_released_keys` are P3, keeper is P9 |
 | A panel member is compromised | The tipster **recuses** members; recused members get no sealed key and are barred from triage. Every tip needs ≥2 sealed keys. | recusal guards implemented and unit-tested; sealing to a per-member key set needs `seal` (S-6.5) |
-| Nobody pays | The programme's reward is **locked on-chain before tips arrive** and reserved only when a panel member marks a tip credible — so a dismissal never strands funds, and a funder cannot withdraw money that is already backing a live tip. | `mock-ft` is a real NEP-141 token and the sandbox harness moves money; programme accounting is S-2.6, `triage` is S-3.2 |
+| Nobody pays | The programme's reward is **locked on-chain before tips arrive** and reserved only when a panel member marks a tip credible — so a dismissal never strands funds, and a funder cannot withdraw money that is already backing a live tip. | `mock-ft` is a real NEP-141 token; opening, funding, closing and `withdraw_unreserved` are implemented, and the ceiling that stops a funder taking reserved funds is tested through the sandbox with a rollback when the token itself refuses (S-2.6, S-2.10). The reservation is created by `triage`, which is S-3.2 |
 | Payout to a bank/burner wallet | `Payout::Near{fresh implicit}` on testnet; on mainnet a 1Click Intents quote pays USDC on NEAR to any chain, and the destination is inside the signed `Claim`, so a relayer cannot redirect it. | the signed `Claim` encoding exists; `claim`, its callbacks and the mainnet quote check are S-3.5 / S-0.6 |
 
 ```
@@ -81,8 +86,8 @@ Expected today:
 
 | Do X | See Y |
 |---|---|
-| `pnpm build:contract` | two wasm files, ~192 KB and ~151 KB, reported by `cargo-near` |
-| `pnpm test` | 62 Rust tests + 43 TypeScript tests pass: 18 `mock-ft` unit, 38 `sealedtip` unit, 5 wire-format parity, 1 sandbox smoke test (~9 s, boots a `near-sandbox` node, deploys both contracts and drives them over RPC — `contracts/sealedtip/tests/smoke.rs`), and 43 `packages/crypto` tests for the key model and action encoding. Also in the run, and reported rather than hidden: **30 Rust integration tests marked `#[ignore]`** (the named skeletons for flows not written yet, P3/P5) and **9 TypeScript tests marked TODO** (the `core`/`clean`/`api`/`keeper` scaffolds). Nothing fails. |
+| `pnpm build:contract` | two wasm files, 263 KB (`sealedtip`) and 151 KB (`mock_ft`), reported by `cargo-near` |
+| `pnpm test` | 121 Rust tests + 43 TypeScript tests pass: 18 `mock-ft` unit, 89 `sealedtip` unit, 5 wire-format parity, 1 sandbox smoke test (~9 s) and 8 sandbox programme tests (~10 s) — `contracts/sealedtip/tests/{smoke,programmes}.rs`, which boot a `near-sandbox` node, deploy both contracts and drive them over RPC — and 43 `packages/crypto` tests for the key model and action encoding. Also in the run, and reported rather than hidden: **30 Rust integration tests marked `#[ignore]`** (the named skeletons for flows not written yet, P3/P5) and **9 TypeScript tests marked TODO** (the `core`/`clean`/`api`/`keeper` scaffolds). Nothing fails. |
 | `pnpm lint` | exit 0 — `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D warnings`, `eslint .` and `tsc -b` are all clean (S-5.9, 2026-11-06). The clippy step needs `--all-targets`: `near-sdk` 5.30 deliberately refuses a host build of a contract crate, so `cargo clippy --workspace -- -D warnings` errors inside the dependency before reaching our code and can never pass. `--all-targets` unifies the `unit-testing` dev-feature, which makes `near-sdk` host-compilable, so clippy actually lints the contracts and the tests. |
 | `pnpm gen-vectors` then `pnpm test:vectors` | `fixtures/vectors.json` regenerated byte-for-byte, and the Rust tests confirm the TS and Rust borsh + ed25519 encodings agree |
 | `pnpm verify-attestation -- --fetch <model>` | a live report fetched from `cloud-api.near.ai`, then every DCAP quote, X.509 app-cert chain, compose hash and OHTTP key-config signature checked — 54+ ✔ lines, exit 0, with the model's answer never requested. Add `--pin-ca <fingerprint>` to anchor the chain. |
@@ -135,8 +140,9 @@ the design, and `ROADMAP.md` says which rows are still stubs.
 - The panel is a Sputnik DAO: a **recused member can still vote in the DAO**; only the contract's
   triage path enforces recusal.
 - **A funder cannot renege, but the panel can still reject.** Reservations only ever block the funder's
-  `withdraw_unreserved`; they do not guarantee a payout decision. Both sides of that are P2/P3 work in
-  progress — `withdraw_unreserved` is still a stub.
+  `withdraw_unreserved`; they do not guarantee a payout decision. The blocking half is built and tested
+  (S-2.6, S-2.10): a withdrawal that reaches into reserved funds panics E16, and one the token refuses is
+  rolled back. The half that *creates* a reservation is `triage`, which is S-3.2.
 - Everything runs on **testnet** with a mock token. The mainnet payout path is designed
   (`Payout::Intents` from a 1Click quote) but unverified: the $1 on-chain check of the 1Click NEP-141
   deposit method (S-0.6) has not been run, because it spends real funds and needs your go-ahead. Until
