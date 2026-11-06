@@ -8,12 +8,14 @@
 //! E09 that fires on every call — including the honest one — proves nothing about the rule.
 mod common;
 
-use common::{Env, Submission};
-use sealedtip::types::Action;
+use common::{implicit_id, Env, Submission};
+use sealedtip::types::{Action, Payout};
 use serde_json::json;
 
 const HOUR_NS: u64 = 3_600_000_000_000;
 const DAY_NS: u64 = 24 * HOUR_NS;
+/// The 1 NEAR `create_programme` attaches, which is the whole `ops_balance` a claim can spend.
+const OPS: u128 = common::OPS_START;
 
 /// A funded programme with one submitted tip whose switch is armed, so both `checkin` and `retract`
 /// are live entry points. `nonce` starts at 0, so the first action the tipster signs is nonce 1.
@@ -102,8 +104,57 @@ async fn a_signature_made_for_another_deployment_fails() {
 }
 
 #[tokio::test]
-#[ignore = "lands with `claim` (S-3.5): a payout only exists inside `Action::Claim`, so there is no tamperable field on chain yet"]
-async fn changed_payout_fails() {}
+async fn changed_payout_fails() {
+    // `claim` rebuilds the signed bytes from the `payout` the caller presents, so the destination and
+    // the rail are both inside the signature. Swapping only the *rail* is the case a guard on
+    // tip id, nonce and account would wave through: same implicit address the tipster signed for, but
+    // `Payout::Intents` — a 1Click deposit address with a memo — instead of the NEAR transfer they
+    // asked for. The redirect case (a different account) is in `tests/claims.rs`; this is the half
+    // that only the signed payload can catch.
+    let env = Env::setup().await;
+    let (programme_id, tip_id) = env.accepted_tip(200).await;
+    let destination = implicit_id("payout.swap.destination");
+    let signed_for = Payout::Near {
+        account: destination.clone(),
+    };
+    let swapped = Payout::Intents {
+        deposit_address: destination.clone(),
+        memo: Some("q-1234".to_string()),
+    };
+
+    let signature = env.signed_action(
+        tip_id,
+        1,
+        Action::Claim {
+            payout: signed_for.clone(),
+        },
+    );
+    let claim = env
+        .claim_with(&env.relayer_1, tip_id, &swapped, 1, &signature)
+        .await;
+    assert!(
+        claim.said("E09_BAD_SIGNATURE"),
+        "a claim signed for a NEAR payout was paid as an Intents one: {}",
+        claim.report()
+    );
+    assert_eq!(env.tip_status(tip_id).await, "Accepted");
+    assert_eq!(
+        (
+            env.programme_money(programme_id).await,
+            env.ops_balance(programme_id).await,
+        ),
+        ((1_000 * common::UNIT, 200 * common::UNIT), OPS,),
+        "a refusal at the signature must not spend the escrow or the programme's NEAR"
+    );
+    assert_eq!(env.tusdc_balance(&destination).await, 0);
+
+    // The positive control: those same bytes are a valid authorisation for the payout they name, so
+    // E09 above was the rail and not a broken fixture.
+    env.claim(&env.relayer_1, tip_id, &signed_for, 1)
+        .await
+        .expect_paid();
+    assert_eq!(env.tusdc_balance(&destination).await, 200 * common::UNIT);
+}
 
 #[tokio::test]
 async fn replayed_nonce_fails() {

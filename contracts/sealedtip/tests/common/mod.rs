@@ -15,7 +15,7 @@ use near_sdk::json_types::Base64VecU8;
 use near_workspaces::network::Sandbox;
 use near_workspaces::types::{Gas, KeyType, NearToken, SecretKey};
 use near_workspaces::{Account, AccountId, Contract, Worker};
-use sealedtip::types::{Action, SignedAction};
+use sealedtip::types::{Action, Payout, SignedAction};
 use serde_json::json;
 
 /// 1 tUSDC in base units (6 decimals, same as USDC).
@@ -34,6 +34,14 @@ pub const KEEPER_X25519: [u8; 32] = [3; 32];
 const SEALED_TIP_WASM: &str = "../../target/near/sealedtip/sealedtip.wasm";
 const MOCK_FT_WASM: &str = "../../target/near/mock_ft/mock_ft.wasm";
 
+/// Read a built contract.
+///
+/// Deliberately no staleness check: `cargo-near` only rewrites an artifact when its *content*
+/// changed, so a `sealedtip.wasm` older than `src/` is normal after a no-op edit and proves nothing.
+/// An mtime gate here would fail in a way that `pnpm build:contract` cannot fix, which is worse than
+/// no gate. `pnpm test` builds first, and CI runs `pnpm test`; a direct `cargo test` on a fresh clone
+/// has to build too, and `cargo near build` will have refreshed the artifact whenever the bytecode
+/// actually differed.
 fn wasm(relative: &str, built_by: &str) -> Vec<u8> {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(relative);
     std::fs::read(&path).unwrap_or_else(|e| {
@@ -163,9 +171,26 @@ impl Env {
             .unwrap_or_else(|e| panic!("mint reverted: {}", e));
     }
 
-    /// `storage_deposit` at exactly the NEP-145 minimum. Needed before receiving a transfer:
-    /// unlike `mint`, `ft_transfer` will not register the receiver.
-    pub async fn register(&self, who: &Account) -> NearToken {
+    /// The minimum the *deployed* token will accept for a storage registration (NEP-145).
+    ///
+    /// This is a property of the token wasm, not of this harness: it is `storage_byte_cost` times the
+    /// account's storage usage as measured at the token's own `new()`, so no caller can derive it and
+    /// `sealedtip::claim::STORAGE_DEPOSIT` has to agree with it. `tests/claims.rs` pins the two.
+    pub async fn storage_minimum(&self) -> NearToken {
+        let min = self.storage_floor().await;
+        // Zero would make every claim silently pass at the wrong price; the token's own floor is
+        // nonzero by construction, so an unexpected zero is a broken view, not a free registration.
+        assert_ne!(
+            min,
+            NearToken::from_yoctonear(0),
+            "storage_balance_bounds reported no minimum"
+        );
+        min
+    }
+
+    /// `storage_balance_bounds.min`, read raw. Every other caller wants `storage_minimum`, which
+    /// checks the number is plausible; this one is the check.
+    async fn storage_floor(&self) -> NearToken {
         let min: String = self
             .token
             .view("storage_balance_bounds")
@@ -177,7 +202,44 @@ impl Env {
             .and_then(|v| v.as_str())
             .expect("no min in storage_balance_bounds")
             .to_string();
-        let min = yocto(&min);
+        yocto(&min)
+    }
+
+    /// Prove the harness's deposit math against the token by trying to register at `floor - step`.
+    ///
+    /// `storage_minimum` is what every `register` in these suites pays, and the contract's own
+    /// `STORAGE_DEPOSIT` is pinned to it, so a floor read too low does not merely make a number
+    /// wrong — it makes every payout in every sandbox test fail for a reason that looks like a broken
+    /// escrow. `tests/claims.rs` calls this to show the token really does refuse the difference.
+    pub async fn storage_floor_is_enforced(&self, step: NearToken) {
+        let min = self.storage_minimum().await;
+        assert!(
+            step < min,
+            "the step has to be smaller than the floor it is meant to cross"
+        );
+        // A throwaway implicit address: registering it costs the token a map entry and nothing else,
+        // and it is not a destination any other test reads.
+        let stranger = implicit_id("storage.floor.probe");
+        let result = self
+            .call_token(
+                &self.root,
+                "storage_deposit",
+                json!({ "account_id": &stranger, "registration_only": true }),
+                min.checked_sub(step)
+                    .expect("the floor is above the step, so this cannot underflow"),
+            )
+            .await;
+        assert!(
+            result.is_err() && self.storage_total(&stranger).await.is_none(),
+            "the token accepted a deposit {} yoctoNEAR under its own minimum: {result:?}",
+            step.as_yoctonear()
+        );
+    }
+
+    /// `storage_deposit` at exactly the NEP-145 minimum. Needed before receiving a transfer:
+    /// unlike `mint`, `ft_transfer` will not register the receiver.
+    pub async fn register(&self, who: &Account) -> NearToken {
+        let min = self.storage_minimum().await;
         who.call(self.token.id(), "storage_deposit")
             .args_json(json!({}))
             .deposit(min)
@@ -187,6 +249,43 @@ impl Env {
             .into_result()
             .unwrap_or_else(|e| panic!("storage_deposit reverted: {}", e));
         min
+    }
+
+    /// What `who` currently holds in the token's storage balance, in yoctoNEAR, or `None` when the
+    /// token has never registered it. The payout destination is checked through this.
+    pub async fn storage_total(&self, who: &AccountId) -> Option<u128> {
+        let balance = self
+            .token
+            .view("storage_balance_of")
+            .args_json(json!({ "account_id": who }))
+            .await
+            .expect("storage_balance_of view failed")
+            .json::<Option<serde_json::Value>>()
+            .expect("storage_balance_of is not JSON");
+        balance.map(|entry| {
+            let total = &entry["total"];
+            match total {
+                serde_json::Value::String(text) => yocto(text).as_yoctonear(),
+                other => panic!("storage balance total is not a decimal string: {other}"),
+            }
+        })
+    }
+
+    /// Drop `who` from the token's storage bookkeeping, refunding it the deposit.
+    ///
+    /// `force = true` is needed for the escrow, which is holding a balance. This is how
+    /// `tests/claims.rs` makes a *real* `ft_transfer` fail: the contract under test is unregistered
+    /// from the token it is paying out of, so the token refuses the transfer for the boring,
+    /// production-plausible reason of an unpayable sender rather than for a mock written for the test.
+    pub async fn unregister(&self, who: &Account) {
+        self.call_token(
+            who,
+            "storage_unregister",
+            json!({ "force": true }),
+            NearToken::from_yoctonear(1),
+        )
+        .await
+        .expect("storage_unregister was not accepted");
     }
 
     /// `ft_transfer`, which needs the receiver registered and exactly 1 yoctoNEAR attached.
@@ -202,6 +301,27 @@ impl Env {
             .expect("ft_transfer failed")
             .into_result()
             .unwrap_or_else(|e| panic!("ft_transfer reverted: {}", e));
+    }
+
+    /// A call against the token rather than the escrow, with the deposit NEP-145 asks for. Used by
+    /// `register` and `unregister`; `ft_transfer`'s own 1 yoctoNEAR stays inside `transfer`.
+    pub async fn call_token(
+        &self,
+        who: &Account,
+        method: &str,
+        args: serde_json::Value,
+        deposit: NearToken,
+    ) -> Result<(), String> {
+        who.call(self.token.id(), method)
+            .args_json(args)
+            .deposit(deposit)
+            .gas(Gas::from_tgas(100))
+            .transact()
+            .await
+            .expect("transaction was not accepted")
+            .into_result()
+            .map(|_| ())
+            .map_err(|e| e.to_string())
     }
 
     pub async fn tusdc_balance(&self, who: &AccountId) -> u128 {
@@ -236,6 +356,30 @@ impl Env {
             .await
             .expect("view_account failed")
             .balance
+    }
+
+    /// NEAR balance of an account this harness holds no key for — which is the whole point for a
+    /// payout destination: a fresh implicit account is a name on chain before it is an account, and
+    /// it only exists once the gas drip has landed. `None` therefore means "does not exist yet".
+    pub async fn near_balance_of(&self, who: &AccountId) -> Option<NearToken> {
+        self.worker
+            .view_account(who)
+            .await
+            .ok()
+            .map(|view| view.balance)
+    }
+
+    /// The programme's NEAR, in yoctoNEAR: what is left of the deposit `create_programme` attached
+    /// after the contract has paid for storage deposits and gas drips. `ops_balance` is the only
+    /// number that can starve a claim, and it is not the escrow, so it needs its own reader.
+    pub async fn ops_balance(&self, programme_id: u64) -> u128 {
+        let field = &self.programme_view(programme_id).await["ops_balance"];
+        match field {
+            serde_json::Value::String(text) => yocto(text).as_yoctonear(),
+            // A JSON number is how a u128 field arrives when a type forgets to be a string; accepting
+            // it would let a changed encoding quietly turn every assertion into a tautology.
+            other => panic!("ops_balance is not a decimal string: {other}"),
+        }
     }
 
     /// Current block timestamp in nanoseconds — what the contract compares deadlines against.
@@ -285,6 +429,60 @@ impl Env {
 
     // --- programme helpers (shared by every suite that needs an escrow) -----------------------
 
+    /// Open a programme with the NEAR and the drip a claim test needs to be about: `attached` becomes
+    /// `ops_balance` in full, and `gas_drip` is what a payout is promised on top of the storage
+    /// deposit. `open_programme` is this at the values every other suite pays for.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn open_programme_cost(
+        &self,
+        max_reward_units: u128,
+        pow_bits: u8,
+        time_scale: u32,
+        gas_drip: NearToken,
+        attached: NearToken,
+    ) -> Result<u64, String> {
+        let outcome = self
+            .funder
+            .call(self.sealedtip.id(), "create_programme")
+            .args_json(json!({
+                "title": "Public interest fund",
+                "scope_uri": "https://scope.example/rules",
+                "scope_hash": vec![0x33u8; 32],
+                "panel_dao": self.panel_dao.id(),
+                "token": self.token.id(),
+                "max_reward": (max_reward_units * UNIT).to_string(),
+                "gas_drip": gas_drip.as_yoctonear().to_string(),
+                "pow_bits": pow_bits,
+                "time_scale": time_scale,
+            }))
+            .deposit(attached)
+            .transact()
+            .await
+            .expect("create_programme was not accepted");
+        let result = outcome.into_result().map_err(|e| e.to_string())?;
+        result
+            .json::<u64>()
+            .map_err(|e| format!("programme id is not a number: {e}"))
+    }
+
+    /// `create_programme` as the funder, reporting the revert instead of panicking — for the tests
+    /// whose whole subject is a creation argument the contract should refuse.
+    pub async fn try_open_programme(
+        &self,
+        max_reward_units: u128,
+        pow_bits: u8,
+        time_scale: u32,
+    ) -> Result<u64, String> {
+        self.open_programme_cost(
+            max_reward_units,
+            pow_bits,
+            time_scale,
+            NearToken::from_yoctonear(GAS_DRIP),
+            NearToken::from_near(1),
+        )
+        .await
+    }
+
     /// Open a programme as the funder. `max_reward_units` is in tUSDC, `pow_bits` is what a tipster
     /// must burn to submit, and `time_scale` above 1 is demo mode (24 h becomes one minute at 1440).
     pub async fn open_programme(
@@ -293,28 +491,9 @@ impl Env {
         pow_bits: u8,
         time_scale: u32,
     ) -> u64 {
-        let scope_hash = vec![0x33u8; 32];
-        let result = self
-            .funder
-            .call(self.sealedtip.id(), "create_programme")
-            .args_json(json!({
-                "title": "Public interest fund",
-                "scope_uri": "https://scope.example/rules",
-                "scope_hash": scope_hash,
-                "panel_dao": self.panel_dao.id(),
-                "token": self.token.id(),
-                "max_reward": (max_reward_units * UNIT).to_string(),
-                "gas_drip": DRIP,
-                "pow_bits": pow_bits,
-                "time_scale": time_scale,
-            }))
-            .deposit(NearToken::from_near(1))
-            .transact()
+        self.try_open_programme(max_reward_units, pow_bits, time_scale)
             .await
-            .expect("create_programme was not accepted")
-            .into_result()
-            .expect("create_programme reverted");
-        result.json::<u64>().expect("programme id is not a number")
+            .expect("create_programme reverted")
     }
 
     /// The funder's tUSDC into the programme, through the token, as the frontend will do it.
@@ -603,15 +782,18 @@ impl Env {
             .map_err(|e| format!("tip id is not a number: {e}"))
     }
 
-    /// Call one of the panel-side methods as `who` and report the revert text, if any.
-    pub async fn call(
+    /// One call as one account, with an attached deposit the method may or may not want. The
+    /// no-deposit case is `NearToken::from_yoctonear(0)`, which is what `call` sends.
+    pub async fn call_with_deposit(
         &self,
         who: &Account,
         method: &str,
         args: serde_json::Value,
+        deposit: NearToken,
     ) -> Result<(), String> {
         who.call(self.sealedtip.id(), method)
             .args_json(args)
+            .deposit(deposit)
             .gas(Gas::from_tgas(100))
             .transact()
             .await
@@ -619,6 +801,17 @@ impl Env {
             .into_result()
             .map(|_| ())
             .map_err(|e| e.to_string())
+    }
+
+    /// Call one of the panel-side methods as `who` and report the revert text, if any.
+    pub async fn call(
+        &self,
+        who: &Account,
+        method: &str,
+        args: serde_json::Value,
+    ) -> Result<(), String> {
+        self.call_with_deposit(who, method, args, NearToken::from_yoctonear(0))
+            .await
     }
 
     /// Whether a tip id exists at all — the check that a refused submission created nothing, as
@@ -746,6 +939,114 @@ impl Env {
             .expect("accepted reward is not a number")
     }
 
+    // --- claim helpers ------------------------------------------------------------------------
+
+    /// The whole route a tip takes before a tipster can be paid: fund, submit, triage, accept at
+    /// `reward_units` of tUSDC. Returns `(programme_id, tip_id)` because the money assertions and the
+    /// payout assertions are about different rows.
+    ///
+    /// Deliberately the real calls rather than a stored fixture: whether a claim can be paid depends
+    /// on the reservation `triage` made and the release `resolve_tip` did, and a fixture that wrote
+    /// those numbers by hand could pass while the production path around them was broken.
+    pub async fn accepted_tip(&self, reward_units: u128) -> (u64, u64) {
+        let programme_id = self.funded_programme(500, 1_000).await;
+        let tip_id = self.accept_tip_on(programme_id, reward_units).await;
+        (programme_id, tip_id)
+    }
+
+    /// Take a tip all the way to `Accepted` inside a programme that already exists and is already
+    /// funded: submitted by a relayer, triaged credible by `member_1`, resolved by the DAO at
+    /// `reward_units`. Returns the tip id, because a test that opened its own escrow — to set its
+    /// `gas_drip` or its NEAR — needs more than one tip in it and cannot use `accepted_tip`.
+    pub async fn accept_tip_on(&self, programme_id: u64, reward_units: u128) -> u64 {
+        let tip_id = self
+            .submit(
+                &self.relayer_1,
+                Submission::new(programme_id, &self.member_1, &self.member_2),
+            )
+            .await
+            .expect("an honest submission should be stored");
+        self.call(
+            &self.member_1,
+            "triage",
+            json!({ "tip_id": tip_id, "credible": true }),
+        )
+        .await
+        .expect("a panel member should be able to triage");
+        self.call(
+            &self.panel_dao,
+            "resolve_tip",
+            json!({
+                "tip_id": tip_id,
+                "accept": true,
+                "reward": (reward_units * UNIT).to_string(),
+            }),
+        )
+        .await
+        .expect("the DAO should be able to accept");
+        assert_eq!(self.tip_status(tip_id).await, "Accepted");
+        tip_id
+    }
+
+    /// `claim` as a relayer forwards it, signing the payout the test names so an honest call cannot
+    /// sign one destination and send another by accident.
+    pub async fn claim(&self, who: &Account, tip_id: u64, payout: &Payout, nonce: u64) -> Paid {
+        let signature = self.signed_action(
+            tip_id,
+            nonce,
+            Action::Claim {
+                payout: payout.clone(),
+            },
+        );
+        self.claim_with(who, tip_id, payout, nonce, &signature)
+            .await
+    }
+
+    /// As above with a signature the caller built itself — the redirect and replay cases.
+    pub async fn claim_with(
+        &self,
+        who: &Account,
+        tip_id: u64,
+        payout: &Payout,
+        nonce: u64,
+        signature: &Base64VecU8,
+    ) -> Paid {
+        let outcome = who
+            .call(self.sealedtip.id(), "claim")
+            .args_json(json!({
+                "tip_id": tip_id,
+                "payout": payout,
+                "nonce": nonce,
+                "signature": signature,
+            }))
+            .gas(Gas::from_tgas(100))
+            .transact()
+            .await
+            .expect("claim was not accepted");
+        // Read the logs and the per-receipt failures before `into_result`, which consumes the outcome —
+        // and do not use the final status at all: a claim the token refused rolls back in a callback
+        // that succeeds, so the transaction as a whole reports success while the payout failed.
+        let logs: Vec<String> = outcome.logs().iter().map(|line| line.to_string()).collect();
+        // `ExecutionOutcome::status` is private, and the panic text of a receipt lives only there, so
+        // the Debug rendering is the one way the harness can read *why* a payout leg broke. Without it
+        // a chain that fails two receipts reports "2 failed part(s)" and nothing else, which is not a
+        // failure message anyone can act on.
+        let failures: Vec<String> = outcome
+            .failures()
+            .iter()
+            .map(|failure| format!("{}: {:?}", failure.executor_id, failure))
+            .collect();
+        let errors = match outcome.into_result() {
+            Ok(_) => Vec::new(),
+            Err(revert) => vec![revert.to_string()],
+        };
+        Paid {
+            failures,
+            errors,
+            logs,
+        }
+    }
+
     /// Mine a `pow_nonce` that clears `pow_bits` for this evidence hash, using the contract's own
     /// public `pow::check`. Needed when a test wants a submission that *passes* a real threshold.
     pub fn mine_pow(&self, evidence_hash: &[u8; 32], pow_bits: u8) -> u64 {
@@ -762,8 +1063,33 @@ pub fn fund_msg(programme_id: u64) -> String {
     format!("{{\"fund\":{programme_id}}}")
 }
 
-/// 50 mNEAR in yoctoNEAR, as a decimal string — above `u64::MAX` a JSON number would lose digits.
-pub const DRIP: &str = "5000000000000000000";
+/// A payout destination that does not exist on chain yet.
+///
+/// An implicit account is simply the hex of an ed25519 public key used as an account id: nobody has
+/// to register it, and it comes into existence the moment NEAR is sent to it. That is what a tipster
+/// hands the contract as their claim destination, and it is why `claim` attaches a gas drip at all.
+/// Deriving the name from a fixed label rather than a real key keeps the fixture fictional; no key
+/// material for it exists anywhere, which is also fine, because these tests only ever look at the
+/// balance under that name.
+pub fn implicit_id(label: &str) -> AccountId {
+    let digest = near_sdk::env::sha256_array(label.as_bytes());
+    let mut hex = String::with_capacity(64);
+    for byte in digest {
+        hex.push_str(&format!("{byte:02x}"));
+    }
+    hex.parse()
+        .unwrap_or_else(|e| panic!("a 64-character hex digest should be an account id: {e}"))
+}
+
+/// The `gas_drip` every programme in these tests is opened with, in yoctoNEAR (50 mNEAR). It is one
+/// number rather than a per-suite copy, because a claim test asserts the drip as part of what the
+/// payout cost the programme and an assertion that copied the literal would keep passing if the
+/// programme was opened with a different one.
+pub const GAS_DRIP: u128 = 50_000_000_000_000_000_000;
+
+/// `ops_balance` the moment a programme is opened: the 1 NEAR `create_programme` attaches. Every
+/// "did this cost the programme NEAR?" assertion starts from this.
+pub const OPS_START: u128 = 1_000_000_000_000_000_000_000_000;
 
 /// One submission, with the honest defaults a happy path wants and a field for each rule a negative
 /// test breaks. `sealed` is the member list the key is sealed to; two entries is the minimum.
@@ -791,6 +1117,73 @@ impl Submission {
             pow_nonce: 0,
             wrong_signer: false,
         }
+    }
+}
+
+/// What one `claim` chain left behind: what in it failed, and every log line the transaction and its
+/// receipts produced.
+///
+/// Both are needed together because a claim is not one call. The entry point can revert (a bad
+/// signature, a tip that was never accepted), or the entry point can succeed and the token refuse the
+/// transfer behind it, which the contract then rolls back — and in that last case the *transaction*
+/// still reports success, because the rollback callback ran fine. Reading `is_success` alone would
+/// call a refused payout a paid one.
+#[must_use = "a claim that returned successfully is not necessarily a claim that paid; read the chain"]
+pub struct Paid {
+    /// One entry per part of the chain that panicked — the entry point or a receipt behind it — with
+    /// that account's execution outcome rendered, which is where the panic text is.
+    failures: Vec<String>,
+    /// The entry point's own revert text, if it got that far and refused.
+    errors: Vec<String>,
+    /// Every log line the transaction and its receipts produced. A contract's `panic_str` text is
+    /// logged by the receipt that panicked, so this is where a refusal inside a callback chain —
+    /// which never fails the transaction as a whole — can actually be read.
+    logs: Vec<String>,
+}
+
+impl Paid {
+    pub fn succeeded(&self) -> bool {
+        self.failures.is_empty() && self.errors.is_empty()
+    }
+
+    /// Assert the payout actually happened, and say what the chain said when it did not. A claim whose
+    /// transaction succeeded can still have been refused by the token, so this is the check every
+    /// "should have been paid" case goes through.
+    pub fn expect_paid(&self) {
+        assert!(
+            self.succeeded(),
+            "a claim that should have been paid reverted: {}",
+            self.report()
+        );
+    }
+
+    /// Did any part of the chain say this? Use for the error codes, not for a receipt's identity.
+    pub fn said(&self, code: &str) -> bool {
+        self.errors
+            .iter()
+            .chain(self.logs.iter())
+            .chain(self.failures.iter())
+            .any(|line| line.contains(code))
+    }
+
+    /// Everything the chain said, for the message of an assertion that expected it to work.
+    pub fn report(&self) -> String {
+        format!(
+            "{} failed part(s): {:?}; errors {:?}; logs {:?}",
+            self.failures.len(),
+            self.failures,
+            self.errors,
+            self.logs
+        )
+    }
+
+    /// How many `tip_paid` events the whole chain emitted. The count rather than a boolean, because
+    /// the rule is "exactly once, and only when the money actually moved".
+    pub fn paid_events(&self) -> usize {
+        self.logs
+            .iter()
+            .filter(|line| line.contains("\"event\":\"tip_paid\""))
+            .count()
     }
 }
 
