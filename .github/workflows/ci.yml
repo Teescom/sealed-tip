@@ -1,9 +1,10 @@
 # CI — the two repo gates on every push and PR (S-1.9 / A-1.9).
 # `pnpm lint` and `pnpm test` are the same commands AGENTS.md tells a contributor to run locally,
 # so a green check here means the README's quickstart works on a clean Linux checkout.
-# Toolchain versions are pinned by measurement, not by taste: cargo-near 0.22.0 and near-sandbox
-# 2.14.0 are what `main` was built and tested with. cargo-near is fetched by tag and its sha256 is
-# verified against the release asset before the binary is put on PATH.
+# Toolchain versions are pinned by measurement, not by taste: cargo-near 0.22.0 is the version `main`
+# was built and tested with, fetched by tag with its release sha256 verified before the binary is put
+# on PATH. The sandbox node version comes from the `near-sandbox` crate itself (2.14.0), so it moves
+# with Cargo.lock rather than with this file.
 name: ci
 on:
   push:
@@ -14,9 +15,6 @@ on:
 env:
   CARGO_NEAR_VERSION: 0.22.0
   CARGO_NEAR_SHA256: 9429064e30a427e96523f539cb255f3688d2345e5000d7d4e4873a8247247d1a
-  # near-sandbox 0.4.0 resolves this from its own DEFAULT_NEAR_SANDBOX_VERSION constant;
-  # bump it together with the crate, or the cache key below stops matching and every run re-downloads.
-  NEAR_SANDBOX_VERSION: 2.14.0
 
 jobs:
   checks:
@@ -58,12 +56,11 @@ jobs:
           tar xzf cargo-near.tar.gz --strip-components=1 -C "$HOME/.cargo/bin" "$asset/cargo-near"
           cargo near --version
 
-      - name: Cache the near-sandbox binary
-        uses: actions/cache@v4
-        with:
-          path: ~/.near
-          key: near-sandbox-${{ env.NEAR_SANDBOX_VERSION }}-${{ runner.os }}-x86_64
-
+      # The near-sandbox node is NOT cached separately. `near-sandbox` 0.4.0 without its
+      # `global_install` feature unpacks the 70 MB binary into `OUT_DIR`, i.e.
+      # `target/debug/build/near-sandbox-*/out/.near/near-sandbox-2.14.0/`, so the `target` path in
+      # the cache step above already covers it. (A `~/.near` cache step here would restore and save
+      # nothing — measured on the first run of this workflow.)
       - run: pnpm install --frozen-lockfile
 
       # fmt + clippy (--all-targets) + eslint + tsc
