@@ -8,7 +8,13 @@ use crate::{Contract, ContractExt};
 
 #[near]
 impl Contract {
-    pub fn claim(&mut self, tip_id: TipId, payout: Payout, nonce: u64, signature: Base64VecU8) -> Promise {
+    pub fn claim(
+        &mut self,
+        tip_id: TipId,
+        payout: Payout,
+        nonce: u64,
+        signature: Base64VecU8,
+    ) -> Promise {
         let _ = (tip_id, payout, nonce, signature);
         todo!("S-3.5")
     }

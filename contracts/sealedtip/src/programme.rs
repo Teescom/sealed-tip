@@ -23,7 +23,10 @@ impl Contract {
         pow_bits: u8,
         time_scale: u32,
     ) -> ProgrammeId {
-        let _ = (title, scope_uri, scope_hash, panel_dao, token, max_reward, gas_drip, pow_bits, time_scale);
+        let _ = (
+            title, scope_uri, scope_hash, panel_dao, token, max_reward, gas_drip, pow_bits,
+            time_scale,
+        );
         todo!("S-2.6")
     }
 

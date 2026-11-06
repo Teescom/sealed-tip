@@ -5,7 +5,7 @@
 //! - Token amounts are `U128` and NEAR amounts are `NearToken` (decimal strings).
 //! - Timestamps and durations are `U64` nanoseconds (decimal strings).
 //! - Keys and hashes are `[u8; 32]`. Signatures are `Base64VecU8` (serde can't do `[u8; 64]`).
-//! PRIVACY: nothing here may identify a tipster (AGENTS privacy invariants).
+//!   PRIVACY: nothing here may identify a tipster (AGENTS privacy invariants).
 
 use near_sdk::json_types::{U128, U64};
 use near_sdk::{near, AccountId, NearToken};
@@ -62,7 +62,9 @@ pub enum TipStatus {
     UnderReview,
     /// Credible but the programme was short of funds; reserved automatically on the next `fund`.
     Unfunded,
-    Accepted { reward: U128 },
+    Accepted {
+        reward: U128,
+    },
     Rejected,
     Retracted,
     Paid,
@@ -131,7 +133,10 @@ pub enum Payout {
     /// Fresh implicit account (testnet; storage_deposit + gas drip applied).
     Near { account: AccountId },
     /// 1Click ORIGIN_CHAIN deposit address on NEAR (mainnet).
-    Intents { deposit_address: AccountId, memo: Option<String> },
+    Intents {
+        deposit_address: AccountId,
+        memo: Option<String>,
+    },
 }
 
 /// Signed tipster action. Message bytes = b"sealedtip:v1" ‖ borsh(SignedAction).
