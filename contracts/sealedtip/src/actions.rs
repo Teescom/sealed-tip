@@ -5,8 +5,9 @@ use near_sdk::borsh::to_vec;
 use near_sdk::json_types::Base64VecU8;
 use near_sdk::{env, require};
 
-use crate::errors::E09_BAD_SIGNATURE;
-use crate::types::{CryptoHash, Ed25519PublicKey, ProgrammeId, SignedAction};
+use crate::errors::{E02_TIP_NOT_FOUND, E09_BAD_SIGNATURE, E10_BAD_NONCE};
+use crate::types::{Action, CryptoHash, Ed25519PublicKey, ProgrammeId, SignedAction, TipId};
+use crate::Contract;
 
 pub const DOMAIN_TAG: &[u8] = b"sealedtip:v1";
 pub const SUBMIT_TAG: &[u8] = b"sealedtip:v1:submit";
@@ -38,6 +39,44 @@ pub fn assert_signature(message: &[u8], signature: &Base64VecU8, pubkey: &Ed2551
     require!(raw.len() == 64, E09_BAD_SIGNATURE);
     let sig: &[u8; 64] = raw.try_into().unwrap();
     require!(env::ed25519_verify(sig, message, pubkey), E09_BAD_SIGNATURE);
+}
+
+impl Contract {
+    /// The two rules every tipster-signed entry point shares: the nonce is the next one (E10), then
+    /// the signature (E09) — cheap check first, because an ed25519 verify is the expensive half of a
+    /// refusal and these methods are reachable by any allow-listed relayer.
+    ///
+    /// The signed bytes are rebuilt from what the contract holds — this account, this tip id, this
+    /// nonce, this action — rather than taken apart from something the caller supplied, so a
+    /// signature minted for another deployment, another tip or another action fails E09 instead of
+    /// being accepted and then reinterpreted. `SignedAction::contract` is inside the message for
+    /// exactly that reason: the same bytes signed against a testnet copy of this contract must not
+    /// verify against the mainnet one.
+    ///
+    /// The caller advances `tip.nonce` itself, once its own rules have passed. A call that reverts
+    /// therefore consumes nothing, which is what lets a tipster retry after a relayer botches one.
+    pub(crate) fn assert_signed(
+        &self,
+        tip_id: TipId,
+        nonce: u64,
+        action: Action,
+        signature: &Base64VecU8,
+    ) {
+        let tip = self
+            .tips
+            .get(&tip_id)
+            .unwrap_or_else(|| env::panic_str(E02_TIP_NOT_FOUND));
+        // Exactly one ahead. `saturating_add` would let `u64::MAX` replay itself, and a replayable
+        // action is the very thing the nonce exists to prevent.
+        require!(nonce > tip.nonce && nonce - tip.nonce == 1, E10_BAD_NONCE);
+        let message = action_message(&SignedAction {
+            contract: env::current_account_id(),
+            tip_id,
+            nonce,
+            action,
+        });
+        assert_signature(&message, signature, &tip.claim_pubkey);
+    }
 }
 
 #[cfg(test)]
@@ -159,5 +198,96 @@ mod tests {
             assert_signature(&message, &short, &pubkey);
         });
         assert!(result.is_err());
+    }
+
+    // --- the shared signed-action rules (S-3.4, S-3.6) ---------------------------------------
+
+    use crate::test_utils::{
+        as_caller, contract_with, contract_with_tip, make_programme, relayer_1, sign_action,
+        sign_action_at, tip_with_nonce,
+    };
+
+    /// What `submit_tip`'s relayer does with the bytes the tipster handed it.
+    fn check(
+        contract: &Contract,
+        tip_id: TipId,
+        nonce: u64,
+        action: Action,
+        signature: &Base64VecU8,
+    ) {
+        as_caller(relayer_1());
+        contract.assert_signed(tip_id, nonce, action, signature);
+    }
+
+    #[test]
+    fn an_action_signed_by_the_tipster_verifies() {
+        // The mock host runs `env::ed25519_verify` for real, which is what lets a unit test reach the
+        // rules *behind* a signature instead of only the ones in front of it.
+        let contract = contract_with_tip();
+        let signature = sign_action(0, 1, Action::Checkin);
+        check(&contract, 0, 1, Action::Checkin, &signature);
+    }
+
+    #[test]
+    #[should_panic(expected = "E09_BAD_SIGNATURE")]
+    fn an_action_signed_for_another_contract_is_not_reused_here() {
+        // Same tip, same nonce, same action — only the account inside the signed bytes differs. That
+        // is the case `SignedAction::contract` exists for: a testnet signature must not be a mainnet
+        // one.
+        let contract = contract_with_tip();
+        let signature = sign_action_at("sealedtip-copy.testnet", 0, 1, Action::Checkin);
+        check(&contract, 0, 1, Action::Checkin, &signature);
+    }
+
+    #[test]
+    #[should_panic(expected = "E09_BAD_SIGNATURE")]
+    fn an_action_signed_for_another_tip_is_not_accepted_on_this_one() {
+        let contract = contract_with_tip();
+        let signature = sign_action(1, 1, Action::Checkin);
+        check(&contract, 0, 1, Action::Checkin, &signature);
+    }
+
+    #[test]
+    #[should_panic(expected = "E09_BAD_SIGNATURE")]
+    fn a_checkin_signature_is_not_also_a_retraction() {
+        // The action is inside the message, so the two cannot be traded for each other.
+        let contract = contract_with_tip();
+        let signature = sign_action(0, 1, Action::Checkin);
+        check(&contract, 0, 1, Action::Retract, &signature);
+    }
+
+    #[test]
+    #[should_panic(expected = "E10_BAD_NONCE")]
+    fn a_replayed_nonce_is_refused() {
+        // The tip's stored nonce is what a successful action leaves behind (S-3.4, S-3.6), so
+        // presenting the nonce that already moved is a replay whatever it signs.
+        let contract = contract_with(vec![make_programme()], vec![tip_with_nonce(1)]);
+        let signature = sign_action(0, 1, Action::Checkin);
+        check(&contract, 0, 1, Action::Checkin, &signature);
+    }
+
+    #[test]
+    #[should_panic(expected = "E10_BAD_NONCE")]
+    fn only_the_next_nonce_counts_not_a_later_one() {
+        // A gap would let a relayer that missed one action use a signature made for a future one, and
+        // it is the *sequence* that carries replay protection.
+        let contract = contract_with_tip();
+        let signature = sign_action(0, 7, Action::Checkin);
+        check(&contract, 0, 7, Action::Checkin, &signature);
+    }
+
+    #[test]
+    #[should_panic(expected = "E02_TIP_NOT_FOUND")]
+    fn an_action_for_a_tip_that_does_not_exist_is_refused() {
+        let contract = contract_with_tip();
+        let signature = sign_action(4, 1, Action::Checkin);
+        check(&contract, 4, 1, Action::Checkin, &signature);
+    }
+
+    #[test]
+    fn a_tip_that_has_already_acted_carries_on_from_its_own_nonce() {
+        let contract = contract_with(vec![make_programme()], vec![tip_with_nonce(1)]);
+        let signature = sign_action(0, 2, Action::Checkin);
+        check(&contract, 0, 2, Action::Checkin, &signature);
     }
 }

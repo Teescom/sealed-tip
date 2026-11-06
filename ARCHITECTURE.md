@@ -359,3 +359,39 @@ Five decisions that a reader of `tip.rs` would otherwise have to re-derive, each
   `near-crypto`, which is what the runtime's own `env::ed25519_verify` is built on, so a test that passes
   is a signature the chain would also accept. Verified by measuring the artifact: 266 623 bytes of wasm,
   built from a target that has no test code in it.
+
+### 14.6 S-3 signed actions and the switch (2026-11-06)
+
+- **The deployment name is inside every signed action.** `SignedAction` carries `contract`, so the
+  bytes a tipster signs are only valid against *this* contract. Without it, a signature captured from
+  one testnet copy would authorise the same action on any other — a cloned front end, a malicious
+  fork, or the same code redeployed under a new account. `tests/signed_actions.rs` signs a real retract
+  against the sandbox root account and shows this contract refuses it (E09).
+- **The nonce must be exactly last + 1, not merely larger.** A tipster that could skip ahead could
+  pre-authorise a batch of actions and let a relayer spend them in any order it chose, which is the
+  same liveness problem the switch exists to solve. `saturating_add` is deliberately not used: at
+  `u64::MAX` it would let the final nonce replay itself forever.
+- **A refused action consumes nothing.** `assert_signed` checks and never writes; the caller stores
+  `tip.nonce = nonce` only after its own guards have passed. So a relayer that forwards a valid action
+  and trips some other rule costs the tipster nothing, and the same bytes can be re-forwarded — proven
+  in the sandbox by a panel member's refused call followed by a relayer's accepted one, same signature.
+- **`trigger` has no role guard, on purpose.** Every other entry point on this contract has an
+  allow-list, and the one that releases the evidence bundle does not — because the switch is the
+  tipster's protection *against* those parties. What makes the open endpoint safe is that it is only
+  reachable after `next_deadline + grace`, and all it can do is record that it has been.
+- **The grace is scaled by the same `time_scale` as the interval.** Compressing the deadline while
+  leaving the grace in real nanoseconds would hand a demo tipster a four-hour protection window against
+  a one-minute clock, and a live tipster would see the opposite. The ratio the tipster chose at
+  submission is what survives into the compressed clock.
+- **Recusal is re-checked at release, not taken on trust from submission.** `submit_tip` already
+  refuses a sealed key naming a recused member (E13), and `post_released_keys` applies the same rule to
+  the released set. The reason is that `get_tip_for_panel` serves those CIDs to whoever proves a panel
+  seat, so the disclosure point is the release, and the party holding the bundle key is the one this
+  build treats as trusted-but-verifiable (ARCHITECTURE §11).
+- **A released key set replaces rather than appends.** The keeper can post a wrong set and correct it
+  without the tip being permanently mis-released; what the contract can check is *whose name* each entry
+  carries, not that the ciphertext under it really is `K_switch` re-sealed — only the keeper ever held
+  `K_switch`, so that half stays the keeper's obligation and the UI reads it as such.
+- **`E20_NOT_TRIGGERED` is separate from `E18_SWITCH_NOT_DUE`.** Both mean "too early" and the
+  difference matters to whoever is debugging: E18 is a watcher whose clock is wrong, E20 is the keeper
+  answering a release the switch never asked for.

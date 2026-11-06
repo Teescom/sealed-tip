@@ -15,6 +15,7 @@ use near_sdk::json_types::Base64VecU8;
 use near_workspaces::network::Sandbox;
 use near_workspaces::types::{Gas, KeyType, NearToken, SecretKey};
 use near_workspaces::{Account, AccountId, Contract, Worker};
+use sealedtip::types::{Action, SignedAction};
 use serde_json::json;
 
 /// 1 tUSDC in base units (6 decimals, same as USDC).
@@ -366,7 +367,19 @@ impl Env {
     /// Open a programme and put `units` of tUSDC in it, registering the contract with the token
     /// first — the state most tip-lifecycle tests start from.
     pub async fn funded_programme(&self, max_reward_units: u128, units: u128) -> u64 {
-        let programme_id = self.open_programme(max_reward_units, 0, 1).await;
+        self.funded_programme_scaled(max_reward_units, units, 1)
+            .await
+    }
+
+    /// As above, at a chosen `time_scale`. Demo mode (1440) is what lets a switch test wait out a
+    /// 24 h deadline in a minute of chain time instead of ~90,000 blocks of `fast_forward`.
+    pub async fn funded_programme_scaled(
+        &self,
+        max_reward_units: u128,
+        units: u128,
+        time_scale: u32,
+    ) -> u64 {
+        let programme_id = self.open_programme(max_reward_units, 0, time_scale).await;
         self.seat_panel(
             programme_id,
             &[&self.member_1, &self.member_2, &self.member_3],
@@ -453,6 +466,91 @@ impl Env {
     pub fn tipster_signature(&self, message: &[u8]) -> Vec<u8> {
         self.tipster.sign(message).to_bytes().to_vec()
     }
+
+    /// The bytes a tipster's action is signed over, built with the contract's own `action_message`
+    /// so that the deployed code decides the wire format. The signed payload names *this* deployment
+    /// (`SignedAction::contract`), which is what makes a signature minted for one contract useless
+    /// against another; a test that wanted to break that has to say so explicitly, via
+    /// `signed_action_on`.
+    pub fn action_message(&self, tip_id: u64, nonce: u64, action: Action) -> Vec<u8> {
+        sealedtip::actions::action_message(&SignedAction {
+            contract: self.sealedtip.id().clone(),
+            tip_id,
+            nonce,
+            action,
+        })
+    }
+
+    /// A tipster-signed action, ready to hand to a relayer. Defaults are the honest case: right key,
+    /// right contract, right tip.
+    pub fn signed_action(&self, tip_id: u64, nonce: u64, action: Action) -> Base64VecU8 {
+        let message = self.action_message(tip_id, nonce, action);
+        Base64VecU8::from(self.tipster_signature(&message))
+    }
+
+    /// The same action signed by a key that is not the tipster's — the case where a relayer (or
+    /// anyone who copied a valid call) guesses the payload and signs it themselves.
+    pub fn signed_action_wrong_key(&self, tip_id: u64, nonce: u64, action: Action) -> Base64VecU8 {
+        let message = self.action_message(tip_id, nonce, action);
+        let impostor = message_key("not-the-tipster.seed");
+        Base64VecU8::from(impostor.sign(&message).to_bytes().to_vec())
+    }
+
+    /// The same action signed for a *different* contract account. Everything the tipster signed is
+    /// identical apart from the deployment name, so if the contract did not include it in the
+    /// message, this signature would verify.
+    pub fn signed_action_on(
+        &self,
+        contract: &AccountId,
+        tip_id: u64,
+        nonce: u64,
+        action: Action,
+    ) -> Base64VecU8 {
+        let message = sealedtip::actions::action_message(&SignedAction {
+            contract: contract.clone(),
+            tip_id,
+            nonce,
+            action,
+        });
+        Base64VecU8::from(self.tipster_signature(&message))
+    }
+
+    /// `checkin` / `retract` as a relayer forwards them. The signature is built from the action the
+    /// test names, so an honest call cannot sign one thing and send another by accident; the tests
+    /// that mean to do exactly that go through `signed_call_with`.
+    pub async fn signed_call(
+        &self,
+        who: &Account,
+        method: &str,
+        tip_id: u64,
+        nonce: u64,
+        action: Action,
+    ) -> Result<(), String> {
+        let signature = self.signed_action(tip_id, nonce, action);
+        self.signed_call_with(who, method, tip_id, nonce, &signature)
+            .await
+    }
+
+    /// As above, with a signature the caller built by hand — the wrong-key, wrong-deployment and
+    /// spent-nonce cases.
+    pub async fn signed_call_with(
+        &self,
+        who: &Account,
+        method: &str,
+        tip_id: u64,
+        nonce: u64,
+        signature: &Base64VecU8,
+    ) -> Result<(), String> {
+        self.call(
+            who,
+            method,
+            json!({ "tip_id": tip_id, "nonce": nonce, "signature": signature }),
+        )
+        .await
+    }
+
+    /// A tip id that does not exist in this deployment — the argument for the "not found" guards.
+    pub const MISSING_TIP: u64 = 4242;
 
     /// One call as one account, with the sealed-key and recusal knobs a submission test needs.
     pub async fn submit(&self, who: &Account, s: Submission) -> Result<u64, String> {
@@ -557,6 +655,68 @@ impl Env {
             .json::<Option<serde_json::Value>>()
             .expect("get_tip_for_panel is not JSON")
             .unwrap_or_else(|| panic!("tip {tip_id} is missing"))
+    }
+
+    /// What anybody without a panel seat can see: status, deadline, whether the switch fired.
+    pub async fn tip_public(&self, tip_id: u64) -> serde_json::Value {
+        self.sealedtip
+            .view("get_tip_public")
+            .args_json(json!({ "tip_id": tip_id }))
+            .await
+            .expect("get_tip_public view failed")
+            .json::<Option<serde_json::Value>>()
+            .expect("get_tip_public is not JSON")
+            .unwrap_or_else(|| panic!("tip {tip_id} is missing"))
+    }
+
+    /// The number of nanoseconds `get_programme_stats` reports for the keeper's last heartbeat.
+    pub async fn keeper_last_seen(&self, programme_id: u64) -> u64 {
+        let seen = &self.programme_stats(programme_id).await["keeper_last_seen"];
+        seen.as_str()
+            .unwrap_or_else(|| panic!("keeper_last_seen is not a decimal string: {seen}"))
+            .parse()
+            .expect("keeper_last_seen is not a number")
+    }
+
+    /// The armed switch deadline from `get_tip_public`, in ns. Panics if the field is null, because
+    /// every caller of it is asserting on a tip that must be armed.
+    pub async fn switch_deadline(&self, tip_id: u64) -> u64 {
+        let deadline = self.tip_public(tip_id).await["switch_deadline"].clone();
+        deadline
+            .as_str()
+            .unwrap_or_else(|| panic!("tip {tip_id} has no switch deadline: {deadline}"))
+            .parse()
+            .expect("switch_deadline is not a number")
+    }
+
+    pub async fn switch_triggered(&self, tip_id: u64) -> bool {
+        self.tip_public(tip_id).await["switch_triggered"]
+            .as_bool()
+            .expect("switch_triggered is a bool")
+    }
+
+    /// Seal the given member list, as `post_released_keys` expects it.
+    pub async fn post_keys(
+        &self,
+        who: &Account,
+        tip_id: u64,
+        members: &[&Account],
+    ) -> Result<(), String> {
+        let keys: Vec<serde_json::Value> = members
+            .iter()
+            .map(|member| {
+                json!({
+                    "member": member.id(),
+                    "cid": format!("released-{}", member.id()),
+                })
+            })
+            .collect();
+        self.call(
+            who,
+            "post_released_keys",
+            json!({ "tip_id": tip_id, "keys": keys }),
+        )
+        .await
     }
 
     /// The tip's status *variant name* — `"Submitted"`, `"UnderReview"`, `"Accepted"`, …
