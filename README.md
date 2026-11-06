@@ -90,6 +90,12 @@ Expected today:
 Toolchain: Rust stable with `wasm32-unknown-unknown` and `cargo-near`, Node ≥ 22, pnpm ≥ 9 (verified
 on Node 26 / pnpm 11.17).
 
+Both gates also run in CI on every push to `main` and every pull request
+([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) — measured 4m6s to 5m5s per job on
+`ubuntu-latest` with Node 22, pnpm 11 and cargo-near 0.22.0 fetched by release tag and verified
+against its sha256 before use. A green check is proof the commands above pass on a clean Linux
+checkout, which is not the machine anyone here builds on.
+
 ## Repository map
 
 | Path | What it is |
