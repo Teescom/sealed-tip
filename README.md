@@ -91,10 +91,11 @@ Toolchain: Rust stable with `wasm32-unknown-unknown` and `cargo-near`, Node ≥ 
 on Node 26 / pnpm 11.17).
 
 Both gates also run in CI on every push to `main` and every pull request
-([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) — measured 4m6s to 5m5s per job on
-`ubuntu-latest` with Node 22, pnpm 11 and cargo-near 0.22.0 fetched by release tag and verified
-against its sha256 before use. A green check is proof the commands above pass on a clean Linux
-checkout, which is not the machine anyone here builds on.
+([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) — measured 1m30s per job with a warm cargo
+cache and 5m5s from cold on `ubuntu-latest` with Node 22, pnpm 11 and cargo-near 0.22.0 fetched by
+release tag and verified against its sha256 before use. Editing `ci.yml` itself costs the next run
+its cache, since the cache key hashes the workflow. A green check is proof the commands above pass
+on a clean Linux checkout, which is not the machine anyone here builds on.
 
 ## Repository map
 
