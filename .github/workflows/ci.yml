@@ -3,8 +3,9 @@
 # so a green check here means the README's quickstart works on a clean Linux checkout.
 # Toolchain versions are pinned by measurement, not by taste: cargo-near 0.22.0 is the version `main`
 # was built and tested with, fetched by tag with its release sha256 verified before the binary is put
-# on PATH. The sandbox node version comes from the `near-sandbox` crate itself (2.14.0), so it moves
-# with Cargo.lock rather than with this file.
+# on PATH. The one asset has two routes because github.com's release-download route was answering 504;
+# whichever route brings the bytes, the digest is what decides whether they run. The sandbox node version
+# comes from the `near-sandbox` crate itself (2.14.0), so it moves with Cargo.lock rather than this file.
 name: ci
 on:
   push:
@@ -15,6 +16,9 @@ on:
 env:
   CARGO_NEAR_VERSION: 0.22.0
   CARGO_NEAR_SHA256: 9429064e30a427e96523f539cb255f3688d2345e5000d7d4e4873a8247247d1a
+  # The release asset for the version above, from `gh api repos/near/cargo-near/releases/tags/...`.
+  # A second way to reach the same bytes, not a second thing being trusted: the sha256 still decides.
+  CARGO_NEAR_ASSET_ID: 477230462
 
 jobs:
   checks:
@@ -49,8 +53,17 @@ jobs:
         run: |
           set -euo pipefail
           asset="cargo-near-x86_64-unknown-linux-gnu"
-          curl -fsSL -o cargo-near.tar.gz \
-            "https://github.com/near/cargo-near/releases/download/cargo-near-v${CARGO_NEAR_VERSION}/${asset}.tar.gz"
+          # Two routes to the one pinned asset. The release URL is the normal one; the release API serves
+          # the same bytes by asset id, which is the fallback measured on 2026-11-08 when github.com's
+          # release-download route answered 504 on three CI attempts and three local fetches (`curl
+          # --retry-all-errors` covers the transient half of that, the fallback the persistent half).
+          release_url="https://github.com/near/cargo-near/releases/download/cargo-near-v${CARGO_NEAR_VERSION}/${asset}.tar.gz"
+          api_url="https://api.github.com/repos/near/cargo-near/releases/assets/${CARGO_NEAR_ASSET_ID}"
+          fetch() { curl -fsSL --retry 4 --retry-all-errors --retry-delay 20 --max-time 300 -o cargo-near.tar.gz "$@"; }
+          if ! fetch "$release_url"; then
+            echo "the release URL is unavailable; fetching the same asset from the release API" >&2
+            fetch --header 'Accept: application/octet-stream' "$api_url"
+          fi
           echo "${CARGO_NEAR_SHA256}  cargo-near.tar.gz" | sha256sum -c -
           mkdir -p "$HOME/.cargo/bin"
           tar xzf cargo-near.tar.gz --strip-components=1 -C "$HOME/.cargo/bin" "$asset/cargo-near"
