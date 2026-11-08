@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { test } from "node:test";
 
-import { Cid } from "@sealedtip/core";
+import { HexCid } from "@sealedtip/core";
 
 import {
   cidOf,
@@ -71,6 +71,8 @@ test("the cid is sha256 of the ciphertext, in the shape the contract stores", as
   const cid = cidOf(ciphertext);
   assert.equal(cid, createHash("sha256").update(ciphertext).digest("hex"));
   assert.match(cid, /^[0-9a-f]{64}$/);
-  assert.doesNotThrow(() => Cid.parse(cid));
+  // `HexCid.parse` rather than a `doesNotThrow`: it returns the value, so a schema that widened to
+  // `string` would still be caught by the assertion above it — but this one is the shape contract.
+  assert.equal(HexCid.parse(cid), cid);
   assert.notEqual(cid, createHash("sha256").update(plaintext).digest("hex"), "a cid of plaintext would leak it");
 });

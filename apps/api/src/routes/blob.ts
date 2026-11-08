@@ -1,5 +1,5 @@
 // POST /blob, GET /blob/:cid — ciphertext only, cap enforced while streaming, cid = sha256 (S-8.3).
-import { Cid } from "@sealedtip/core";
+import { HexCid } from "@sealedtip/core";
 import { Hono } from "hono";
 
 import { TooLarge, plaintextContainer, readCapped, type BlobStore } from "../store/blob.js";
@@ -39,7 +39,9 @@ export const blobRoutes = (store: BlobStore): Hono => {
 
   app.get("/:cid", async (c) => {
     const cid = c.req.param("cid");
-    if (cid === undefined || !Cid.safeParse(cid).success) {
+    // `HexCid`, not `Cid`: the contract stores a CID it never validates, so only the strict form
+    // is a key in this store. A looser guard would hand whatever the URL said to the store.
+    if (cid === undefined || !HexCid.safeParse(cid).success) {
       return c.json({ error: "cid must be 64 hex characters" }, 400);
     }
     const bytes = await store.get(cid);

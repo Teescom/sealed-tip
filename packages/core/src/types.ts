@@ -1,11 +1,26 @@
 // TS mirror of contracts/sealedtip/src/types.rs (ARCHITECTURE §4). Change both together.
 import { z } from "zod";
 
-export const U128 = z.string().regex(/^\d+$/);
-export const U64 = z.string().regex(/^\d+$/);
+export const U128 = z.string().regex(/^\d+$/, "decimal string");
+export const U64 = z.string().regex(/^\d+$/, "decimal string");
+/** `NearToken` in Rust: a yoctoNEAR decimal string. Same wire shape as `U128`, a different unit, and a
+ * UI that formats `ops_balance` as tUSDC base units is wrong in a way no test would notice. */
+export const YoctoNear = z.string().regex(/^\d+$/, "yoctoNEAR decimal string");
 export const AccountId = z.string().min(2).max(64);
 export const Bytes32 = z.array(z.number().int().min(0).max(255)).length(32);
-export const Cid = z.string().regex(/^[0-9a-f]{64}$/, "hex sha256 of ciphertext");
+
+/**
+ * `pub type Cid = String` in the contract (`contracts/sealedtip/src/types.rs`) — an opaque blob reference
+ * the tipster's own client chooses and the contract stores without validating.
+ *
+ * The mirror has to accept what the chain can hold. The real view captured in `fixtures/views.json`
+ * carries `"evidence_cid": "0a1b2c-17"`; a schema demanding 64 hex would throw on chain data that any
+ * tipster can produce, since `submit_tip` is signed by the tipster and nothing checks the string — which
+ * is a hostile submission taking the panel's UI down. `HexCid` is the canonical form a Sealed Tip client
+ * actually writes, and that is the schema to use when the question is "did our client produce this".
+ */
+export const Cid = z.string();
+export const HexCid = z.string().regex(/^[0-9a-f]{64}$/, "hex sha256 of ciphertext");
 
 export const PanelMember = z.object({ account: AccountId, x25519_pub: Bytes32 });
 
@@ -21,8 +36,8 @@ export const Programme = z.object({
   max_reward: U128,
   balance: U128,
   reserved: U128,
-  ops_balance: U128,
-  gas_drip: U128,
+  ops_balance: YoctoNear,
+  gas_drip: YoctoNear,
   pow_bits: z.number().int(),
   open: z.boolean(),
   time_scale: z.number().int().positive(),

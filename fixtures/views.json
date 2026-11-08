@@ -1,0 +1,140 @@
+{
+  "_source": "Captured 2026-11-08 from the sandbox suite: `cargo test -p sealedtip --test switch released_keys_exclude_recused_members`, with a temporary println of the five sealedtip view methods over `serde_json::Value` read through near-workspaces RPC, i.e. these are the bytes the deployed wasm returned, not hand-written examples. The scenario: a funded programme with a 3-member panel, one tip sealed to member_1 and member_3, member_2 recused, a 1-day switch that was triggered, and the keeper's release posted. `contracts/sealedtip/tests/views_shape.rs` keeps the shape honest against the live contract; the TypeScript suite in packages/core parses these values. Times are as recorded and are the only fields that are not reproducible.",
+  "accounts": {
+    "funder": "funder.test.near",
+    "member_1": "member1.test.near",
+    "member_2": "member2.test.near",
+    "member_3": "member3.test.near",
+    "panel_dao": "paneldao.test.near",
+    "token": "tusdc.test.near"
+  },
+  "get_programme": {
+    "id": 0,
+    "funder": "funder.test.near",
+    "title": "Public interest fund",
+    "scope_uri": "https://scope.example/rules",
+    "scope_hash": [51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51],
+    "panel_dao": "paneldao.test.near",
+    "panel": [
+      {
+        "account": "member1.test.near",
+        "x25519_pub": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+      },
+      {
+        "account": "member2.test.near",
+        "x25519_pub": [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
+      },
+      {
+        "account": "member3.test.near",
+        "x25519_pub": [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+      }
+    ],
+    "token": "tusdc.test.near",
+    "max_reward": "500000000",
+    "balance": "1000000000",
+    "reserved": "0",
+    "ops_balance": "1000000000000000000000000",
+    "gas_drip": "50000000000000000000",
+    "pow_bits": 0,
+    "open": true,
+    "time_scale": 1440,
+    "created_at": "1794144144214819000"
+  },
+  "get_programme_stats": {
+    "programme_id": 0,
+    "balance": "1000000000",
+    "reserved": "0",
+    "submitted": 1,
+    "under_review": 0,
+    "accepted": 0,
+    "rejected": 0,
+    "paid": 0,
+    "keeper_last_seen": "0"
+  },
+  "list_programmes": [
+    {
+      "id": 0,
+      "funder": "funder.test.near",
+      "title": "Public interest fund",
+      "scope_uri": "https://scope.example/rules",
+      "scope_hash": [51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51],
+      "panel_dao": "paneldao.test.near",
+      "panel": [
+        {
+          "account": "member1.test.near",
+          "x25519_pub": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        },
+        {
+          "account": "member2.test.near",
+          "x25519_pub": [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
+        },
+        {
+          "account": "member3.test.near",
+          "x25519_pub": [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+        }
+      ],
+      "token": "tusdc.test.near",
+      "max_reward": "500000000",
+      "balance": "1000000000",
+      "reserved": "0",
+      "ops_balance": "1000000000000000000000000",
+      "gas_drip": "50000000000000000000",
+      "pow_bits": 0,
+      "open": true,
+      "time_scale": 1440,
+      "created_at": "1794144144214819000"
+    }
+  ],
+  "get_tip_public": {
+    "id": 0,
+    "programme_id": 0,
+    "status": "Submitted",
+    "submitted_at": "1794144145976205000",
+    "switch_deadline": "1794144205976205000",
+    "switch_triggered": true
+  },
+  "get_tip_for_panel": {
+    "id": 0,
+    "programme_id": 0,
+    "claim_pubkey": [35, 122, 149, 189, 46, 103, 233, 241, 248, 241, 243, 137, 228, 7, 88, 206, 252, 213, 160, 176, 132, 81, 155, 188, 19, 242, 80, 199, 10, 212, 157, 46],
+    "nonce": 0,
+    "evidence_cid": "0a1b2c-17",
+    "evidence_hash": [17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17],
+    "sealed_keys": [
+      {
+        "member": "member1.test.near",
+        "cid": "sealed-member1.test.near"
+      },
+      {
+        "member": "member3.test.near",
+        "cid": "sealed-member3.test.near"
+      }
+    ],
+    "recused": [
+      "member2.test.near"
+    ],
+    "cleaning_report_hash": [34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34],
+    "attestation_hash": null,
+    "switch": {
+      "interval": "86400000000000",
+      "grace": "14400000000000",
+      "next_deadline": "1794144205976205000",
+      "bundle_key_for_keeper": "k-switch",
+      "includes_raw": false,
+      "triggered": true
+    },
+    "status": "Submitted",
+    "submitted_at": "1794144145976205000",
+    "triaged_by": null,
+    "released_keys": [
+      {
+        "member": "member1.test.near",
+        "cid": "released-member1.test.near"
+      },
+      {
+        "member": "member3.test.near",
+        "cid": "released-member3.test.near"
+      }
+    ]
+  }
+}
