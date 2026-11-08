@@ -65,9 +65,9 @@ test("a stored blob comes back through GET byte for byte, as opaque bytes", asyn
 
 test("a cid that is not 64 lowercase hex never reaches the store", async () => {
   // What the property actually is: the store is a lookup keyed by a hash the contract can re-check, so a
-  // request that is not that shape must be answered without asking it anything. A path that does not even
-  // line up with one segment (`../../etc/passwd`) is refused by the router as 404, which is the same
-  // outcome, and both are asserted here rather than one status code being guessed at.
+  // request that is not that shape must be answered without asking it anything. The route guards on
+  // `HexCid` from `@sealedtip/core` — deliberately not on `Cid`, which mirrors the contract's unvalidated
+  // `String` and so accepts anything up to any length a caller likes.
   const asked: string[] = [];
   const spy: BlobStore = {
     maxBytes: 4096,
@@ -88,10 +88,13 @@ test("a cid that is not 64 lowercase hex never reaches the store", async () => {
     "x".repeat(64),
     "../../etc/passwd",
   ];
-  for (const cid of cases) {
+  for (const cid of cases.filter((one) => !one.includes("/"))) {
     const res = await app.request(`/${cid}`);
-    assert.ok(res.status === 400 || res.status === 404, `${cid} got ${res.status}: ${await res.text()}`);
+    assert.equal(res.status, 400, `${cid} got ${res.status}`);
+    assert.deepEqual(await res.json(), { error: "cid must be 64 hex characters" });
   }
+  // A path that does not line up with one segment is refused by the router before the route runs.
+  assert.equal((await app.request("/../../etc/passwd")).status, 404);
   assert.deepEqual(asked, [], `the store was queried with a malformed cid: ${asked.join(", ")}`);
   // And it does get consulted for a well-formed cid that simply is not there — which is the 404 the next
   // test checks — so the empty list above is the guard working, not the route never running.
