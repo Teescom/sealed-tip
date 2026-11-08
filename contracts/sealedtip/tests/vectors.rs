@@ -9,6 +9,7 @@ use near_sdk::{env, AccountId};
 use sealedtip::actions::{
     action_message, assert_signature, submit_message, DOMAIN_TAG, SUBMIT_TAG,
 };
+use sealedtip::pow::{check, leading_zero_bits};
 use sealedtip::types::{Action, CryptoHash, Ed25519PublicKey, Payout, SignedAction};
 
 const VECTORS: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../../fixtures/vectors.json");
@@ -21,6 +22,7 @@ struct Fixture {
     keys: Vec<KeyVector>,
     vectors: Vec<ActionVector>,
     submit: Vec<SubmitVector>,
+    pow: Vec<PowVector>,
 }
 
 #[derive(Deserialize)]
@@ -87,6 +89,22 @@ struct KeyVector {
     ed25519_public_key: Vec<u8>,
     x25519_secret: Vec<u8>,
     x25519_public_key: Vec<u8>,
+}
+
+#[derive(Deserialize)]
+#[serde(crate = "near_sdk::serde")]
+#[allow(dead_code)]
+struct PowVector {
+    name: String,
+    evidence_hash: Vec<u8>,
+    nonce: u64,
+    /// The difficulty the client mined for, or, for a fixed nonce, the difficulty it reaches.
+    bits: u8,
+    leading_zero_bits: u32,
+    /// True when `nonce` is the *first* nonce that reaches `bits` — what `solvePow` promises.
+    minimal: bool,
+    /// `sha256(evidence_hash ‖ u64le(nonce))` as computed in TypeScript.
+    hash: Vec<u8>,
 }
 
 fn fixture() -> Fixture {
@@ -358,4 +376,120 @@ fn hkdf_keys_match_fixture_vectors() {
         .expect("checkin vector");
     assert_eq!(claim.secret_key, bare.ed25519_secret);
     assert_eq!(claim.public_key, bare.ed25519_public_key);
+}
+
+/// `packages/crypto/src/pow.ts` re-implements this hash rather than calling the contract, so the
+/// digest the client found is what decides: a big-endian or u32-truncated nonce hashes elsewhere
+/// and the contract would reject a tip the browser had already paid for.
+#[test]
+fn pow_digests_match_the_client_solver() {
+    let data = fixture();
+    assert_eq!(
+        data.pow.len(),
+        3,
+        "two mined nonces and one fixed nonce above u32"
+    );
+    for vector in &data.pow {
+        let evidence = hash32(&vector.evidence_hash, "evidence_hash");
+        let mut preimage = Vec::with_capacity(40);
+        preimage.extend_from_slice(&evidence);
+        preimage.extend_from_slice(&vector.nonce.to_le_bytes());
+        assert_eq!(
+            env::sha256_array(&preimage).to_vec(),
+            vector.hash,
+            "{}: the client hashed a different preimage than the contract would",
+            vector.name
+        );
+        assert_eq!(
+            leading_zero_bits(&env::sha256_array(&preimage)),
+            vector.leading_zero_bits,
+            "{}: bit count diverged",
+            vector.name
+        );
+    }
+}
+
+/// The contract's own gate has to accept what the client's solver hands it, at exactly the
+/// difficulty, and refuse one bit above.
+#[test]
+fn the_contract_accepts_every_pow_vector() {
+    let data = fixture();
+    for vector in &data.pow {
+        let evidence = hash32(&vector.evidence_hash, "evidence_hash");
+        assert!(
+            check(&evidence, vector.nonce, vector.bits),
+            "{}: contract rejects the nonce the client mined",
+            vector.name
+        );
+        let above = vector
+            .leading_zero_bits
+            .checked_add(1)
+            .and_then(|bits| u8::try_from(bits).ok());
+        if let Some(bits) = above {
+            assert!(
+                !check(&evidence, vector.nonce, bits),
+                "{}: contract accepts one bit over the vector's own difficulty",
+                vector.name
+            );
+        }
+    }
+}
+
+/// `solvePow` promises the *smallest* nonce. If it were to start from a random one, or skip, the
+/// fixture's minimality is what the contract re-checks here — the client cannot quietly make
+/// `pow_bits` cheaper than the programme configured.
+#[test]
+fn a_mined_nonce_is_the_first_to_reach_its_difficulty() {
+    let data = fixture();
+    for vector in data.pow.iter().filter(|v| v.minimal) {
+        let evidence = hash32(&vector.evidence_hash, "evidence_hash");
+        // Every `check` call spends mock gas, so the fixture keeps the mined nonces small. If one
+        // ever grew past this the scan would stop being cheap, and the failure should say that
+        // rather than surfacing as an opaque `GasLimitExceeded` from the mock host.
+        assert!(
+            vector.nonce < 40_000,
+            "{}: mined nonce {} is too large to re-solve inside the mock's gas budget",
+            vector.name,
+            vector.nonce
+        );
+        if let Some(earlier) = (0..vector.nonce).find(|nonce| check(&evidence, *nonce, vector.bits))
+        {
+            panic!(
+                "{}: nonce {earlier} reaches {} bits before the fixture's {}",
+                vector.name, earlier, vector.nonce
+            );
+        }
+        assert!(
+            vector.nonce > 0,
+            "{}: a mined nonce of 0 makes the scan vacuous",
+            vector.name
+        );
+    }
+}
+
+/// The vector above 2^32 exists to catch a nonce written as u32. If it ever stops being above u32
+/// range it has stopped testing anything, and if the truncated nonce hashed the same it never would.
+#[test]
+fn one_vector_forces_a_real_u64_nonce() {
+    let data = fixture();
+    let large = data
+        .pow
+        .iter()
+        .find(|v| v.nonce > u64::from(u32::MAX))
+        .expect("a pow vector whose nonce does not fit a u32");
+    let evidence = hash32(&large.evidence_hash, "evidence_hash");
+    let truncated = large.nonce & u64::from(u32::MAX);
+    assert_ne!(
+        truncated, large.nonce,
+        "the vector's nonce must overflow a u32"
+    );
+    let mut preimage = Vec::with_capacity(40);
+    preimage.extend_from_slice(&evidence);
+    preimage.extend_from_slice(&truncated.to_le_bytes());
+    assert_ne!(
+        env::sha256_array(&preimage).to_vec(),
+        large.hash,
+        "{}: a u32-truncated nonce hashes identically, so the vector proves nothing",
+        large.name
+    );
 }
