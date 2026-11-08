@@ -56,3 +56,19 @@ export const deriveKeys = async (secret: Uint8Array, passphrase?: string): Promi
     x25519: { secretKey: x25519SecretKey, publicKey: sodium.crypto_scalarmult_base(x25519SecretKey) },
   };
 };
+
+/**
+ * The X25519 public half on its own, for the identities a deployment *registers* rather than derives —
+ * the keeper and the panel members, whose public keys the contract stores as `[u8; 32]`.
+ */
+export const x25519PublicKey = async (secretKey: Uint8Array): Promise<Uint8Array> => {
+  if (secretKey.length !== 32) throw new RangeError(`x25519 secret key must be 32 bytes, got ${secretKey.length}`);
+  await sodium.ready;
+  return sodium.crypto_scalarmult_base(secretKey);
+};
+
+export const newX25519KeyPair = async (): Promise<KeyPair> => {
+  await sodium.ready;
+  const secretKey = sodium.randombytes_buf(32);
+  return { secretKey, publicKey: sodium.crypto_scalarmult_base(secretKey) };
+};

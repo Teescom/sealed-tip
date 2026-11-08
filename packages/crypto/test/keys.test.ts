@@ -7,10 +7,12 @@ import {
   X25519_LABEL,
   deriveKeys,
   newSecret,
+  newX25519KeyPair,
   secretToWords,
   sign,
   verify,
   wordsToSecret,
+  x25519PublicKey,
 } from "../src/index.js";
 import { bytes, fixture, keyVector } from "./fixture.js";
 
@@ -104,4 +106,23 @@ test("newSecret returns 32 fresh bytes", () => {
   const b = newSecret();
   assert.equal(a.length, 32);
   assert.notDeepEqual(asArray(a), asArray(b));
+});
+
+// The keeper's and each panel member's public half is what the contract stores as `[u8; 32]`, so a
+// deployment that registers a key it cannot reproduce has sealed every submission into the dark.
+test("x25519PublicKey is the half deriveKeys returns, on its own", async () => {
+  for (const vector of fixture.keys) {
+    assert.deepEqual(asArray(await x25519PublicKey(bytes(vector.x25519_secret))), vector.x25519_public_key, vector.name);
+  }
+  await assert.rejects(() => x25519PublicKey(new Uint8Array(31)), RangeError);
+});
+
+// `scripts/lib/keys.ts` mints a deployment's keeper and panel keys with this, then stores the secret
+// and registers the public half, so the two must agree or the sealed submissions never open.
+test("a fresh X25519 pair is internally consistent and fresh every time", async () => {
+  const first = await newX25519KeyPair();
+  const second = await newX25519KeyPair();
+  assert.equal(first.secretKey.length, 32);
+  assert.deepEqual(asArray(await x25519PublicKey(first.secretKey)), asArray(first.publicKey));
+  assert.notDeepEqual(asArray(first.publicKey), asArray(second.publicKey));
 });
