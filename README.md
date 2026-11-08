@@ -6,22 +6,26 @@
 > Live plan and progress: [`ROADMAP.md`](ROADMAP.md) · decisions: [`ARCHITECTURE.md`](ARCHITECTURE.md) §14 · product spec: [`PRD.md`](PRD.md).
 
 **Status: mid-build, 14 / 103 Must tasks done** (the tally counts a task as done only once its GitHub
-issues are closed, and closing them is the owner's call — 39 more Must rows are code-complete and
+issues are closed, and closing them is the owner's call — a further 44 Must rows are code-complete and
 tested behind that rule). Working and tested today: the tipster key model (24
 words ↔ secret ↔ HKDF-derived ed25519/X25519 keys), the borsh + ed25519 action wire format — verified to
 be byte-identical in Rust and TypeScript from one shared fixture — the contract's access guards, PoW
 check, time scaling and NEP-297 events, programme accounting (open, fund over NEP-141, withdraw what is
 not backing a live tip, close), panel appointment, the owner's relayer and keeper rotation, the paginated
-views and their privacy boundary, the offline attestation verifier, the `tUSDC` test token, a
-`near-sandbox` harness that boots a chain and drives both contracts, and the whole tip lifecycle except
-the payout — `submit_tip` (PoW, signature, quorum and recusal refusals, reserving nothing), `triage`
-(the only place a reservation is created), `resolve_tip` (DAO-only, reward ceiling, unused reservation
-released) and the retry that promotes an `Unfunded` tip when money arrives, plus the tipster-signed half:
-`retract`, `checkin`, `trigger` and the keeper's `post_released_keys` and `heartbeat`. Every one of them
-is tested against the deployed wasm rather than only in-process, including the four ways a signature can
-be wrong (another key, another deployment, a spent nonce, a skipped nonce) and the switch's two clocks.
-Not built yet: `claim` with its callbacks, browser-side
-cleaning, sealing, the API, the keeper, the web UI and the demo script. The last column of the table
+views and their privacy boundary, the offline attestation verifier, the client-side bundle sealing
+(XChaCha20-Poly1305 for the bundle, a sealed box for each recipient's copy of the key, `cidOf` for the
+pointer) and the PoW solver that mines the nonce the contract then checks, the `tUSDC` test token, a
+`near-sandbox` harness that boots a chain and drives both contracts, and the whole tip lifecycle
+including the payout — `submit_tip` (PoW, signature, quorum and recusal refusals, reserving nothing),
+`triage` (the only place a reservation is created), `resolve_tip` (DAO-only, reward ceiling, unused
+reservation released) and the retry that promotes an `Unfunded` tip when money arrives, plus the
+tipster-signed half: `retract`, `checkin`, `trigger` and the keeper's `post_released_keys` and
+`heartbeat`, plus `claim` with the destination inside the signed action, the token's storage deposit,
+the gas drip, and a rollback that restores the money and the tip when the token refuses. Every one of
+them is tested against the deployed wasm rather than only in-process, including the four ways a signature
+can be wrong (another key, another deployment, a spent nonce, a skipped nonce) and the switch's two
+clocks. Not built yet: browser-side cleaning, the API, the keeper, the web UI and the demo script.
+The last column of the table
 below gives each protection its real state; [`ROADMAP.md`](ROADMAP.md) tracks every piece by task ID.
 
 ## The problem
@@ -50,7 +54,7 @@ evidence stays sealed and nobody gets paid.
 
 ## How Sealed Tip protects you
 
-The right-hand column is the honest state of this repository as of 2026-11-06: what runs today, and what
+The right-hand column is the honest state of this repository as of 2026-11-08: what runs today, and what
 is designed but not built yet. Task IDs point into [`ROADMAP.md`](ROADMAP.md).
 
 | Threat | What the code does | State |
@@ -60,7 +64,7 @@ is designed but not built yet. Task IDs point into [`ROADMAP.md`](ROADMAP.md).
 | "The AI read my text" | The optional AI redaction step can go **browser → attested NEAR AI Cloud TEE** directly over OHTTP with no server of ours in the path — proven in `spikes/ohttp-browser/`. The proxy stays for the API key, rate limiting and IP hiding, and the UI says plainly who can read the text. | the OHTTP/HPKE/BHTTP path is proven live from a Chromium tab with no library and no dependency; the proxy route and its UI copy are P8 |
 | Is that really the enclave? | `pnpm verify-attestation` re-verifies an attestation report offline: the TDX quote parses and its `report_data` binds *our* nonce and the signing address, RTMR0-2 replay from the event log, the dstack X.509 app-cert chain is walked and pins the compose hash, and the OHTTP key config carries a valid ed25519 signature. What it cannot do alone is named in its own output: the Intel collateral chain over the quote, NVIDIA's GPU attestation, and the response signature (needs an API key). | works today (54 checks on a live report) except the response signature |
 | The outlet disappears | A **dead man's switch**: `checkin` keeps it armed; missing `deadline + grace` lets anyone `trigger` it, and the keeper releases the *cleaned* switch bundle key to non-recused panel members (raw files only on explicit opt-in). | built and tested through the sandbox: `time.rs` scaling, the arming at `submit_tip`, `checkin` restarting the clock from the block it lands in, `trigger` refusing until `deadline + grace` has passed and then accepting **any** account (the sandbox root, which holds no role, fires it in one test), one trigger per tip, and `post_released_keys` keeper-only. In demo mode a 1-day interval arms 1 minute out and the grace compresses with it. The keeper *service* that notices a `switch_triggered` event is P9 |
-| A panel member is compromised | The tipster **recuses** members; recused members get no sealed key and are barred from triage. Every tip needs ≥2 sealed keys. | recusal guards implemented, unit-tested and proven through the sandbox (a recused member is refused at `triage`, E06, with the reservation left at zero; a released key naming a recused member is refused at `post_released_keys`, E13, even when it is posted by the keeper). Sealing to a per-member key set needs `seal` (S-6.5). The ≥2-key rule counts *distinct* members, so two entries naming one reviewer is one reviewer |
+| A panel member is compromised | The tipster **recuses** members; recused members get no sealed key and are barred from triage. Every tip needs ≥2 sealed keys. | recusal guards implemented, unit-tested and proven through the sandbox (a recused member is refused at `triage`, E06, with the reservation left at zero; a released key naming a recused member is refused at `post_released_keys`, E13, even when it is posted by the keeper). Sealing to a per-member key set is built in `seal.ts` (S-6.5, sealed boxes on each member's X25519 key), so what is missing is the browser flow that calls it, not the crypto. The ≥2-key rule counts *distinct* members, so two entries naming one reviewer is one reviewer |
 | Nobody pays | The programme's reward is **locked on-chain before tips arrive** and reserved only when a panel member marks a tip credible — so a dismissal never strands funds, and a funder cannot withdraw money that is already backing a live tip. | `mock-ft` is a real NEP-141 token; opening, funding, closing and `withdraw_unreserved` are implemented, and the ceiling that stops a funder taking reserved funds is tested through the sandbox with a rollback when the token itself refuses (S-2.6, S-2.10). The reservation is created by `triage` and released by `resolve_tip`, both tested through the sandbox: ten submissions leave the full balance withdrawable, one credible triage does not (S-3.2, S-3.3) |
 | Payout to a bank/burner wallet | `Payout::Near{fresh implicit}` on testnet; on mainnet a 1Click Intents quote pays USDC on NEAR to any chain, and the destination is inside the signed `Claim`, so a relayer cannot redirect it. | built and tested through the sandbox (S-3.5, S-2.10, S-5.5): the payout is signed, so a relayer can neither move a reward to another account nor switch the same account onto the other rail; `claim` registers the destination, transfers, and answers for the transfer, and a transfer the token refuses rolls the money and the tip back so the next nonce can retry. An Intents payout gets its memo inside the NEP-141 memo, a NEAR payout gets a gas drip that makes the fresh implicit account spendable. **Still unverified:** the $1 mainnet check of the 1Click deposit method (S-0.6), which decides whether that memo is the right shape |
 
@@ -92,9 +96,9 @@ Expected today:
 | Do X | See Y |
 |---|---|
 | `pnpm build:contract` | two wasm files, 271,800 bytes (`sealedtip`) and 151,157 bytes (`mock_ft`), reported by `cargo-near` |
-| `pnpm test` | 251 Rust tests + 43 TypeScript tests pass, and **no Rust test is skipped or ignored**: 174 `sealedtip` unit, 18 `mock-ft` unit, 5 wire-format parity, and **54 sandbox integration tests** — 11 claim, 9 signed-action, 8 programme, 7 switch, 6 submission, 6 reservation, 4 triage-and-resolve, 2 access-control, 1 smoke (`contracts/sealedtip/tests/{smoke,programmes,submission,reservations,triage_and_resolve,signed_actions,switch,claims,access_control}.rs`), which boot a `near-sandbox` node, deploy both contracts and drive them over RPC — plus 43 `packages/crypto` tests for the key model and action encoding. Also reported rather than hidden: **9 TypeScript tests are still `todo` scaffolds** (the `core`/`clean`/`api`/`keeper` stubs and the `crypto` seal and pow suites, which land with P6). Nothing fails. |
+| `pnpm test` | 255 Rust tests + 55 TypeScript tests pass, and **no Rust test is skipped or ignored**: 174 `sealedtip` unit, 18 `mock-ft` unit, 9 wire-format parity, and **54 sandbox integration tests** — 11 claim, 9 signed-action, 8 programme, 7 switch, 6 submission, 6 reservation, 4 triage-and-resolve, 2 access-control, 1 smoke (`contracts/sealedtip/tests/{smoke,programmes,submission,reservations,triage_and_resolve,signed_actions,switch,claims,access_control}.rs`), which boot a `near-sandbox` node, deploy both contracts and drive them over RPC — plus 55 `packages/crypto` tests for the key model, the action wire format, bundle sealing and sealed boxes, and the PoW solver. Also reported rather than hidden: **7 TypeScript tests are still `todo` scaffolds** (3 in `clean`, which land with the rest of P6, and 1 each in `core`, `api` and `keeper`, which land with P8 and P9). Nothing fails. |
 | `pnpm lint` | exit 0 — `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D warnings`, `eslint .` and `tsc -b` are all clean (S-5.9, 2026-11-06). The clippy step needs `--all-targets`: `near-sdk` 5.30 deliberately refuses a host build of a contract crate, so `cargo clippy --workspace -- -D warnings` errors inside the dependency before reaching our code and can never pass. `--all-targets` unifies the `unit-testing` dev-feature, which makes `near-sdk` host-compilable, so clippy actually lints the contracts and the tests. |
-| `pnpm gen-vectors` then `pnpm test:vectors` | `fixtures/vectors.json` regenerated byte-for-byte, and the Rust tests confirm the TS and Rust borsh + ed25519 encodings agree |
+| `pnpm gen-vectors` then `pnpm test:vectors` | `fixtures/vectors.json` regenerated byte-for-byte, and the Rust tests confirm the TS and Rust borsh + ed25519 encodings agree *and* that the TypeScript PoW solver and the contract's `pow::check` hash the same 40-byte preimage and count the same bits |
 | `pnpm verify-attestation -- --fetch <model>` | a live report fetched from `cloud-api.near.ai`, then every DCAP quote, X.509 app-cert chain, compose hash and OHTTP key-config signature checked — 54+ ✔ lines, exit 0, with the model's answer never requested. Add `--pin-ca <fingerprint>` to anchor the chain. |
 
 Toolchain: Rust stable with `wasm32-unknown-unknown` and `cargo-near`, Node ≥ 22, pnpm ≥ 9 (verified
@@ -113,7 +117,7 @@ on a clean Linux checkout, which is not the machine anyone here builds on.
 |---|---|
 | `contracts/sealedtip/` | The escrow + tip lifecycle contract (Rust, `near-sdk` 5.30). `tests/common/mod.rs` is the sandbox harness. |
 | `contracts/mock-ft/` | `tUSDC` — NEP-141/145/148 test token with an open `mint` (testnet only, never mainnet). |
-| `packages/crypto/` | 24 words ↔ secret, HKDF key derivation, borsh action encoding, ed25519 signing and attestation verification are implemented and tested; the XChaCha sealing (`seal`) and PoW solver are stubs (S-6.5, S-6.6). |
+| `packages/crypto/` | Everything in it works now: 24 words ↔ secret, HKDF key derivation, borsh action encoding, ed25519 signing, attestation verification, XChaCha bundle sealing plus sealed boxes and `cidOf` (S-6.5), and the PoW solver that shares `fixtures/vectors.json` with the contract's `pow::check` (S-6.6). 55 tests, 0 failing. |
 | `packages/core/` | zod mirror of the contract types (written; not yet validated against a real on-chain view, S-6.1) plus the view client interface — its implementation is S-6.2 and currently throws. |
 | `packages/clean/` | In-browser evidence cleaning (PDF, image, scan) + cleaning report: interfaces fixed, all five modules still throw `not implemented` (S-6.7–S-6.11). |
 | `apps/web` · `apps/api` · `apps/keeper` | Tipster/panel UI (the strict CSP and privacy headers are configured; the pages are placeholders) · blob store, relayer queue, AI proxy (stubs) · keeper heartbeat and switch release (stubs). |

@@ -53,11 +53,25 @@ export interface HkdfLabels {
   x25519: string;
 }
 
+export interface PowVector {
+  name: string;
+  evidence_hash: Bytes;
+  /** A JSON number: the generator refuses a nonce that would not survive one. */
+  nonce: number;
+  /** The difficulty the vector was mined for, or, for a fixed nonce, the one it reaches. */
+  bits: number;
+  leading_zero_bits: number;
+  /** True when `nonce` is the first nonce that reaches `bits`. */
+  minimal: boolean;
+  hash: Bytes;
+}
+
 interface Fixture {
   hkdf_labels: HkdfLabels;
   keys: KeyVector[];
   vectors: ActionVector[];
   submit: SubmitVector[];
+  pow: PowVector[];
 }
 
 export const fixture: Fixture = JSON.parse(
