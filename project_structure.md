@@ -93,6 +93,9 @@ res/                     # pinned sputnikdao2.wasm + SPUTNIK_VERSION.txt
 | `packages/crypto/src/attestation.ts` | offline re-verify of a NEAR AI Cloud attestation bundle (nonce + signing-address bindings, TDX quote v4 register offsets, RTMR replay from the event log, compose-manifest hash, OHTTP ed25519 wrapper, GPU evidence nonce, compose-manager action-log quote) | no network, no new deps; malformed input becomes a failed check, never a throw |
 | `packages/clean/src/gate.ts` | magic-byte sniff; PDF/JPEG/PNG only; everything else refused | **browser-only** |
 | `packages/clean/src/{pdf,image,scan,report}.ts` | rasterise, re-encode, scan mode, removal report | **browser-only** |
+| `packages/clean/src/host.ts` | the `CanvasHost` port: the one seam through which the cleaners touch pixels, so the package needs neither the DOM nor a native image module | DOM host is `apps/web` (P10), Node host is `packages/clean/test/node_host.ts` |
+| `packages/clean/src/index.ts` | `cleanFile`: gate → clean → optional scan, in the one call the UI makes | the only entry `apps/web` imports |
+| `packages/clean/tools/make-fixtures.ts` | writes the four fictional dirty files in `fixtures/files/`, then re-opens each one and demands the leak it planted | `pnpm make:fixtures`; byte-deterministic |
 | `apps/web/app/page.tsx` | landing + Tor guidance | no third-party loads |
 | `apps/web/app/p/[id]` | public programme page | no tipster data |
 | `apps/web/app/submit/[programme]` | tipster flow | **browser-only** plaintext |
@@ -119,6 +122,7 @@ Tests use `node:test` via `tsx`. Web tests use Vitest.
 | `test` / `test:contract` | contract build + `cargo test`, then `pnpm -r test` |
 | `test:vectors` | crypto package tests + `cargo test -p sealedtip vectors` |
 | `test:clean` | cleaning fixtures |
+| `make:fixtures` | regenerate `fixtures/files/` and re-verify every leak in them |
 | `lint` | fmt, clippy `-D warnings`, ESLint, `tsc -b` |
 | `dev` / `relayer` / `keeper` | local services |
 | `deploy:testnet`, `seed`, `demo`, `spam`, `verify-attestation`, `sign-statement`, `gen-vectors` | `scripts/*.ts` |

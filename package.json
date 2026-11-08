@@ -23,7 +23,8 @@
     "spam": "pnpm --filter @sealedtip/scripts exec tsx spam.ts",
     "verify-attestation": "pnpm --filter @sealedtip/scripts exec tsx verify-attestation.ts",
     "sign-statement": "pnpm --filter @sealedtip/scripts exec tsx sign-statement.ts",
-    "gen-vectors": "pnpm --filter @sealedtip/scripts exec tsx gen-vectors.ts"
+    "gen-vectors": "pnpm --filter @sealedtip/scripts exec tsx gen-vectors.ts",
+    "make:fixtures": "pnpm --filter @sealedtip/clean exec tsx tools/make-fixtures.ts"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
