@@ -117,6 +117,19 @@ importers:
       pdfjs-dist:
         specifier: ^6.5.438
         version: 6.5.438
+    devDependencies:
+      '@napi-rs/canvas':
+        specifier: ^1.1.0
+        version: 1.1.0
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.20.5
+      tsx:
+        specifier: ^4.23.15
+        version: 4.23.15
+      typescript:
+        specifier: ~5.9.3
+        version: 5.9.3
 
   packages/core:
     dependencies:
@@ -2642,7 +2655,6 @@ snapshots:
       '@napi-rs/canvas-linux-x64-musl': 1.1.0
       '@napi-rs/canvas-win32-arm64-msvc': 1.1.0
       '@napi-rs/canvas-win32-x64-msvc': 1.1.0
-    optional: true
 
   '@near-js/accounts@2.2.5(0b1038d1900f52ef145e72c06c5d6b38)':
     dependencies:

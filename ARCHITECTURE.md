@@ -58,7 +58,7 @@ Tipster browser (no wallet, Tor recommended)           Panel browser (wallet)
 | Panel | Sputnik DAO v2 — testnet factory `sputnik-v2.testnet`, mainnet `sputnik-dao.near`; wasm pinned in `contracts/sealedtip/res/` (S-0.7, verified 2026-11-05) |
 | Frontend | Next.js 16, TypeScript, Tailwind; wallet-selector for panel/funders only |
 | Client crypto | `libsodium-wrappers` (sealed boxes, XChaCha20-Poly1305), `@noble/ed25519`, `@noble/hashes` (HKDF, sha256), `@scure/bip39` (entropy ↔ words), `@dao-xyz/borsh` or hand-rolled borsh encoder |
-| Client cleaning | `pdfjs-dist` (render pages), `pdf-lib` (rebuild PDF from images), canvas re-encode, `exifr` (show what's removed) |
+| Client cleaning | `pdfjs-dist` (render pages), `pdf-lib` (rebuild PDF from images), canvas re-encode, `exifr` (show what's removed). The package talks to a canvas through its own `CanvasHost` port, never to a DOM: `apps/web` (P10) supplies the browser host, and `@napi-rs/canvas` is a **dev/test-only** dependency of `packages/clean` so a Node test can implement the same port — a cleaning package with a native image module in `dependencies` cannot be shipped to a tipster's browser. (pdfjs's own Node canvas factory lazily requires that same package, so nothing new enters the tree; supplying a partial factory from outside is what breaks it, which is why the host hands pdfjs no `CanvasFactory` at all and renders with `{ canvas, viewport }`.) |
 | Backend | Node 22 + Hono `tip-api` (relayer queue, blobs, AI proxy, quotes); `keeper` worker |
 | Storage | Ciphertext blobs (Vercel Blob / S3-compatible), `cid = sha256(ciphertext)`, 25 MB cap per tip |
 | AI | NEAR AI Cloud `https://cloud-api.near.ai/v1` |
