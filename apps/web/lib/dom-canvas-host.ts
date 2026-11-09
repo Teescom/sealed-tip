@@ -138,7 +138,7 @@ const surfaceOf = (canvas: CanvasLike, encode: Encoder): Surface => {
       image.data.set(pixels);
       context.putImageData(image, 0, 0);
     },
-    encode: async (kind, quality) => await encode(canvas, kind, quality),
+    encode: async (kind: EncodeKind, quality?: number) => await encode(canvas, kind, quality),
   };
 };
 
@@ -177,7 +177,7 @@ export const domCanvasHost = (deps: DomCanvasDeps = {}): CanvasHost => {
   let pdfConfigured = false;
 
   return {
-    surface: (width, height) => {
+    surface: (width: number, height: number) => {
       const canvas = createCanvas(requireSize("width", width), requireSize("height", height));
       return surfaceOf(canvas, encode);
     },

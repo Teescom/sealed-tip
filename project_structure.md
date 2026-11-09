@@ -101,6 +101,7 @@ res/                     # pinned sputnikdao2.wasm + SPUTNIK_VERSION.txt
 | `apps/web/lib/config.ts` | the four `NEXT_PUBLIC_*` coordinates, validated into sentences rather than a stack trace; `daysToNs` for a switch interval | no secret is readable: nothing outside that prefix is ever looked at, and a placeholder contract id is refused by name |
 | `apps/web/lib/api.ts` | the tip API's four calls (`/blob` put+get, `/relay/:action`, `/ai/redact`) with the server's caps mirrored locally | the refusal happens before an upload, so plaintext never leaves the browser for a blob the store would reject anyway |
 | `apps/web/lib/dom-canvas-host.ts` | the browser `CanvasHost`: `OffscreenCanvas` where present, `createImageBitmap` to decode, `toBlob`/`convertToBlob` to encode, pdfjs on a module worker | the DOM is reached through three injected primitives, so the web tests are Node tests and the cleaning arithmetic is the same one `packages/clean` was vouched for |
+| `apps/web/lib/submit-flow.ts` | the complete submit and signed-action pipeline (`submitTipFlow`, `checkinFlow`, `retractFlow`, `claimFlow`) | **browser-only** plaintext and keys; 9-step atomic flow |
 | `apps/web/app/page.tsx` | landing + Tor guidance | no third-party loads |
 | `apps/web/app/p/[id]` | public programme page | no tipster data |
 | `apps/web/app/submit/[programme]` | tipster flow | **browser-only** plaintext |
