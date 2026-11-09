@@ -8,10 +8,12 @@ import { test } from "node:test";
 
 import { Hono } from "hono";
 
+import { createRedactor } from "../src/ai/redact.js";
 import { createApp } from "../src/app.js";
 import { STRIPPED_HEADERS, noLogs } from "../src/middleware/no-logs.js";
 import { createQueue } from "../src/relay/queue.js";
 import { createRateLimiter } from "../src/relay/ratelimit.js";
+import { aiRoutes } from "../src/routes/ai.js";
 import { relayRoutes } from "../src/routes/relay.js";
 import { memoryBlobStore } from "../src/store/blob.js";
 
@@ -28,6 +30,31 @@ const relayForTests = (): Hono =>
     context: { contract: "sealedtip.testnet", tipReader: async () => null },
     limiter: createRateLimiter({ keyBurst: 10, keyPerSecond: 1, globalBurst: 10, globalPerSecond: 1 }),
     queue: createQueue({ delayMs: () => 60_000, send: async () => ({ txHash: "never" }) }),
+  });
+
+/**
+ * The AI route over an upstream that answers. `/ai/redact` is the one endpoint where a tipster hands this
+ * service the words themselves — the evidence, before it was ever sealed — so its body is what this test
+ * has to cover now that the route exists. The fake cloud stands in for NEAR AI so it runs without a key.
+ */
+const aiForTests = (): Hono =>
+  aiRoutes({
+    redactor: createRedactor({
+      defaultModel: "attested-model",
+      bucket: { take: () => ({ allowed: true, retryAfterMs: 0 }) },
+      cloud: {
+        report: async () => ({ tee_reports: [] }),
+        complete: async () => ({
+          chatId: "chat-1",
+          responseText: '{"choices":[{"message":{"content":"{}"}}]}',
+        }),
+        signature: async () => ({
+          text: "attested-model:0:0",
+          signing_address: "0x0000000000000000000000000000000000000000",
+          signature: "0x00",
+        }),
+      },
+    }),
   });
 
 /** Everything a handler could have written, captured off the five sinks a Node process can log through. */
@@ -89,7 +116,7 @@ test("stripping does not eat the body: the bytes a tipster uploaded still arrive
 });
 
 test("a request through the real app logs nothing at all, least of all an address", async () => {
-  const app = createApp({ blobs: memoryBlobStore(1024), relay: relayForTests() });
+  const app = createApp({ blobs: memoryBlobStore(1024), relay: relayForTests(), ai: aiForTests() });
   const { logged } = await captureLogs(async () => {
     await app.request("/health");
     await app.request("/blob", { method: "POST", body: new Uint8Array([1, 2, 3, 4]) });
@@ -103,7 +130,7 @@ test("a request through the real app logs nothing at all, least of all an addres
 // store and to /relay is the linkage the 24-word identity exists to avoid — so this is checked as a
 // property of the route, not of the handler that happens to be installed.
 test("a signed action posted to /relay appears in no log and comes back in no error", async () => {
-  const app = createApp({ blobs: memoryBlobStore(1024), relay: relayForTests() });
+  const app = createApp({ blobs: memoryBlobStore(1024), relay: relayForTests(), ai: aiForTests() });
   const action = {
     tip_id: 7,
     nonce: 3,
@@ -124,13 +151,30 @@ test("a signed action posted to /relay appears in no log and comes back in no er
 });
 
 test("an oversized upload is refused without the body being echoed into the response or a log", async () => {
-  const app = createApp({ blobs: memoryBlobStore(4), relay: relayForTests() });
+  const app = createApp({ blobs: memoryBlobStore(4), relay: relayForTests(), ai: aiForTests() });
   const { result: res, logged } = await captureLogs(async () =>
     app.request("/blob", { method: "POST", body: new Uint8Array(64).fill(7) }),
   );
   assert.equal(res.status, 413);
   const text = JSON.stringify(await res.json()) + logged;
   assert.ok(!text.includes("777777"), `the refused body came back: ${text}`);
+  assert.ok(!logged.includes(IP), `an address was logged: ${logged}`);
+});
+
+// `/ai/redact` is the one route that gets the tipster's words rather than bytes they sealed, so a leak here
+// is the worst one this service can have. The upstream is a fake, which is also the point: a real call puts
+// the text on NEAR AI's host — a linkage ARCHITECTURE §7 accepts and a log line would make permanent.
+test("the text posted to /ai/redact reaches no log, not even on the request that succeeds", async () => {
+  const app = createApp({ blobs: memoryBlobStore(1024), relay: relayForTests(), ai: aiForTests() });
+  const { result: res, logged } = await captureLogs(async () =>
+    app.request("/ai/redact", {
+      method: "POST",
+      headers: { ...forwardHeaders(), "content-type": "application/json" },
+      body: JSON.stringify({ text: SECRET_BODY, nonce: "ab".repeat(32) }),
+    }),
+  );
+  assert.equal(res.status, 200, await res.clone().text());
+  assert.ok(!logged.includes(SECRET_BODY), "the tipster's text was logged");
   assert.ok(!logged.includes(IP), `an address was logged: ${logged}`);
 });
 
@@ -141,17 +185,31 @@ const API_SOURCES = [
   "src/index.ts",
   "src/app.ts",
   "src/env.ts",
+  "src/json.ts",
   "src/middleware/no-logs.ts",
   "src/routes/blob.ts",
   "src/routes/relay.ts",
   "src/routes/ai.ts",
   "src/routes/quote.ts",
+  "src/ai/cloud.ts",
+  "src/ai/redact.ts",
   "src/relay/gate.ts",
   "src/relay/queue.ts",
   "src/relay/ratelimit.ts",
   "src/relay/submit.ts",
   "src/store/blob.ts",
 ];
+
+// `src/ai/cloud.ts` is the one file here that makes an outbound request, and the URL it builds carries the
+// nonce the tipster chose. A `fetch` failure message can contain that URL, so the ban here is on printing an
+// error object wholesale — the two AI files have to name what failed, not hand over what it failed on.
+test("no api source may print a caught error object, only a message it chose to write", () => {
+  for (const file of API_SOURCES) {
+    const text = readFileSync(new URL(`../${file}`, import.meta.url), "utf8");
+    assert.ok(!/console\.\w+\(\s*(error|err|cause)\s*[,)]/.test(text), `${file} logs a caught error`);
+    assert.ok(!/console\.\w+\(.*\bc\b\s*[,)]/.test(text), `${file} logs a request context`);
+  }
+});
 
 test("no route may import a request logger or hand a request object to a console sink", () => {
   for (const file of API_SOURCES) {
@@ -167,9 +225,16 @@ test("no route may import a request logger or hand a request object to a console
 // an exhibit. The relay route is where that temptation actually arrives — the obvious way to check a
 // tipster's signature server-side is to import `verify` — so the ban is checked here, in source, where a
 // comment explaining it cannot be skipped.
+//
+// It matches import and export statements, not every mention. The AI proxy has to name the package in its
+// comments to explain why it assembles the attestation bundle but never checks one, and a ban that punished
+// that sentence would get the sentence deleted rather than the import refused.
+const IMPORTS_CLIENT_PACKAGE =
+  /^\s*(?:import|export)\b[^;\n]*["']@sealedtip\/(?:crypto|clean)["']|import\(\s*["']@sealedtip\/(?:crypto|clean)["']/m;
+
 test("the API may not import client crypto or client cleaning", () => {
   for (const file of API_SOURCES) {
     const text = readFileSync(new URL(`../${file}`, import.meta.url), "utf8");
-    assert.ok(!/@sealedtip\/(crypto|clean)/.test(text), `${file} imports a client-side package`);
+    assert.ok(!IMPORTS_CLIENT_PACKAGE.test(text), `${file} imports a client-side package`);
   }
 });

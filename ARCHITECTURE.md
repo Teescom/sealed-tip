@@ -191,11 +191,46 @@ files ─► clean (rasterise PDF | re-encode image | optional scan mode) ─►
 **Status checks and claims:** the tipster enters their 24 words (plus the optional passphrase) on `/status` or `/claim`. Keys are re-derived locally and the browser signs the action.
 
 ## 7. AI redaction (NEAR AI Cloud)
-1. **Preflight:** `GET /v1/attestation/report?model=<id>&provider=near&signing_algo=ecdsa&nonce=<hex32>` with headers `x-no-aliasing: true` and `Authorization: Bearer`. Verify the TDX quote with DCAP, check that the nonce and `signing_address` are bound in the report data, and replay the event log to RTMR3. Start from `near-examples/nearai-cloud-verification-example`.
-2. **Completion:** `POST /v1/chat/completions` (canonical model id). The system prompt asks for JSON `{suggestions:[{span, reason, replacement}], residual_risks:[…]}`, focused on content that could identify the tipster.
-3. **Signature:** `GET /v1/signature/<chat_id>?signing_algo=ecdsa`. Check `text == "<model>:<sha256(req)>:<sha256(resp)>"` and that the signer equals the attested `signing_address`.
-4. **Bundle:** the attestation, verification result and signature (no PII) become `attestation_hash`. The bundle is shown in the "Verified enclave" panel and can be re-verified with `scripts/verify-attestation.ts`.
-5. **Proxy:** stateless, holds the key, uses the `noLogs` middleware, and keeps no copy of the request or response.
+
+Built in `apps/api/src/ai/` (S-8.5), with the verification half in `packages/crypto/src/attestation.ts` and
+the offline verifier in `scripts/verify-attestation.ts`. The five steps are the contract with the service;
+what follows each one is what was measured or decided when the route was written.
+
+1. **Preflight:** `GET /v1/attestation/report?model=<id>&nonce=<hex32>&signing_algo=ecdsa` with header
+   `x-no-aliasing: true`. **Measured:** the endpoint is public on `cloud-api.near.ai` — it answers with no
+   `Authorization` at all — so the bearer key is not sent to it. Fewer places a key appears is the rule. The
+   model id is percent-encoded into one query parameter, which a test proves cannot smuggle a second `nonce`
+   or `signing_algo` past us. This call runs **before** anything is paid for: an answer that cannot be
+   attested is not worth an inference credit.
+2. **Completion:** `POST /v1/chat/completions` (canonical model id) with the system prompt asking for JSON
+   `{suggestions:[{span, reason, replacement}], residual_risks:[…]}`, focused on content that could identify
+   the tipster. **The request body is serialized once by the caller and forwarded as those exact bytes**,
+   because step 3 signs sha256 of them; re-shaping the JSON — even the same object — changes the hash and
+   breaks the only binding that says *this* answer is for *this* ask. A model that answers in prose is not
+   refused: its bytes are still attestable, so the words come back marked `unparsed` and the tipster's page
+   shows them.
+3. **Signature:** `GET /v1/signature/<chat_id>?signing_algo=ecdsa`. Check `text == "<model>:<sha256(req)>:<sha256(resp)>"`
+   — recomputed from the stored bytes, never taken from what the response claims — and that the signer equals
+   an attested `signing_address`. **Never measured against the live service**, because it needs a chat
+   completion and so the API key the owner has not issued: the documented field names are read tolerantly, an
+   answer that states none of them is a 502 naming what is missing, and the shape is a spec reading rather
+   than a fact.
+4. **Bundle:** the version, the nonce the client chose, the model, the exact request and response bytes, the
+   report and the signature become one `RedactionBundle`; `attestation_hash` is sha256 over its canonical
+   JSON (sorted keys, `undefined` dropped), so the hash is reproducible from the file alone. The bundle is
+   shown in the "Verified enclave" panel (P10) and re-verified offline with
+   `pnpm verify-attestation -- --redaction <file> --nonce <hex32>`, which prints its verdicts, the hash, and
+   the three things it cannot prove: **secp256k1 validity** of the response signature (checking that needs a
+   curve implementation, and `@noble/curves` is an ask-first dependency), the **Intel DCAP collateral chain**
+   over each quote, and **RTMR3**, which is pinned by an app/os allow-list rather than replayed from the event
+   log. They are listed as `unchecked` on purpose: a bundle this tool cannot fully grade must not print
+   "verified".
+5. **Proxy:** stateless, holds the key, mounted behind `noLogs`, keeps no copy of the request or the response,
+   and sends `cache-control: no-store` so the bundle is not resident in a CDN either. A text over 8 KiB is a
+   413 that names bytes only, and with no `NEAR_AI_API_KEY` the route answers 503 before it spends anything.
+   **It assembles evidence and does not grade it** — the same split S-8.4 chose, for the same reason: §5 of
+   `project_structure.md` keeps `packages/crypto` out of this process, and a proxy scoring its own work would
+   be evidence of nothing. The graders are the tipster's client and the offline script.
 
 ## 8. Payout
 - **Testnet:** `Payout::Near` to a fresh implicit account generated at claim time. The contract calls `storage_deposit` and sends the gas drip.
@@ -213,13 +248,14 @@ files ─► clean (rasterise PDF | re-encode image | optional scan mode) ─►
 |---|---|
 | `POST /blob`, `GET /blob/:cid` | Ciphertext only; 25 MB cap |
 | `POST /relay/:action` | Queue signed actions; random delay; per-IP-less rate limit (token bucket keyed by claim pubkey + global) |
-| `POST /ai/redact` | Stateless proxy plus attestation bundle |
+| `POST /ai/redact` | Stateless proxy plus attestation bundle (built, S-8.5); answers 503 with no API key and keeps nothing |
 | `POST /quote` | 1Click quote proxy |
 
 - Run **2 relayer instances** with separate accounts, both allow-listed.
 - The `noLogs` middleware drops IPs and bodies; a test asserts it.
 - **What `POST /relay/:action` checks, and what it does not.** It forwards only `submit_tip`, `checkin`, `retract` and `claim`; validates the body against the same zod schemas that describe the deployed wasm; and for an action, reads the tip so a call naming a tip that does not exist is refused for free instead of costing relayer gas. It does **not** verify the signature: that is `env::ed25519_verify`'s job (ESSENTIALS #15), a second copy of the signed-message format in TypeScript is a copy that goes stale, and §5 of `project_structure.md` keeps `packages/crypto` out of this process. The cost of that choice is one failed relayer transaction per well-formed forgery, which is what the global token bucket bounds.
 - **Rate limit is two token buckets, never an IP.** Per-claim-pubkey is fairness against one misbehaving page and cannot be a defence, since a pubkey is either caller-supplied or public on the tip; the shared bucket is what a flood actually runs into. A refusal consumes nothing.
+- **`POST /ai/redact` is the one endpoint that holds a secret and reads plaintext, and that is the documented exception to §5 of `project_structure.md`, not a breach of it.** It holds `NEAR_AI_API_KEY` (which is why the browser cannot be told to call the service directly) and it sees the passage the tipster chose to send for analysis — never a tipster key, never an exhibit, never anything the cleaners produced. What it does not do is check the attestation it fetched: the bundle is assembled here and graded by a client or a script that holds `packages/crypto`, per §7.5. Its limits are about our inference credit rather than identity, because at this step of the flow there is no claim pubkey to key on and an IP is a name this service must not keep: 8 KiB of text per request, 6 requests at once, 2 a minute. An upstream failure is a 502 that names the endpoint and the status and repeats no word of the request, and nothing about a redaction request reaches a log — a test asserts that on a request that succeeds.
 
 **keeper**
 - Calls `heartbeat` every 5 minutes.
