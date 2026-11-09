@@ -58,7 +58,7 @@ src/
 ├── switch.rs     # checkin (signed), trigger (anyone), post_released_keys + heartbeat (keeper)
 ├── admin.rs      # owner: set_relayers, set_keeper — never funds or tips
 ├── token.rs      # promises + on_claim_paid rollback
-├── views.rs      # get_programme, list_programmes, get_programme_stats, get_tip_public (no CIDs), get_tip_for_panel
+├── views.rs      # get_programme, list_programmes, get_programme_stats, get_tip_public (no CIDs), get_tip_for_panel, get_keeper_info
 └── test_utils.rs # #[cfg(test)] only: fictional make_programme / make_tip / make_contract + as_caller (S-2.12)
 tests/
 ├── common/mod.rs  # S-1.6 sandbox harness: boots a node, deploys both contracts, mint/register/transfer/views/advance
@@ -84,11 +84,13 @@ res/                     # pinned sputnikdao2.wasm + SPUTNIK_VERSION.txt
 |---|---|---|
 | `packages/core/src/types.ts` | zod mirror of `types.rs` | — |
 | `packages/core/src/contract.ts` | view client; the only place with method names | — |
+| `packages/core/src/bundle.ts` | the exhibit bundle schema: what one tip's ciphertext contains, shared by the tipster's browser, the panel's browser and `pnpm demo` | cleaned bytes only — there is no field for metadata, and an unknown key is stripped rather than stored |
 | `packages/crypto/src/keys.ts` | 24-word secret, HKDF → ed25519 + x25519 | **browser-only** |
 | `packages/crypto/src/actions.ts` | borsh SignedAction + domain tag, signing | **browser-only** (keys) |
 | `packages/crypto/src/borsh.ts` | minimal borsh writer; must match the Rust derive, checked by `fixtures/vectors.json` | — |
 | `packages/crypto/src/ed25519.ts` | @noble/ed25519 with `hashes.sha512` bound (browser and Node must sign identically) | — |
 | `packages/crypto/src/seal.ts` | XChaCha20-Poly1305 bundles, sealed boxes, cid | **browser-only** (plaintext) |
+| `packages/crypto/src/bundle.ts` | the bundle's canonical serialization, seal/open, and the report hash — the wire half of `core`'s schema | **browser-only** (plaintext); `evidence_hash` is `sha256(ciphertext)`, deliberately not a fingerprint of the content (§14.7) |
 | `packages/crypto/src/pow.ts` | PoW solve/check | — |
 | `packages/crypto/src/attestation.ts` | offline re-verify of a NEAR AI Cloud attestation bundle (nonce + signing-address bindings, TDX quote v4 register offsets, RTMR replay from the event log, compose-manifest hash, OHTTP ed25519 wrapper, GPU evidence nonce, compose-manager action-log quote) and of a whole `RedactionBundle` from the proxy (`verifyRedactionBundle`, `responseSignatureText`, `canonicalJson`, `attestationHashOf`) | no network, no new deps; malformed input becomes a failed check, never a throw; the secp256k1 validity, Intel collateral and RTMR3 gaps are returned as an `unchecked` list instead of scored as passes |
 | `packages/clean/src/gate.ts` | magic-byte sniff; PDF/JPEG/PNG only; everything else refused | **browser-only** |
@@ -96,6 +98,9 @@ res/                     # pinned sputnikdao2.wasm + SPUTNIK_VERSION.txt
 | `packages/clean/src/host.ts` | the `CanvasHost` port: the one seam through which the cleaners touch pixels, so the package needs neither the DOM nor a native image module | DOM host is `apps/web` (P10), Node host is `packages/clean/test/node_host.ts` |
 | `packages/clean/src/index.ts` | `cleanFile`: gate → clean → optional scan, in the one call the UI makes | the only entry `apps/web` imports |
 | `packages/clean/tools/make-fixtures.ts` | writes the four fictional dirty files in `fixtures/files/`, then re-opens each one and demands the leak it planted | `pnpm make:fixtures`; byte-deterministic |
+| `apps/web/lib/config.ts` | the four `NEXT_PUBLIC_*` coordinates, validated into sentences rather than a stack trace; `daysToNs` for a switch interval | no secret is readable: nothing outside that prefix is ever looked at, and a placeholder contract id is refused by name |
+| `apps/web/lib/api.ts` | the tip API's four calls (`/blob` put+get, `/relay/:action`, `/ai/redact`) with the server's caps mirrored locally | the refusal happens before an upload, so plaintext never leaves the browser for a blob the store would reject anyway |
+| `apps/web/lib/dom-canvas-host.ts` | the browser `CanvasHost`: `OffscreenCanvas` where present, `createImageBitmap` to decode, `toBlob`/`convertToBlob` to encode, pdfjs on a module worker | the DOM is reached through three injected primitives, so the web tests are Node tests and the cleaning arithmetic is the same one `packages/clean` was vouched for |
 | `apps/web/app/page.tsx` | landing + Tor guidance | no third-party loads |
 | `apps/web/app/p/[id]` | public programme page | no tipster data |
 | `apps/web/app/submit/[programme]` | tipster flow | **browser-only** plaintext |

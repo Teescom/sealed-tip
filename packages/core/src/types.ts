@@ -92,6 +92,18 @@ export const TipPublic = z.object({
   switch_triggered: z.boolean(),
 });
 
+/**
+ * `get_keeper_info` in `contracts/sealedtip/src/views.rs`: the keeper as the chain appointed it.
+ *
+ * The tipster's browser needs `keeper_x25519_pub` before it can arm a dead man's switch, and this is the
+ * only source that is still right after the owner rotates the keeper.
+ */
+export const KeeperInfo = z.object({
+  keeper: AccountId,
+  keeper_x25519_pub: Bytes32,
+  keeper_last_seen: U64,
+});
+
 export const ProgrammeStats = z.object({
   programme_id: z.number().int(),
   balance: U128,
@@ -112,4 +124,5 @@ export type Switch = z.infer<typeof Switch>;
 export type Tip = z.infer<typeof Tip>;
 export type Payout = z.infer<typeof Payout>;
 export type TipPublic = z.infer<typeof TipPublic>;
+export type KeeperInfo = z.infer<typeof KeeperInfo>;
 export type ProgrammeStats = z.infer<typeof ProgrammeStats>;

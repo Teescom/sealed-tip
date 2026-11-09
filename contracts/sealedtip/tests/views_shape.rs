@@ -7,7 +7,7 @@
 //! clock. It is the read-side twin of `tests/vectors.rs` (S-5.8): that file locks the *write* encoding
 //! TypeScript produces, this one locks the *read* encoding TypeScript consumes.
 //!
-//! Refresh the fixture the same way it was made: print the five views here and write them out. What must
+//! Refresh the fixture the same way it was made: print the views here and write them out. What must
 //! never happen is editing the fixture to make this test pass without re-capturing it.
 mod common;
 
@@ -150,13 +150,15 @@ async fn the_deployed_wasm_returns_the_shape_the_typescript_types_parse() {
     let stats = env.programme_stats(programme_id).await;
     let public = env.tip_public(tip_id).await;
     let tip = env.tip_view(tip_id).await;
+    let keeper = env.keeper_info().await;
 
-    let live: [(&str, &Value); 5] = [
+    let live: [(&str, &Value); 6] = [
         ("get_programme", &programme),
         ("get_programme_stats", &stats),
         ("list_programmes", &list),
         ("get_tip_public", &public),
         ("get_tip_for_panel", &tip),
+        ("get_keeper_info", &keeper),
     ];
 
     // One comparison pass so a struct that drifted in three places reports three differences, not one per

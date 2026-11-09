@@ -56,7 +56,7 @@ Tipster browser (no wallet, Tor recommended)           Panel browser (wallet)
 | Approved extra deps (2026-11-04) | `near-contract-standards` 5.30 (mock-ft NEP-141/145) · Vitest 5.1 (web tests) · `ed25519-dalek` 2.2 (2026-11-06, **dev/test only**, rationale in the Tests row above; flag to the owner if a non-test use is ever proposed) |
 | Token | Mock NEP-141 `tusdc.<you>.testnet` (NEP-145 storage); mainnet USDC **VERIFY** id |
 | Panel | Sputnik DAO v2 — testnet factory `sputnik-v2.testnet`, mainnet `sputnik-dao.near`; wasm pinned in `contracts/sealedtip/res/` (S-0.7, verified 2026-11-05) |
-| Frontend | Next.js 16, TypeScript, Tailwind; wallet-selector for panel/funders only |
+| Frontend | Next.js 16, TypeScript, Tailwind; wallet-selector for panel/funders only. `apps/web` also declares `zod` (the same `^4.6.7` the other packages use — it is already in the browser bundle through `@sealedtip/core`) and `pdfjs-dist` (the same range as `packages/clean`, because the browser canvas host has to point the *same* pdfjs module at its worker). Neither is a new package in the tree. |
 | Client crypto | `libsodium-wrappers` (sealed boxes, XChaCha20-Poly1305), `@noble/ed25519`, `@noble/hashes` (HKDF, sha256), `@scure/bip39` (entropy ↔ words), `@dao-xyz/borsh` or hand-rolled borsh encoder |
 | Client cleaning | `pdfjs-dist` (render pages), `pdf-lib` (rebuild PDF from images), canvas re-encode, `exifr` (show what's removed). The package talks to a canvas through its own `CanvasHost` port, never to a DOM: `apps/web` (P10) supplies the browser host, and `@napi-rs/canvas` is a **dev/test-only** dependency of `packages/clean` so a Node test can implement the same port — a cleaning package with a native image module in `dependencies` cannot be shipped to a tipster's browser. (pdfjs's own Node canvas factory lazily requires that same package, so nothing new enters the tree; supplying a partial factory from outside is what breaks it, which is why the host hands pdfjs no `CanvasFactory` at all and renders with `{ canvas, viewport }`.) |
 | Backend | Node 22 + Hono `tip-api` (relayer queue, blobs, AI proxy, quotes); `keeper` worker |
@@ -177,6 +177,7 @@ pub enum Payout {
 - `get_programme`, `list_programmes`, `get_programme_stats` → `{balance, reserved, submitted, under_review, accepted, rejected, paid, keeper_last_seen}`.
 - `get_tip_public(id)` → status, age, switch deadline; no CIDs.
 - `get_tip_for_panel(id)` → CIDs.
+- `get_keeper_info()` → `{keeper, keeper_x25519_pub, keeper_last_seen}`. Read-only, and it adds no fact the chain was not already publishing — `set_keeper` makes the keeper's X25519 key rotatable state, so this is the only source a tipster's browser can seal a switch key against.
 
 ## 6. Client pipeline (tipster)
 ```
@@ -448,3 +449,39 @@ Five decisions that a reader of `tip.rs` would otherwise have to re-derive, each
   tipster never agreed to, and would turn the dead man's switch into a second way to bury evidence.
   The same reasoning is why an all-recused panel throws instead of posting an empty key set: silence an
   operator can see beats a release that looks answered. (P9, `apps/keeper/src/release.ts`.)
+
+### 14.7 P10 client decisions (2026-11-09)
+
+- **`evidence_hash` is `sha256(ciphertext)` — the same bytes as the CID — and not a hash of the
+  plaintext.** A content hash is cheap to compute and would let the panel verify what it decrypted, but it
+  is a permanent, chain-visible fingerprint of the document itself: two tipsters who both leak the same
+  invoice would be linked by their `evidence_hash` even though their ciphertexts differ. What the client
+  does instead is hash the *canonical serialization* of the bundle it is about to encrypt
+  (`packages/crypto/src/bundle.ts::sealBundle`), so the panel can recompute it after opening and still get
+  the check, and nobody who cannot open the box gets anything. Locked by the crypto test "the evidence hash
+  is the cid, in bytes — and neither is a fingerprint of the content".
+- **There is one bundle, so `K_switch == K` unless the tipster opts into raw.** The contract's `Switch`
+  stores a CID for *the key sealed to the keeper* and no CID for a second ciphertext, and the keeper
+  re-seals whatever `openSealed` hands back without looking at it (`apps/keeper/src/release.ts`). The
+  reading that fits both is that the switch releases the same exhibit the panel already holds the key to,
+  with the tipster's full description, and `includes_raw` is a flag on that one bundle rather than a
+  pointer to another. The consequence is stated instead of hidden: **a tipster who opts into raw originals
+  gives the panel those files at triage, not only if the switch fires** — which is what the switch settings
+  screen has to say out loud.
+- **The keeper's X25519 public key is read from the chain (`get_keeper_info`), never from a build
+  variable.** `set_keeper` rotates it, so a `NEXT_PUBLIC_` value is a snapshot of a decision the owner can
+  make later; and a switch sealed to the wrong key does not fail when the tipster arms it, it fails when
+  they are already in trouble. Adding a read-only view was a §5 change, so it is written down there: no new
+  mutating method, no new secret, and every field the view returns was already public.
+- **The bundle schema lives in `@sealedtip/core`, its serialization and hashing in `@sealedtip/crypto`.**
+  Three programs read the container — the tipster's browser, the panel's browser, and `pnpm demo` — and a
+  second definition of it is a container the other two cannot open. Neither move adds a dependency edge:
+  `project_structure.md` §5 keeps crypto out of `apps/api`, and the schema is a value the web tier already
+  imports from core.
+- **`apps/web` reaches the DOM through three injected primitives, so the web tests are Node tests.** A
+  jsdom dependency would be a new one (§2), and the arithmetic worth testing in a canvas host — pixels
+  round trip, a decode sizes from the image, quality passes through unmangled — does not need a DOM to
+  prove. What stays untested is whether `HTMLCanvasElement` behaves like the fake; that is the browser's
+  answer. The one thing a reader has to keep true: `pdfjs-dist` is a dependency of both `packages/clean`
+  and `apps/web`, and it must be the same version in both, because `GlobalWorkerOptions` is a module
+  singleton and the worker port has to be set on the instance the cleaner actually reads.

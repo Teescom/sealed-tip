@@ -10,6 +10,7 @@ import {
   AccountId,
   Cid,
   HexCid,
+  KeeperInfo,
   Programme,
   ProgrammeStats,
   Switch,
@@ -27,6 +28,7 @@ interface Fixture {
   readonly list_programmes: unknown;
   readonly get_tip_public: unknown;
   readonly get_tip_for_panel: unknown;
+  readonly get_keeper_info: unknown;
 }
 
 const views = JSON.parse(
@@ -54,6 +56,12 @@ test("the captured views parse against the mirror schemas", () => {
   assert.deepEqual(tip.recused, [views.accounts.member_2]);
   assert.equal(tip.sealed_keys.length, 2);
   assert.equal(tip.switch?.triggered, true);
+
+  // The submission page seals a switch key to these bytes, so the mirror has to read them the way the
+  // panel's do: a `[u8; 32]` is an array of numbers on the wire, and `keeper_last_seen` is a `U64` string.
+  const keeper = KeeperInfo.parse(views.get_keeper_info);
+  assert.deepEqual(keeper.keeper_x25519_pub, new Array(32).fill(3));
+  assert.equal(keeper.keeper_last_seen, "0");
 });
 
 /** The unit mistake this split exists to catch: a UI that formats `ops_balance` as tUSDC base units prints

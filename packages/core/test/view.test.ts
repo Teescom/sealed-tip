@@ -20,6 +20,7 @@ const programme = views["get_programme"] as Record<string, unknown>;
 const stats = views["get_programme_stats"] as Record<string, unknown>;
 const tipPublic = views["get_tip_public"] as Record<string, unknown>;
 const tipPanel = views["get_tip_for_panel"] as Record<string, unknown>;
+const keeperInfo = views["get_keeper_info"] as Record<string, unknown>;
 
 interface Call {
   readonly method: string;
@@ -77,6 +78,12 @@ test("each method calls the view the contract exports with the argument it decla
       payload: tipPanel,
       call: (c) => c.getTipForPanel(3),
       want: { method: "get_tip_for_panel", args: { tip_id: 3 } },
+    },
+    {
+      name: "getKeeperInfo",
+      payload: keeperInfo,
+      call: (c) => c.getKeeperInfo(),
+      want: { method: "get_keeper_info", args: {} },
     },
   ];
   for (const { name, payload, call, want } of cases) {
