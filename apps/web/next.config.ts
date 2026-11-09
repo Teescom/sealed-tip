@@ -1,21 +1,10 @@
-// PRIVACY INVARIANT 3: tipster pages load nothing from third parties. Strict CSP on every route (S-10.1).
+// PRIVACY INVARIANT 3: tipster pages load nothing from third parties (S-10.1).
+//
+// The CSP itself is NOT here — see `proxy.ts` and `lib/csp.ts`. A config file is read once at build
+// time and the policy needs a per-request nonce, because the App Router's own inline scripts are part of
+// every page; without it the browser refuses them and no page ever boots. Everything that does not need to
+// vary per request still belongs in this file.
 import type { NextConfig } from "next";
-
-const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8787";
-const rpcUrl = process.env.NEXT_PUBLIC_NEAR_RPC_URL || "https://rpc.testnet.near.org";
-
-const csp = [
-  "default-src 'self'",
-  "script-src 'self' 'wasm-unsafe-eval'",
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' blob: data:",
-  "font-src 'self'",
-  `connect-src 'self' ${apiUrl} ${rpcUrl}`,
-  "frame-ancestors 'none'",
-  "base-uri 'none'",
-  "form-action 'self'",
-  "worker-src 'self' blob:",
-].join("; ");
 
 const config: NextConfig = {
   transpilePackages: ["@sealedtip/core", "@sealedtip/crypto", "@sealedtip/clean"],
@@ -32,7 +21,6 @@ const config: NextConfig = {
     return [{
       source: "/:path*",
       headers: [
-        { key: "Content-Security-Policy", value: csp },
         { key: "Referrer-Policy", value: "no-referrer" },
         { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
       ],

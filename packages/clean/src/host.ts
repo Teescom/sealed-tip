@@ -66,4 +66,14 @@ export interface CleanPage {
 export const readBlob = async (file: Blob): Promise<Uint8Array> =>
   new Uint8Array(await file.arrayBuffer());
 
-export const blobOf = (bytes: Uint8Array, type: Supported): Blob => new Blob([bytes], { type });
+/**
+ * A cleaned byte string as the `Blob` the caller hands to an upload or a download link.
+ *
+ * The view is copied, not referenced: `BlobPart` is typed as backed by a plain `ArrayBuffer`, and a
+ * cleaner's bytes arrive as `Uint8Array<ArrayBufferLike>`, which the DOM says could be a shared buffer
+ * something else is still writing. Every caller here passes freshly encoded bytes, so the copy costs one
+ * pass over a page and buys the guarantee that the blob holds what was cleaned, not whatever the surface
+ * becomes next.
+ */
+export const blobOf = (bytes: Uint8Array, type: Supported): Blob =>
+  new Blob([new Uint8Array(bytes)], { type });
