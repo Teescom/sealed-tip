@@ -5,11 +5,12 @@
 > NEAR Hackathon 2026 · track **Privacy & Private AI** · deadline 14 Nov 2026, 23:59 UTC.
 > Live plan and progress: [`ROADMAP.md`](ROADMAP.md) · decisions: [`ARCHITECTURE.md`](ARCHITECTURE.md) §14 · product spec: [`PRD.md`](PRD.md).
 
-**Status: 83 / 104 Must tasks done (80%), 86 / 110 overall** — every implementation phase through P10 is
-built and verified offline against a sandbox chain: 258 Rust and 399 TypeScript tests pass with none skipped
-or ignored, `pnpm lint`, `pnpm build` and `pnpm demo` all exit 0, and CI runs all three on every push and PR.
-What is left is on-chain and outward-facing rather than code: P4 (both contracts on testnet — the deployer
-root holds 1.43597 NEAR against the 2.23321 the plan moves, so it waits on a faucet top-up and an explicit
+**Status: 83 / 104 Must tasks done (80%), 86 / 110 overall** — every implementation phase through P11 is
+built and verified offline against a sandbox chain or a local simulation: 258 Rust and 399 TypeScript tests
+pass with none skipped or ignored, and `pnpm lint`, `pnpm build`, `pnpm test` and `pnpm demo` all exit 0; CI
+runs build, lint and test on every push and PR. What is left is on-chain and outward-facing rather than code:
+P4 (both contracts on testnet — the deployer root holds 1.43597 NEAR against the 2.24264 the plan moves once
+`pnpm build:contract` has refreshed the wasm it prices, so it waits on a faucet top-up and an explicit
 `pnpm deploy:testnet -- --apply`), the first live keeper heartbeat/watch/release and the first live
 `POST /ai/redact` bundle (needs `NEAR_AI_API_KEY`), the 501 quote stub `S-8.6`, the $1 mainnet check `S-0.6`,
 the response-signature half of `S-0.3`, and the P12 submission steps (Vercel, demo video, X post, form).
