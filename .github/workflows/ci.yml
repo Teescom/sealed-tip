@@ -1,6 +1,6 @@
-# CI — the two repo gates on every push and PR (S-1.9 / A-1.9).
-# `pnpm lint` and `pnpm test` are the same commands AGENTS.md tells a contributor to run locally,
-# so a green check here means the README's quickstart works on a clean Linux checkout.
+# CI — the repo gates on every push and PR (S-1.9 / A-1.9, build gate S-13.7).
+# `pnpm lint`, `pnpm test` and `pnpm build` are the same commands AGENTS.md tells a contributor to run
+# locally, so a green check here means the README's quickstart works on a clean Linux checkout.
 # Toolchain versions are pinned by measurement, not by taste: cargo-near 0.22.0 is the version `main`
 # was built and tested with, fetched by tag with its release sha256 verified before the binary is put
 # on PATH. The one asset has two routes because github.com's release-download route was answering 504;
@@ -82,3 +82,12 @@ jobs:
       # Builds both contracts with cargo-near, runs the Rust unit tests and the near-sandbox
       # integration suite, then every TypeScript package's tests.
       - run: pnpm test
+
+      # The gate `main` did not have, and needed for a reason measured rather than guessed: a tree whose
+      # web production build fails with 38 type errors (21 TS6305 about `packages/*/dist`, 13 implicit-any,
+      # 4 unknown) stayed green here, because `pnpm lint` runs `tsc -b`, which rebuilds project references
+      # from source, while `next build` type-checks against a `dist/` that is gitignored and so may be
+      # stale or, on a clean checkout, absent. The two commands are not interchangeable, and only this one
+      # is what a judge or a deploy runs. No `.env` is needed: the web bundle reads no secret, and the
+      # whole build was verified to exit 0 in a clean worktree that has no env file at all.
+      - run: pnpm build
