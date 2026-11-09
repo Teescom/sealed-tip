@@ -5,8 +5,14 @@ import { fileURLToPath } from "node:url";
 
 import { serve } from "@hono/node-server";
 
+import { createViewClient } from "@sealedtip/core";
+
 import { createApp } from "./app.js";
 import { loadEnv } from "./env.js";
+import { createQueue, randomDelayMs } from "./relay/queue.js";
+import { RELAY_LIMITS, createRateLimiter } from "./relay/ratelimit.js";
+import { createSubmitter } from "./relay/submit.js";
+import { relayRoutes } from "./routes/relay.js";
 import { memoryBlobStore } from "./store/blob.js";
 
 // A container gets its environment from the platform; a laptop gets the repo-root `.env`, which is the
@@ -27,5 +33,37 @@ if (env.BLOB_STORE_URL !== undefined) {
   );
 }
 
-serve({ fetch: createApp({ blobs: memoryBlobStore(env.BLOB_MAX_BYTES) }).fetch, port: env.API_PORT });
+// The two relayer keys are what this service spends, so they are read here and nowhere else: `createApp`
+// takes a built relay app, which keeps a test able to drive the same routes against a fake chain without
+// either importing this file or binding a port (S-8.1, S-8.4).
+const submitter = createSubmitter({
+  contract: env.SEALEDTIP_CONTRACT,
+  rpcUrl: env.NEAR_RPC_URL,
+  relayers: [
+    { account: env.RELAYER_A_ACCOUNT, secretKey: env.RELAYER_A_KEY },
+    { account: env.RELAYER_B_ACCOUNT, secretKey: env.RELAYER_B_KEY },
+  ],
+});
+
+const views = createViewClient(env.NEAR_RPC_URL, env.SEALEDTIP_CONTRACT);
+
+const relay = relayRoutes({
+  context: { contract: env.SEALEDTIP_CONTRACT, tipReader: (tipId) => views.getTipForPanel(tipId) },
+  // The limits are constants chosen from what an honest tipster does; the only numbers the operator picks
+  // are the delay range, because that is the one that has to change between a demo and a deployment.
+  limiter: createRateLimiter(RELAY_LIMITS),
+  queue: createQueue({
+    delayMs: () => randomDelayMs(env.RELAY_DELAY_MIN_S, env.RELAY_DELAY_MAX_S),
+    send: (action) => submitter.submit(action.method, action.args),
+    // Method name and the error's own message. Not the args: they carry a claim pubkey and a signature,
+    // and this is the one relay path guaranteed to write to stdout.
+    onUndelivered: (action, error) =>
+      console.error(`relay dropped ${action.method}: ${error instanceof Error ? error.message : String(error)}`),
+  }),
+});
+
+serve({
+  fetch: createApp({ blobs: memoryBlobStore(env.BLOB_MAX_BYTES), relay }).fetch,
+  port: env.API_PORT,
+});
 console.log(`tip-api listening on ${env.API_PORT} for ${env.SEALEDTIP_CONTRACT} on ${env.NEAR_NETWORK}`);

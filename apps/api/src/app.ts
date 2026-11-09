@@ -6,11 +6,16 @@ import { noLogs } from "./middleware/no-logs.js";
 import { ai } from "./routes/ai.js";
 import { blobRoutes } from "./routes/blob.js";
 import { quote } from "./routes/quote.js";
-import { relay } from "./routes/relay.js";
 import type { BlobStore } from "./store/blob.js";
 
 export interface AppDeps {
   readonly blobs: BlobStore;
+  /**
+   * Built by the caller, because the relay route is the one that needs a chain reader, two relayer keys
+   * and a queue: `index.ts` wires the real ones with `relayRoutes({...})`, a test wires stubs, and
+   * neither gets to reach for a global the way the old module-level `relay` did.
+   */
+  readonly relay: Hono;
 }
 
 export const createApp = (deps: AppDeps): Hono => {
@@ -19,7 +24,7 @@ export const createApp = (deps: AppDeps): Hono => {
   app.use("*", noLogs);
   app.get("/health", (c) => c.json({ ok: true }));
   app.route("/blob", blobRoutes(deps.blobs));
-  app.route("/relay", relay);
+  app.route("/relay", deps.relay);
   app.route("/ai", ai);
   app.route("/quote", quote);
   return app;
