@@ -20,11 +20,11 @@ export function CleaningReportView({ report }: CleaningReportViewProps) {
       <div className="space-y-2">
         {report.files.map((file, i) => (
           <div key={i} className="rounded bg-black/40 p-2 border border-emerald-900/30">
-            <div className="font-mono text-xs text-emerald-400 font-medium">
+            <div className="font-mono text-xs text-emerald-400 font-medium break-all">
               {file.name} {file.pages ? `(${file.pages} pages)` : ""}
             </div>
             {file.removed.length > 0 ? (
-              <div className="mt-1 text-xs text-neutral-300">
+              <div className="mt-1 text-xs text-neutral-300 break-words">
                 <span className="text-emerald-500">Stripped metadata: </span>
                 {file.removed.join(", ")}
               </div>

@@ -493,12 +493,13 @@ export default function PanelPage() {
               h("span", { className: "text-red-400" }, "*"),
             ),
             h("input", {
+              id: "panel-member-account",
               type: "text",
               value: memberAccount,
               onChange: (e: React.ChangeEvent<HTMLInputElement>) => setMemberAccount(e.target.value),
               placeholder: "e.g. panel1.testnet",
               className:
-                "w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-xs font-mono text-white placeholder-neutral-600 focus:outline-none focus:border-sky-500",
+                "w-full min-h-[44px] bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm font-mono text-white placeholder-neutral-600 focus:outline-none focus:border-sky-500",
             }),
           ),
           h(
@@ -506,17 +507,18 @@ export default function PanelPage() {
             null,
             h(
               "label",
-              { className: "block text-xs font-medium text-neutral-300 mb-1" },
+              { htmlFor: "panel-private-key", className: "block text-xs font-medium text-neutral-300 mb-1" },
               "X25519 Private Key (Hex or Base64) ",
               h("span", { className: "text-red-400" }, "*"),
             ),
             h("input", {
+              id: "panel-private-key",
               type: "password",
               value: privateKeyInput,
               onChange: (e: React.ChangeEvent<HTMLInputElement>) => setPrivateKeyInput(e.target.value),
               placeholder: "32 bytes hex (64 chars) or base64",
               className:
-                "w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-xs font-mono text-white placeholder-neutral-600 focus:outline-none focus:border-sky-500",
+                "w-full min-h-[44px] bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm font-mono text-white placeholder-neutral-600 focus:outline-none focus:border-sky-500",
             }),
           ),
         ),
@@ -529,18 +531,19 @@ export default function PanelPage() {
         h("h2", { className: "text-sm font-semibold text-white uppercase tracking-wider" }, "2. Tip Inspection"),
         h(
           "div",
-          { className: "flex gap-3 items-end" },
+          { className: "flex flex-col sm:flex-row gap-3 sm:items-end" },
           h(
             "div",
             { className: "flex-1 max-w-xs" },
-            h("label", { className: "block text-xs font-medium text-neutral-300 mb-1" }, "Tip ID to Inspect"),
+            h("label", { htmlFor: "tip-id-inspect", className: "block text-xs font-medium text-neutral-300 mb-1" }, "Tip ID to Inspect"),
             h("input", {
+              id: "tip-id-inspect",
               type: "number",
               min: "0",
               value: tipIdInput,
               onChange: (e: React.ChangeEvent<HTMLInputElement>) => setTipIdInput(e.target.value),
               className:
-                "w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-sky-500",
+                "w-full min-h-[44px] bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-sky-500",
             }),
           ),
           h(
@@ -550,7 +553,7 @@ export default function PanelPage() {
               onClick: handleFetchTip,
               disabled: loadingTip,
               className:
-                "px-4 py-2 bg-sky-600 hover:bg-sky-500 disabled:bg-neutral-800 text-white rounded-lg text-xs font-medium transition-colors cursor-pointer",
+                "min-h-[44px] px-5 py-2.5 bg-sky-600 hover:bg-sky-500 disabled:bg-neutral-800 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center justify-center shrink-0",
             },
             loadingTip ? "Fetching On-Chain..." : "Fetch Tip Details",
           ),
@@ -980,7 +983,8 @@ export default function PanelPage() {
                 {
                   type: "button",
                   onClick: () => setPreviewFile(null),
-                  className: "text-neutral-400 hover:text-white text-lg font-bold cursor-pointer",
+                  "aria-label": "Close exhibit preview",
+                  className: "min-h-[44px] min-w-[44px] flex items-center justify-center text-neutral-400 hover:text-white text-lg font-bold cursor-pointer rounded-lg hover:bg-neutral-800",
                 },
                 "✕",
               ),

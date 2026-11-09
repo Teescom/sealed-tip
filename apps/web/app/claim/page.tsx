@@ -454,13 +454,13 @@ function ClaimContent() {
     <div className="min-h-screen bg-neutral-950 text-neutral-100 selection:bg-sky-500/30 selection:text-sky-200">
       {/* Header */}
       <header className="border-b border-neutral-800 bg-neutral-900/60 backdrop-blur sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 min-h-[4rem] py-2 flex flex-wrap items-center justify-between gap-2">
           <Link href="/" className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-lg bg-sky-500/20 border border-sky-500/40 flex items-center justify-center font-bold text-sky-400 font-mono">
+            <div className="h-9 w-9 rounded-lg bg-sky-500/20 border border-sky-500/40 flex items-center justify-center font-bold text-sky-400 font-mono text-sm" aria-hidden="true">
               ST
             </div>
             <div>
-              <span className="font-bold tracking-tight text-white block leading-tight">
+              <span className="font-bold tracking-tight text-white block leading-tight text-sm sm:text-base">
                 Sealed Tip
               </span>
               <span className="text-[10px] text-neutral-400 uppercase tracking-widest font-mono block">
@@ -469,17 +469,17 @@ function ClaimContent() {
             </div>
           </Link>
 
-          <nav aria-label="Navigation" className="flex items-center gap-3 sm:gap-4 text-xs font-medium">
-            <Link href="/p/0" className="text-neutral-300 hover:text-white transition-colors">
+          <nav aria-label="Navigation" className="flex items-center flex-wrap gap-1 sm:gap-2 text-xs font-medium">
+            <Link href="/p/0" className="min-h-[44px] px-2.5 sm:px-3 text-neutral-300 hover:text-white transition-colors flex items-center justify-center rounded-lg hover:bg-neutral-800/50">
               Programmes
             </Link>
-            <Link href="/status" className="text-neutral-300 hover:text-white transition-colors">
-              Check Status
+            <Link href="/status" className="min-h-[44px] px-2.5 sm:px-3 text-neutral-300 hover:text-white transition-colors flex items-center justify-center rounded-lg hover:bg-neutral-800/50">
+              Status
             </Link>
-            <Link href="/claim" className="text-sky-400 font-semibold transition-colors">
-              Claim Reward
+            <Link href="/claim" className="min-h-[44px] px-2.5 sm:px-3 text-sky-400 font-semibold transition-colors flex items-center justify-center rounded-lg bg-sky-950/40 border border-sky-800/40">
+              Claim
             </Link>
-            <Link href="/panel" className="text-neutral-300 hover:text-white transition-colors hidden md:inline-block">
+            <Link href="/panel" className="min-h-[44px] px-2.5 sm:px-3 text-neutral-300 hover:text-white transition-colors hidden md:flex items-center justify-center rounded-lg hover:bg-neutral-800/50">
               Panel DAO
             </Link>
           </nav>
@@ -487,7 +487,7 @@ function ClaimContent() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-3xl mx-auto px-4 py-8">
+      <main id="main-content" className="max-w-3xl mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-2xl font-bold tracking-tight text-white">Claim Reward</h1>
           <p className="mt-1 text-sm text-neutral-400">
@@ -510,7 +510,7 @@ function ClaimContent() {
               value={tipIdInput}
               onChange={(e) => setTipIdInput(e.target.value)}
               placeholder="e.g. 0"
-              className="w-full bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 focus:outline-none focus:border-sky-500 font-mono"
+              className="w-full min-h-[44px] bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 focus:outline-none focus:border-sky-500 font-mono"
             />
           </div>
 
@@ -548,14 +548,14 @@ function ClaimContent() {
               value={passphraseInput}
               onChange={(e) => setPassphraseInput(e.target.value)}
               placeholder="leave empty if none was set"
-              className="w-full bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 focus:outline-none focus:border-sky-500"
+              className="w-full min-h-[44px] bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 focus:outline-none focus:border-sky-500"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-medium text-sm transition disabled:opacity-50"
+            className="w-full min-h-[48px] py-3 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-semibold text-sm transition disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed shadow-md"
           >
             {loading ? "Verifying Credentials..." : "Check Claim Eligibility"}
           </button>
@@ -666,13 +666,15 @@ function ClaimContent() {
               </div>
 
               {/* Tabs */}
-              <div className="flex border-b border-neutral-800">
+              <div className="flex flex-col sm:flex-row border-b border-neutral-800 gap-1 sm:gap-0" role="tablist">
                 <button
                   type="button"
+                  role="tab"
+                  aria-selected={payoutOption === "near"}
                   onClick={() => setPayoutOption("near")}
-                  className={`pb-3 px-4 text-xs font-semibold uppercase tracking-wider border-b-2 transition ${
+                  className={`min-h-[44px] pb-3 px-4 text-xs font-semibold uppercase tracking-wider border-b-2 transition flex items-center justify-center cursor-pointer ${
                     payoutOption === "near"
-                      ? "border-sky-500 text-sky-400"
+                      ? "border-sky-500 text-sky-400 bg-sky-950/20 sm:bg-transparent"
                       : "border-transparent text-neutral-400 hover:text-neutral-200"
                   }`}
                 >
@@ -680,10 +682,12 @@ function ClaimContent() {
                 </button>
                 <button
                   type="button"
+                  role="tab"
+                  aria-selected={payoutOption === "crosschain"}
                   onClick={() => setPayoutOption("crosschain")}
-                  className={`pb-3 px-4 text-xs font-semibold uppercase tracking-wider border-b-2 transition ${
+                  className={`min-h-[44px] pb-3 px-4 text-xs font-semibold uppercase tracking-wider border-b-2 transition flex items-center justify-center cursor-pointer ${
                     payoutOption === "crosschain"
-                      ? "border-sky-500 text-sky-400"
+                      ? "border-sky-500 text-sky-400 bg-sky-950/20 sm:bg-transparent"
                       : "border-transparent text-neutral-400 hover:text-neutral-200"
                   }`}
                 >
@@ -694,12 +698,13 @@ function ClaimContent() {
               {/* Option A: NEAR Payout */}
               {payoutOption === "near" && (
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <span className="text-xs text-neutral-300 font-medium">Implicit Anonymous Address</span>
                     <button
                       type="button"
                       onClick={handleGenerateFreshAccount}
-                      className="px-3 py-1.5 rounded-lg bg-sky-600/30 hover:bg-sky-600/50 border border-sky-500/40 text-sky-300 text-xs font-semibold transition"
+                      aria-label="Generate a new anonymous Ed25519 keypair and implicit NEAR account"
+                      className="min-h-[44px] px-3.5 py-2 rounded-lg bg-sky-600/30 hover:bg-sky-600/50 border border-sky-500/40 text-sky-300 text-xs font-semibold transition flex items-center justify-center cursor-pointer shrink-0"
                     >
                       + Generate Fresh Anonymous Account
                     </button>
@@ -709,7 +714,7 @@ function ClaimContent() {
                   {generatedAccount && (
                     <div className="rounded-lg border border-amber-500/40 bg-amber-950/20 p-4 space-y-3">
                       <div className="flex items-center gap-2 text-amber-300 font-semibold text-xs uppercase tracking-wider">
-                        <svg className="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <svg className="w-4 h-4 text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                           <path
                             fillRule="evenodd"
                             d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
@@ -737,7 +742,8 @@ function ClaimContent() {
                                 setCopiedAccount(true);
                                 setTimeout(() => setCopiedAccount(false), 2000);
                               }}
-                              className="px-2.5 py-1.5 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs shrink-0"
+                              aria-label="Copy generated account ID"
+                              className="min-h-[44px] min-w-[60px] px-3 py-2 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs shrink-0 flex items-center justify-center cursor-pointer border border-neutral-700"
                             >
                               {copiedAccount ? "Copied!" : "Copy"}
                             </button>
@@ -757,7 +763,8 @@ function ClaimContent() {
                                 setCopiedKey(true);
                                 setTimeout(() => setCopiedKey(false), 2000);
                               }}
-                              className="px-2.5 py-1.5 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs shrink-0"
+                              aria-label="Copy generated private key"
+                              className="min-h-[44px] min-w-[60px] px-3 py-2 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs shrink-0 flex items-center justify-center cursor-pointer border border-neutral-700"
                             >
                               {copiedKey ? "Copied!" : "Copy"}
                             </button>
@@ -864,7 +871,8 @@ function ClaimContent() {
                     (payoutOption === "near" && !nearAccountId.trim()) ||
                     (payoutOption === "crosschain" && !quote)
                   }
-                  className="w-full py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition disabled:opacity-40 disabled:cursor-not-allowed"
+                  aria-label="Submit signed claim to relayer queue"
+                  className="w-full min-h-[48px] py-3.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer shadow-md"
                 >
                   {claimSubmitting ? "Signing & Submitting Claim to Relayer..." : "Submit Claim for Payout"}
                 </button>

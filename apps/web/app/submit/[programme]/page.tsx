@@ -367,23 +367,24 @@ export default function SubmitPage({
         {/* Title & Description */}
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-neutral-300 mb-1">
+            <label htmlFor="tip-title" className="block text-sm font-medium text-neutral-300 mb-1">
               Tip Title <span className="text-red-400">*</span>
             </label>
             <input
+              id="tip-title"
               type="text"
               required
               maxLength={200}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Accounting fraud in procurement division"
-              className="w-full bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-sky-500"
+              className="w-full min-h-[44px] bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-sky-500"
             />
           </div>
 
           <div>
-            <div className="flex justify-between items-center mb-1">
-              <label className="block text-sm font-medium text-neutral-300">
+            <div className="flex flex-wrap justify-between items-center gap-2 mb-1">
+              <label htmlFor="tip-description" className="block text-sm font-medium text-neutral-300">
                 Detailed Narrative <span className="text-red-400">*</span>
               </label>
               {description.trim().length > 0 && (
@@ -391,20 +392,22 @@ export default function SubmitPage({
                   type="button"
                   onClick={handleRunAiRedaction}
                   disabled={aiRunning}
-                  className="text-xs text-purple-400 hover:text-purple-300 font-medium flex items-center gap-1"
+                  aria-label="Run AI privacy check with verifiable TEE attestation"
+                  className="min-h-[44px] px-3 py-1.5 text-xs text-purple-400 hover:text-purple-300 font-medium flex items-center gap-1 rounded-lg hover:bg-purple-950/30 transition-colors cursor-pointer"
                 >
                   {aiRunning ? "Analyzing..." : "✨ Run AI Privacy Check"}
                 </button>
               )}
             </div>
             <textarea
+              id="tip-description"
               required
               rows={6}
               maxLength={200000}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Provide full details. What happened, who was involved, and which files prove it."
-              className="w-full bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-sky-500"
+              className="w-full bg-neutral-900 border border-neutral-700 rounded-lg p-3 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-sky-500 font-sans"
             />
             <p className="text-[11px] text-neutral-500 mt-1">
               Be cautious of stylometry or unique details that only you could know.
@@ -414,7 +417,7 @@ export default function SubmitPage({
 
         {/* AI Redaction review if available */}
         {aiError && (
-          <div className="text-xs text-red-400 bg-red-950/20 p-2 rounded border border-red-800/40">
+          <div role="alert" className="text-xs text-red-400 bg-red-950/20 p-3 rounded-lg border border-red-800/40">
             AI Redaction Error: {aiError}
           </div>
         )}
@@ -434,7 +437,7 @@ export default function SubmitPage({
           <label className="block text-sm font-medium text-neutral-300">
             Evidence Files (PDF, PNG, JPEG)
           </label>
-          <div className="border border-dashed border-neutral-700 rounded-lg p-6 text-center bg-neutral-950/30">
+          <div className="border border-dashed border-neutral-700 rounded-xl p-6 text-center bg-neutral-950/30">
             <input
               type="file"
               multiple
@@ -445,9 +448,9 @@ export default function SubmitPage({
             />
             <label
               htmlFor="file-upload"
-              className="cursor-pointer text-sm text-sky-400 hover:text-sky-300 font-medium"
+              className="min-h-[44px] px-4 py-2.5 inline-flex items-center justify-center cursor-pointer text-sm text-sky-400 hover:text-sky-300 font-semibold rounded-lg hover:bg-sky-950/30 transition-colors"
             >
-              Choose files to clean & upload
+              Choose files to clean &amp; upload
             </label>
             <p className="text-xs text-neutral-500 mt-1">
               PDFs are rasterised to eliminate revision history. Images are re-encoded without EXIF.
@@ -459,18 +462,19 @@ export default function SubmitPage({
               {selectedFiles.map((sf, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center justify-between p-3 rounded-lg border border-neutral-800 bg-neutral-900/60 text-xs"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg border border-neutral-800 bg-neutral-900/60 text-xs"
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="font-mono text-neutral-200">{sf.file.name}</span>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="font-mono text-neutral-200 break-all">{sf.file.name}</span>
                     <span className="text-neutral-500">
                       ({(sf.file.size / 1024).toFixed(1)} KB)
                     </span>
-                    <label className="flex items-center gap-1 cursor-pointer text-neutral-400">
+                    <label className="min-h-[44px] flex items-center gap-2 cursor-pointer text-neutral-300 hover:text-white">
                       <input
                         type="checkbox"
                         checked={sf.scanMode}
                         onChange={() => handleToggleScanMode(idx)}
+                        className="w-4 h-4 rounded border-neutral-700 text-sky-500 focus:ring-sky-500 cursor-pointer"
                       />
                       <span>Photocopier scan mode</span>
                     </label>
@@ -478,7 +482,8 @@ export default function SubmitPage({
                   <button
                     type="button"
                     onClick={() => handleRemoveFile(idx)}
-                    className="text-red-400 hover:text-red-300"
+                    aria-label={`Remove file ${sf.file.name}`}
+                    className="min-h-[44px] min-w-[70px] px-3 py-2 text-red-400 hover:text-red-300 rounded-lg hover:bg-red-950/30 font-medium flex items-center justify-center cursor-pointer shrink-0 border border-red-900/40 sm:border-0"
                   >
                     Remove
                   </button>
