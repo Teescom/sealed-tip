@@ -125,7 +125,7 @@ res/                     # pinned sputnikdao2.wasm + SPUTNIK_VERSION.txt
 | `apps/keeper/test/support.ts` | the no-network fakes: chain, blobs, calls, real X25519 members | a test never needs a port, a node, a `.env` or a timer |
 | `scripts/lib/app-cert.ts` | Node-only verify of the dstack X.509 chain in `info.app_cert`: leaf → App CA → KMS CA, validity, and the quote's MRTD + RTMR0-3 + compose hash embedded in the signed leaf | stays out of `packages/crypto` because that package must be browser-safe |
 | `scripts/lib/redaction-report.ts` | what a stored redaction bundle proves, as one pure function: the crypto package's checks plus the caller's app-cert chain, the `attestation_hash`, and the `unchecked` gaps in the order a judge reads them | the CLI prints it and `scripts/test/redaction-report.test.ts` asserts its shape, so "verified" cannot be printed over an unverifiable signature |
-| `scripts/*` | deploy, seed, demo, spam, verify-attestation, sign-statement, gen-vectors | fictional data only |
+| `scripts/*`, `scripts/demo/*` | deploy, seed, demo (PRD §8 acceptance test steps 1-8), spam (anti-spam stress test), verify-attestation, sign-statement, gen-vectors | fictional data only |
 
 Tests use `node:test` via `tsx`. Web tests use Vitest.
 
