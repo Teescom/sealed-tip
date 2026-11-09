@@ -5,7 +5,15 @@
 > NEAR Hackathon 2026 · track **Privacy & Private AI** · deadline 14 Nov 2026, 23:59 UTC.
 > Live plan and progress: [`ROADMAP.md`](ROADMAP.md) · decisions: [`ARCHITECTURE.md`](ARCHITECTURE.md) §14 · product spec: [`PRD.md`](PRD.md).
 
-**Status: feature-complete, all core phases built & verified** — 24 / 103 Must tasks marked done (with all remaining implementation and acceptance issues completed across contracts, web app, backend, keeper, and demo suite). Working and tested: the tipster key model (24
+**Status: 83 / 104 Must tasks done (80%), 86 / 110 overall** — every implementation phase through P10 is
+built and verified offline against a sandbox chain: 258 Rust and 399 TypeScript tests pass with none skipped
+or ignored, `pnpm lint`, `pnpm build` and `pnpm demo` all exit 0, and CI runs all three on every push and PR.
+What is left is on-chain and outward-facing rather than code: P4 (both contracts on testnet — the deployer
+root holds 1.43597 NEAR against the 2.23321 the plan moves, so it waits on a faucet top-up and an explicit
+`pnpm deploy:testnet -- --apply`), the first live keeper heartbeat/watch/release and the first live
+`POST /ai/redact` bundle (needs `NEAR_AI_API_KEY`), the 501 quote stub `S-8.6`, the $1 mainnet check `S-0.6`,
+the response-signature half of `S-0.3`, and the P12 submission steps (Vercel, demo video, X post, form).
+Both counts are what `python3 tools/roadmap.py ROADMAP.md` prints, measured 2026-11-09. Working and tested: the tipster key model (24
 words ↔ secret ↔ HKDF-derived ed25519/X25519 keys), the borsh + ed25519 action wire format — verified to
 be byte-identical in Rust and TypeScript from one shared fixture — the contract's access guards, PoW
 check, time scaling and NEP-297 events, programme accounting (open, fund over NEP-141, withdraw what is
