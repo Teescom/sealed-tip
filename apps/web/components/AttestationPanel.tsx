@@ -14,7 +14,7 @@ export function AttestationPanel({ bundleHash, model, nonce }: AttestationPanelP
       <p className="text-sky-400 mb-2">
         Verified against the NEAR AI Cloud Intel TDX hardware attestation quote. Text never touches un-attested servers.
       </p>
-      <div className="font-mono space-y-1 text-[11px] text-sky-300">
+      <div className="font-mono space-y-1 text-[11px] text-sky-300 break-all">
         <div>
           <span className="text-sky-500">Hash: </span>
           {bundleHash}

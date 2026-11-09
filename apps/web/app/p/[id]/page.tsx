@@ -296,7 +296,7 @@ export default function ProgrammePage({
   if (loading) {
     return h(
       "div",
-      { className: "min-h-screen bg-neutral-950 text-neutral-100 flex items-center justify-center p-4" },
+      { className: "min-h-screen bg-neutral-950 text-neutral-100 flex items-center justify-center p-4", role: "status", "aria-live": "polite" },
       h(
         "div",
         { className: "text-center space-y-3" },
@@ -312,14 +312,14 @@ export default function ProgrammePage({
       { className: "min-h-screen bg-neutral-950 text-neutral-100 flex items-center justify-center p-4" },
       h(
         "div",
-        { className: "max-w-md w-full bg-neutral-900 border border-neutral-800 rounded-xl p-6 text-center space-y-4" },
-        h("div", { className: "h-10 w-10 mx-auto rounded-full bg-red-950/40 border border-red-800/60 flex items-center justify-center text-red-400 font-bold" }, "!"),
+        { className: "max-w-md w-full bg-neutral-900 border border-neutral-800 rounded-xl p-6 text-center space-y-4", role: "alert", "aria-live": "assertive" },
+        h("div", { className: "h-10 w-10 mx-auto rounded-full bg-red-950/40 border border-red-800/60 flex items-center justify-center text-red-400 font-bold", "aria-hidden": "true" }, "!"),
         h("h1", { className: "text-lg font-bold text-white" }, "Programme Error"),
         h("p", { className: "text-sm text-neutral-400" }, error ?? "Programme not found"),
         h(
           "div",
           { className: "pt-2" },
-          h(Link, { href: "/", className: "inline-block bg-neutral-800 hover:bg-neutral-700 text-white text-xs px-4 py-2 rounded-lg font-medium transition-colors" }, "← Back to Overview"),
+          h(Link, { href: "/", className: "inline-flex items-center justify-center min-h-[44px] bg-neutral-800 hover:bg-neutral-700 text-white text-xs px-4 py-2 rounded-lg font-medium transition-colors" }, "← Back to Overview"),
         ),
       ),
     );
@@ -336,23 +336,23 @@ export default function ProgrammePage({
       { className: "border-b border-neutral-800 bg-neutral-900/60 sticky top-0 z-40 backdrop-blur" },
       h(
         "div",
-        { className: "max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between" },
+        { className: "max-w-5xl mx-auto px-4 sm:px-6 min-h-[56px] py-2 flex flex-wrap items-center justify-between gap-3" },
         h(
           "div",
-          { className: "flex items-center gap-3" },
-          h(Link, { href: "/", className: "text-neutral-400 hover:text-white text-xs transition-colors" }, "← Sealed Tip"),
-          h("span", { className: "text-neutral-600" }, "/"),
+          { className: "flex items-center gap-2 sm:gap-3 flex-wrap" },
+          h(Link, { href: "/", className: "inline-flex items-center min-h-[44px] text-neutral-400 hover:text-white text-xs transition-colors" }, "← Sealed Tip"),
+          h("span", { className: "text-neutral-600", "aria-hidden": "true" }, "/"),
           h("span", { className: "text-xs font-mono font-bold text-sky-400" }, `Programme #${programme.id}`),
         ),
         h(
           "div",
-          { className: "flex items-center gap-3" },
+          { className: "flex items-center gap-2 sm:gap-3 flex-wrap" },
           h(KeeperStatus, { lastSeenNs: keeper.keeper_last_seen }),
           h(
             Link,
             {
               href: `/submit/${programme.id}`,
-              className: "bg-sky-600 hover:bg-sky-500 text-white text-xs px-3.5 py-1.5 rounded-lg font-semibold transition-colors shadow-sm",
+              className: "inline-flex items-center justify-center min-h-[44px] bg-sky-600 hover:bg-sky-500 text-white text-xs px-3.5 py-1.5 rounded-lg font-semibold transition-colors shadow-sm",
             },
             "Submit Anonymous Tip",
           ),
@@ -362,7 +362,7 @@ export default function ProgrammePage({
     // Main Content
     h(
       "main",
-      { className: "max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-8" },
+      { id: "main-content", className: "max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-8" },
       // Programme Header & Rules
       h(
         "section",
@@ -402,7 +402,7 @@ export default function ProgrammePage({
             Link,
             {
               href: `/submit/${programme.id}`,
-              className: "inline-flex items-center justify-center gap-2 bg-sky-600 hover:bg-sky-500 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition-colors shadow-lg shadow-sky-950/50",
+              className: "inline-flex items-center justify-center min-h-[44px] gap-2 bg-sky-600 hover:bg-sky-500 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition-colors shadow-lg shadow-sky-950/50",
             },
             h("span", null, "Submit Anonymous Tip"),
             h("span", { "aria-hidden": "true" }, "→"),
@@ -524,7 +524,7 @@ export default function ProgrammePage({
               "div",
               { className: "p-8 text-center rounded-xl border border-neutral-800 bg-neutral-900/20 space-y-2" },
               h("p", { className: "text-sm text-neutral-400" }, "No public tips submitted yet to this programme."),
-              h(Link, { href: `/submit/${programme.id}`, className: "text-xs text-sky-400 hover:underline font-semibold" }, "Be the first to submit a confidential tip →"),
+              h(Link, { href: `/submit/${programme.id}`, className: "inline-flex items-center justify-center min-h-[44px] text-xs text-sky-400 hover:underline font-semibold" }, "Be the first to submit a confidential tip →"),
             )
           : h(
               "div",
@@ -579,7 +579,7 @@ export default function ProgrammePage({
           Link,
           {
             href: `/submit/${programme.id}`,
-            className: "bg-sky-600 hover:bg-sky-500 text-white font-semibold text-sm px-6 py-2.5 rounded-xl transition-colors shrink-0 shadow-md",
+            className: "inline-flex items-center justify-center min-h-[44px] bg-sky-600 hover:bg-sky-500 text-white font-semibold text-sm px-6 py-2.5 rounded-xl transition-colors shrink-0 shadow-md",
           },
           "Submit Anonymous Tip",
         ),

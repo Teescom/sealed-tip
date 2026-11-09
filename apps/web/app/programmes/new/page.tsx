@@ -221,7 +221,7 @@ export default function NewProgrammePage() {
 
   return h(
     "main",
-    { className: "min-h-screen bg-black text-neutral-200 px-4 py-8" },
+    { id: "main-content", className: "min-h-screen bg-black text-neutral-200 px-4 py-8" },
     h(
       "div",
       { className: "max-w-4xl mx-auto space-y-8" },
@@ -229,10 +229,10 @@ export default function NewProgrammePage() {
       h(
         "div",
         null,
-        h(Link, { href: "/", className: "text-xs text-sky-400 hover:underline" }, "← Home"),
+        h(Link, { href: "/", className: "inline-flex items-center min-h-[44px] text-xs text-sky-400 hover:underline" }, "← Home"),
         h(
           "div",
-          { className: "flex items-center justify-between mt-2" },
+          { className: "flex flex-wrap items-center justify-between gap-3 mt-2" },
           h(
             "div",
             null,
@@ -290,17 +290,18 @@ export default function NewProgrammePage() {
             { className: "md:col-span-2" },
             h(
               "label",
-              { className: "block text-xs font-medium text-neutral-300 mb-1" },
+              { htmlFor: "programme-title-input", className: "block text-xs font-medium text-neutral-300 mb-1" },
               "Programme Title ",
               h("span", { className: "text-red-400" }, "*"),
             ),
             h("input", {
+              id: "programme-title-input",
               type: "text",
               value: title,
               onChange: (e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value),
               placeholder: "e.g. Public Infrastructure Anti-Corruption Fund",
               className:
-                "w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-sky-500",
+                "w-full min-h-[44px] bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-sky-500",
             }),
           ),
 
@@ -310,17 +311,18 @@ export default function NewProgrammePage() {
             { className: "md:col-span-2" },
             h(
               "label",
-              { className: "block text-xs font-medium text-neutral-300 mb-1" },
+              { htmlFor: "programme-scope-uri-input", className: "block text-xs font-medium text-neutral-300 mb-1" },
               "Scope URI (Rules, Boundaries & Policy Document) ",
               h("span", { className: "text-red-400" }, "*"),
             ),
             h("input", {
+              id: "programme-scope-uri-input",
               type: "text",
               value: scopeUri,
               onChange: (e: React.ChangeEvent<HTMLInputElement>) => setScopeUri(e.target.value),
               placeholder: "https://... or ipfs://...",
               className:
-                "w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-xs font-mono text-white placeholder-neutral-600 focus:outline-none focus:border-sky-500",
+                "w-full min-h-[44px] bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm font-mono text-white placeholder-neutral-600 focus:outline-none focus:border-sky-500",
             }),
           ),
 
@@ -328,14 +330,15 @@ export default function NewProgrammePage() {
           h(
             "div",
             { className: "md:col-span-2" },
-            h("label", { className: "block text-xs font-medium text-neutral-300 mb-1" }, "Whistleblower Scope Description"),
+            h("label", { htmlFor: "programme-scope-desc-input", className: "block text-xs font-medium text-neutral-300 mb-1" }, "Whistleblower Scope Description"),
             h("textarea", {
+              id: "programme-scope-desc-input",
               rows: 3,
               value: scopeDescription,
               onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => setScopeDescription(e.target.value),
               placeholder: "Describe reporting boundaries, required evidence, and terms...",
               className:
-                "w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-sky-500",
+                "w-full min-h-[44px] bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-sky-500",
             }),
           ),
 
@@ -345,18 +348,19 @@ export default function NewProgrammePage() {
             null,
             h(
               "label",
-              { className: "block text-xs font-medium text-neutral-300 mb-1" },
+              { htmlFor: "programme-max-reward-input", className: "block text-xs font-medium text-neutral-300 mb-1" },
               "Max Reward per Tip (USDC) ",
               h("span", { className: "text-red-400" }, "*"),
             ),
             h("input", {
+              id: "programme-max-reward-input",
               type: "number",
               min: "1",
               step: "1",
               value: maxRewardUsdc,
               onChange: (e: React.ChangeEvent<HTMLInputElement>) => setMaxRewardUsdc(e.target.value),
               className:
-                "w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-sky-500",
+                "w-full min-h-[44px] bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-sky-500",
             }),
             h("p", { className: "text-[11px] text-neutral-500 mt-0.5" }, `Base units (6 decimals): ${usdcToUnits(maxRewardUsdc)}`),
           ),
@@ -365,15 +369,16 @@ export default function NewProgrammePage() {
           h(
             "div",
             null,
-            h("label", { className: "block text-xs font-medium text-neutral-300 mb-1" }, "Initial Reward Pool Funding (USDC)"),
+            h("label", { htmlFor: "programme-initial-fund-input", className: "block text-xs font-medium text-neutral-300 mb-1" }, "Initial Reward Pool Funding (USDC)"),
             h("input", {
+              id: "programme-initial-fund-input",
               type: "number",
               min: "1",
               step: "1",
               value: initialFundUsdc,
               onChange: (e: React.ChangeEvent<HTMLInputElement>) => setInitialFundUsdc(e.target.value),
               className:
-                "w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-sky-500",
+                "w-full min-h-[44px] bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-sky-500",
             }),
             h("p", { className: "text-[11px] text-neutral-500 mt-0.5" }, `Total fund deposited via NEP-141: ${usdcToUnits(initialFundUsdc)}`),
           ),
@@ -384,18 +389,19 @@ export default function NewProgrammePage() {
             null,
             h(
               "label",
-              { className: "block text-xs font-medium text-neutral-300 mb-1" },
+              { htmlFor: "programme-ops-deposit-input", className: "block text-xs font-medium text-neutral-300 mb-1" },
               "Ops Balance Deposit (NEAR) ",
               h("span", { className: "text-red-400" }, "*"),
             ),
             h("input", {
+              id: "programme-ops-deposit-input",
               type: "number",
               min: "0.5",
               step: "0.5",
               value: opsDepositNear,
               onChange: (e: React.ChangeEvent<HTMLInputElement>) => setOpsDepositNear(e.target.value),
               className:
-                "w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-sky-500",
+                "w-full min-h-[44px] bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-sky-500",
             }),
             h("p", { className: "text-[11px] text-neutral-500 mt-0.5" }, "Covers gas drips (0.05 NEAR per payout) and NEP-141 destination storage deposits."),
           ),
@@ -406,16 +412,17 @@ export default function NewProgrammePage() {
             null,
             h(
               "label",
-              { className: "block text-xs font-medium text-neutral-300 mb-1" },
+              { htmlFor: "programme-panel-dao-input", className: "block text-xs font-medium text-neutral-300 mb-1" },
               "Panel Sputnik DAO Account ID ",
               h("span", { className: "text-red-400" }, "*"),
             ),
             h("input", {
+              id: "programme-panel-dao-input",
               type: "text",
               value: panelDao,
               onChange: (e: React.ChangeEvent<HTMLInputElement>) => setPanelDao(e.target.value),
               className:
-                "w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-sky-500",
+                "w-full min-h-[44px] bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-sky-500",
             }),
             h("p", { className: "text-[11px] text-neutral-500 mt-0.5" }, "Council responsible for appointing reviewers and voting on tip resolution."),
           ),
@@ -426,16 +433,17 @@ export default function NewProgrammePage() {
             null,
             h(
               "label",
-              { className: "block text-xs font-medium text-neutral-300 mb-1" },
+              { htmlFor: "programme-token-contract-input", className: "block text-xs font-medium text-neutral-300 mb-1" },
               "Reward Token Contract (NEP-141) ",
               h("span", { className: "text-red-400" }, "*"),
             ),
             h("input", {
+              id: "programme-token-contract-input",
               type: "text",
               value: tokenContract,
               onChange: (e: React.ChangeEvent<HTMLInputElement>) => setTokenContract(e.target.value),
               className:
-                "w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-sky-500",
+                "w-full min-h-[44px] bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-sky-500",
             }),
           ),
 
@@ -445,16 +453,17 @@ export default function NewProgrammePage() {
             null,
             h(
               "label",
-              { className: "block text-xs font-medium text-neutral-300 mb-1" },
+              { htmlFor: "programme-funder-account-input", className: "block text-xs font-medium text-neutral-300 mb-1" },
               "Funder Account ID ",
               h("span", { className: "text-red-400" }, "*"),
             ),
             h("input", {
+              id: "programme-funder-account-input",
               type: "text",
               value: funderAccount,
               onChange: (e: React.ChangeEvent<HTMLInputElement>) => setFunderAccount(e.target.value),
               className:
-                "w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-sky-500",
+                "w-full min-h-[44px] bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-sky-500",
             }),
           ),
 
@@ -463,35 +472,35 @@ export default function NewProgrammePage() {
             "div",
             null,
             h(
-              "label",
+              "span",
               { className: "block text-xs font-medium text-neutral-300 mb-1" },
               "Time Scale ",
               h("span", { className: "text-red-400" }, "*"),
             ),
             h(
               "div",
-              { className: "flex gap-4 mt-2" },
+              { className: "flex flex-col sm:flex-row gap-2 mt-2", role: "radiogroup", "aria-label": "Time Scale" },
               h(
                 "label",
-                { className: "flex items-center gap-2 text-xs cursor-pointer" },
+                { className: "min-h-[44px] flex items-center gap-2 p-2 rounded-lg border border-neutral-800 bg-neutral-950/40 text-xs cursor-pointer hover:bg-neutral-800/40 transition-colors" },
                 h("input", {
                   type: "radio",
                   name: "timeScale",
                   checked: timeScale === 1,
                   onChange: () => setTimeScale(1),
-                  className: "accent-sky-500",
+                  className: "h-4 w-4 accent-sky-500",
                 }),
                 h("span", null, "Production (1 — 1x real time)"),
               ),
               h(
                 "label",
-                { className: "flex items-center gap-2 text-xs cursor-pointer" },
+                { className: "min-h-[44px] flex items-center gap-2 p-2 rounded-lg border border-neutral-800 bg-neutral-950/40 text-xs cursor-pointer hover:bg-neutral-800/40 transition-colors" },
                 h("input", {
                   type: "radio",
                   name: "timeScale",
                   checked: timeScale === 1440,
                   onChange: () => setTimeScale(1440),
-                  className: "accent-purple-500",
+                  className: "h-4 w-4 accent-purple-500",
                 }),
                 h("span", null, "Demo/Testing (1440 — 1 day = 1 min)"),
               ),
@@ -502,15 +511,16 @@ export default function NewProgrammePage() {
           h(
             "div",
             null,
-            h("label", { className: "block text-xs font-medium text-neutral-300 mb-1" }, "PoW Anti-Spam Difficulty (bits)"),
+            h("label", { htmlFor: "programme-pow-bits-input", className: "block text-xs font-medium text-neutral-300 mb-1" }, "PoW Anti-Spam Difficulty (bits)"),
             h("input", {
+              id: "programme-pow-bits-input",
               type: "number",
               min: "0",
               max: "32",
               value: powBits,
               onChange: (e: React.ChangeEvent<HTMLInputElement>) => setPowBits(Number(e.target.value)),
               className:
-                "w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-sky-500",
+                "w-full min-h-[44px] bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-sky-500",
             }),
             h("p", { className: "text-[11px] text-neutral-500 mt-0.5" }, "Default: 12 bits (~1-2 seconds in browser)."),
           ),
@@ -552,7 +562,8 @@ export default function NewProgrammePage() {
                 {
                   type: "button",
                   onClick: () => copyToClipboard(commands.createCommand, "step1"),
-                  className: "text-xs text-sky-400 hover:text-sky-300 cursor-pointer",
+                  className: "min-h-[44px] px-3 inline-flex items-center text-xs text-sky-400 hover:text-sky-300 cursor-pointer rounded-lg bg-neutral-900 border border-neutral-800 hover:bg-neutral-800 transition-colors",
+                  "aria-label": "Copy Step 1 create programme command",
                 },
                 copiedKey === "step1" ? "Copied!" : "Copy Command",
               ),
@@ -584,7 +595,8 @@ export default function NewProgrammePage() {
                 {
                   type: "button",
                   onClick: () => copyToClipboard(commands.fundCommand, "step2"),
-                  className: "text-xs text-sky-400 hover:text-sky-300 cursor-pointer",
+                  className: "min-h-[44px] px-3 inline-flex items-center text-xs text-sky-400 hover:text-sky-300 cursor-pointer rounded-lg bg-neutral-900 border border-neutral-800 hover:bg-neutral-800 transition-colors",
+                  "aria-label": "Copy Step 2 fund reward pool command",
                 },
                 copiedKey === "step2" ? "Copied!" : "Copy Command",
               ),
@@ -612,7 +624,8 @@ export default function NewProgrammePage() {
                 {
                   type: "button",
                   onClick: () => copyToClipboard(commands.topUpCommand, "step3"),
-                  className: "text-xs text-sky-400 hover:text-sky-300 cursor-pointer",
+                  className: "min-h-[44px] px-3 inline-flex items-center text-xs text-sky-400 hover:text-sky-300 cursor-pointer rounded-lg bg-neutral-900 border border-neutral-800 hover:bg-neutral-800 transition-colors",
+                  "aria-label": "Copy Step 3 top up operations instructions",
                 },
                 copiedKey === "step3" ? "Copied!" : "Copy Instructions",
               ),

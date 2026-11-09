@@ -7,13 +7,13 @@ export default function LandingPage() {
     <div className="min-h-screen bg-neutral-950 text-neutral-100 selection:bg-sky-500/30 selection:text-sky-200">
       {/* Top Header / Navigation */}
       <header className="border-b border-neutral-800 bg-neutral-900/60 backdrop-blur sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 min-h-[4rem] py-2 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-lg bg-sky-500/20 border border-sky-500/40 flex items-center justify-center font-bold text-sky-400 font-mono">
+            <div className="h-9 w-9 rounded-lg bg-sky-500/20 border border-sky-500/40 flex items-center justify-center font-bold text-sky-400 font-mono text-sm" aria-hidden="true">
               ST
             </div>
             <div>
-              <span className="font-bold tracking-tight text-white block leading-tight">
+              <span className="font-bold tracking-tight text-white block leading-tight text-sm sm:text-base">
                 Sealed Tip
               </span>
               <span className="text-[10px] text-neutral-400 uppercase tracking-widest font-mono block">
@@ -22,34 +22,34 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <nav aria-label="Main Navigation" className="flex items-center gap-3 sm:gap-4 text-xs font-medium">
+          <nav aria-label="Main Navigation" className="flex items-center flex-wrap gap-1 sm:gap-2 text-xs font-medium">
             <Link
               href="/p/0"
-              className="text-neutral-300 hover:text-white transition-colors"
+              className="min-h-[44px] px-2.5 sm:px-3 text-neutral-300 hover:text-white transition-colors flex items-center justify-center rounded-lg hover:bg-neutral-800/50"
             >
               Programmes
             </Link>
             <Link
               href="/status"
-              className="text-neutral-300 hover:text-white transition-colors"
+              className="min-h-[44px] px-2.5 sm:px-3 text-neutral-300 hover:text-white transition-colors flex items-center justify-center rounded-lg hover:bg-neutral-800/50"
             >
-              Check Status
+              Status
             </Link>
             <Link
               href="/claim"
-              className="text-neutral-300 hover:text-white transition-colors"
+              className="min-h-[44px] px-2.5 sm:px-3 text-neutral-300 hover:text-white transition-colors flex items-center justify-center rounded-lg hover:bg-neutral-800/50"
             >
-              Claim Reward
+              Claim
             </Link>
             <Link
               href="/panel"
-              className="text-neutral-300 hover:text-white transition-colors hidden md:inline-block"
+              className="min-h-[44px] px-2.5 sm:px-3 text-neutral-300 hover:text-white transition-colors hidden md:flex items-center justify-center rounded-lg hover:bg-neutral-800/50"
             >
               Panel DAO
             </Link>
             <Link
               href="/submit/0"
-              className="bg-sky-600 hover:bg-sky-500 text-white px-3 py-1.5 rounded-lg transition-colors font-semibold"
+              className="min-h-[44px] bg-sky-600 hover:bg-sky-500 text-white px-3.5 sm:px-4 rounded-lg transition-colors font-semibold flex items-center justify-center shadow-sm"
             >
               Submit Tip
             </Link>
@@ -57,7 +57,7 @@ export default function LandingPage() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-12">
+      <main id="main-content" className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-12">
         {/* Hero & Problem Statement */}
         <section aria-labelledby="hero-title" className="space-y-6 max-w-4xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono bg-sky-950/40 border border-sky-800/60 text-sky-400">

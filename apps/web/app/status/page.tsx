@@ -358,13 +358,13 @@ function StatusContent() {
     <div className="min-h-screen bg-neutral-950 text-neutral-100 selection:bg-sky-500/30 selection:text-sky-200">
       {/* Header */}
       <header className="border-b border-neutral-800 bg-neutral-900/60 backdrop-blur sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 min-h-[4rem] py-2 flex flex-wrap items-center justify-between gap-2">
           <Link href="/" className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-lg bg-sky-500/20 border border-sky-500/40 flex items-center justify-center font-bold text-sky-400 font-mono">
+            <div className="h-9 w-9 rounded-lg bg-sky-500/20 border border-sky-500/40 flex items-center justify-center font-bold text-sky-400 font-mono text-sm" aria-hidden="true">
               ST
             </div>
             <div>
-              <span className="font-bold tracking-tight text-white block leading-tight">
+              <span className="font-bold tracking-tight text-white block leading-tight text-sm sm:text-base">
                 Sealed Tip
               </span>
               <span className="text-[10px] text-neutral-400 uppercase tracking-widest font-mono block">
@@ -373,17 +373,17 @@ function StatusContent() {
             </div>
           </Link>
 
-          <nav aria-label="Navigation" className="flex items-center gap-3 sm:gap-4 text-xs font-medium">
-            <Link href="/p/0" className="text-neutral-300 hover:text-white transition-colors">
+          <nav aria-label="Navigation" className="flex items-center flex-wrap gap-1 sm:gap-2 text-xs font-medium">
+            <Link href="/p/0" className="min-h-[44px] px-2.5 sm:px-3 text-neutral-300 hover:text-white transition-colors flex items-center justify-center rounded-lg hover:bg-neutral-800/50">
               Programmes
             </Link>
-            <Link href="/status" className="text-sky-400 font-semibold transition-colors">
-              Check Status
+            <Link href="/status" className="min-h-[44px] px-2.5 sm:px-3 text-sky-400 font-semibold transition-colors flex items-center justify-center rounded-lg bg-sky-950/40 border border-sky-800/40">
+              Status
             </Link>
-            <Link href="/claim" className="text-neutral-300 hover:text-white transition-colors">
-              Claim Reward
+            <Link href="/claim" className="min-h-[44px] px-2.5 sm:px-3 text-neutral-300 hover:text-white transition-colors flex items-center justify-center rounded-lg hover:bg-neutral-800/50">
+              Claim
             </Link>
-            <Link href="/panel" className="text-neutral-300 hover:text-white transition-colors hidden md:inline-block">
+            <Link href="/panel" className="min-h-[44px] px-2.5 sm:px-3 text-neutral-300 hover:text-white transition-colors hidden md:flex items-center justify-center rounded-lg hover:bg-neutral-800/50">
               Panel DAO
             </Link>
           </nav>
@@ -391,7 +391,7 @@ function StatusContent() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-3xl mx-auto px-4 py-8">
+      <main id="main-content" className="max-w-3xl mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-2xl font-bold tracking-tight text-white">Check Tip Status</h1>
           <p className="mt-1 text-sm text-neutral-400">
@@ -414,7 +414,7 @@ function StatusContent() {
               value={tipIdInput}
               onChange={(e) => setTipIdInput(e.target.value)}
               placeholder="e.g. 0"
-              className="w-full bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 focus:outline-none focus:border-sky-500 font-mono"
+              className="w-full min-h-[44px] bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 focus:outline-none focus:border-sky-500 font-mono"
             />
           </div>
 
@@ -452,14 +452,14 @@ function StatusContent() {
               value={passphraseInput}
               onChange={(e) => setPassphraseInput(e.target.value)}
               placeholder="leave empty if none was set"
-              className="w-full bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 focus:outline-none focus:border-sky-500"
+              className="w-full min-h-[44px] bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 focus:outline-none focus:border-sky-500"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-medium text-sm transition disabled:opacity-50"
+            className="w-full min-h-[48px] py-3 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-semibold text-sm transition disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed shadow-md"
           >
             {loading ? "Verifying Credentials & Loading Tip..." : "Check Status"}
           </button>
@@ -617,23 +617,25 @@ function StatusContent() {
               </div>
 
               {/* Action Buttons */}
-              <div className="pt-4 border-t border-neutral-800 flex flex-wrap gap-3 items-center">
+              <div className="pt-4 border-t border-neutral-800 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
                 <button
                   type="button"
                   onClick={handleCheckin}
                   disabled={!isSwitchArmed || tip.switch_triggered || checkinLoading}
-                  className="px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold transition disabled:opacity-40 disabled:cursor-not-allowed"
+                  aria-label="Check in with dead man's switch to reset timer"
+                  className="min-h-[44px] px-5 py-2.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer shadow-sm"
                 >
-                  {checkinLoading ? "Checking in..." : "Check In with Switch"}
+                  {checkinLoading ? "Checking in..." : "✓ Check In with Switch"}
                 </button>
 
                 <button
                   type="button"
                   onClick={handleRetract}
                   disabled={!isRetractable || retractLoading}
-                  className="px-4 py-2 rounded-lg bg-red-600/80 hover:bg-red-500 text-white text-xs font-semibold transition disabled:opacity-40 disabled:cursor-not-allowed"
+                  aria-label="Retract this anonymous tip before review"
+                  className="min-h-[44px] px-5 py-2.5 rounded-lg bg-red-600/80 hover:bg-red-500 text-white text-xs font-semibold transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer border border-red-700/50"
                 >
-                  {retractLoading ? "Retracting..." : "Retract Tip"}
+                  {retractLoading ? "Retracting..." : "✕ Retract Tip"}
                 </button>
               </div>
 
