@@ -86,7 +86,7 @@
 ## Verify
 - **E2EE from the browser: settled 2026-11-05** (ARCHITECTURE §14.4).
 - The 1Click NEP-141 deposit method (day 2).
-- Whether OutLayer can host the keeper.
+- **OutLayer can host the keeper: settled 2026-11-09** (ARCHITECTURE §14.8). Not the daemon — a run is one-shot and capped at 60-180s and there is no scheduler. It can host the release step, with their untrusted external scheduler outside the enclave and `view()`/`call()` inside it.
 
 ## Confirmed
 - Sputnik DAO v2 factories: testnet `sputnik-v2.testnet`, mainnet `sputnik-dao.near`. Wasm pinned
