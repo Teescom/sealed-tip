@@ -5,7 +5,7 @@
   "license": "MIT",
   "engines": { "node": ">=22", "pnpm": ">=9" },
   "scripts": {
-    "build": "pnpm build:contract && pnpm -r --filter ./packages/* --filter ./apps/* build",
+    "build": "pnpm build:contract && pnpm -r build",
     "build:contract": "cargo near build non-reproducible-wasm --manifest-path contracts/sealedtip/Cargo.toml && cargo near build non-reproducible-wasm --manifest-path contracts/mock-ft/Cargo.toml",
     "check:contract": "cargo check --workspace --target wasm32-unknown-unknown",
     "test": "pnpm test:contract && pnpm -r test",

@@ -5,6 +5,17 @@ import type { Viewport } from "next";
 
 const h = React.createElement;
 
+/**
+ * Every route renders per request, on purpose.
+ *
+ * The CSP (S-10.1, privacy invariant 3) admits Next's own inline scripts with a per-request nonce, and a
+ * nonce cannot exist on HTML written at build time — a prerendered page is a file, and its inline scripts
+ * get stamped with whatever header the build process happened to see, which is none. Measured: the
+ * prerendered landing page loaded with six blocked inline scripts and never hydrated, while the on-demand
+ * routes under the same policy were clean. Static output is the thing that has to give, not the header.
+ */
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Sealed Tip — Anonymous Whistleblower Tip Line",
   description: "Anonymous, rewarded whistleblowing on NEAR. Client-side evidence cleaning, zero plaintext servers, and dead man's switch protection.",

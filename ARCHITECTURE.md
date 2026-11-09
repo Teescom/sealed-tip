@@ -485,6 +485,24 @@ Five decisions that a reader of `tip.rs` would otherwise have to re-derive, each
   answer. The one thing a reader has to keep true: `pdfjs-dist` is a dependency of both `packages/clean`
   and `apps/web`, and it must be the same version in both, because `GlobalWorkerOptions` is a module
   singleton and the worker port has to be set on the instance the cleaner actually reads.
+- **Privacy invariant 3 is enforced by a per-request nonce, and that decides two other things.** The App
+  Router ships each page's routing payload in inline `<script>` tags, so a `script-src` that names only
+  `'self'` refuses them and nothing hydrates — measured on `main`, where four routes sat on their
+  "Loading…" shells with six console violations while the CSP test passed, because the test asserted the
+  config string rather than a served page. So `lib/csp.ts` builds the policy and `apps/web/proxy.ts` is the
+  one place it is set, on the **request** as well as the response: the render reads the nonce off
+  `req.headers` and stamps its own scripts from there, and a response-only header admits scripts that carry
+  no nonce. Two consequences whoever continues should not "fix": every route is `force-dynamic`, because
+  HTML written at build time cannot contain a nonce it does not know yet; and `'unsafe-inline'` stays out of
+  `script-src`, because that is the half of the invariant the header exists to hold.
+- **`apps/web` type-checks against package *source*, so it declares no TypeScript project references.**
+  Every package's `build` is `tsc --noEmit`, which produces nothing for a reference to point at, so a
+  reference resolves to whatever `dist/` an older full build left behind — gitignored, and on `main` two
+  days stale. `next build` then reported that `@sealedtip/core` exports no `KeeperInfo` four commits after
+  it started to, while `pnpm lint` stayed green because `tsc -b` rebuilds references first. `main`/`types`
+  in each package.json point at `src/index.ts`, which is what `transpilePackages` bundles and what vitest
+  imports, so type check, bundle and test read one file.
+
 
 ### 14.8 S-0.10 result: OutLayer is not a host for the keeper, and is one for its release step (research, 2026-11-09)
 
