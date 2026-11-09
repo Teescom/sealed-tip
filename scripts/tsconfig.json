@@ -1,1 +1,11 @@
-{ "extends": "../tsconfig.base.json", "compilerOptions": { "composite": true, "outDir": "dist" }, "include": ["*.ts", "lib", "demo", "test"], "references": [{ "path": "../packages/core" }, { "path": "../packages/crypto" }] }
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": { "composite": true, "outDir": "dist" },
+  "include": ["*.ts", "lib", "demo", "test"]
+  // No `references`. Every package's `build` is `tsc -p tsconfig.json --noEmit`, so a project reference
+  // can only ever point at a `dist/` some earlier `tsc -b` happened to write — TypeScript prefers that
+  // fossil over the source — and on a clean checkout the fossil does not exist at all. With the two
+  // references this package failed `pnpm build` with 27 errors (23 TS6305 for `packages/core/dist` and
+  // `packages/crypto/dist`, then 3 TS7006 and 1 TS2769 downstream of the missing types). Without them it
+  // type-checks against source and exits 0. `pnpm lint` hid this because it runs `tsc -b`, which builds.
+}
