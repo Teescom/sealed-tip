@@ -11,6 +11,11 @@
     "paths": { "@/*": ["./*"] }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules"],
-  "references": [{ "path": "../../packages/core" }, { "path": "../../packages/crypto" }, { "path": "../../packages/clean" }]
+  "exclude": ["node_modules"]
+  // No `references` to the packages, deliberately. Each package's `build` script is `tsc --noEmit`, so a
+  // referenced project has nothing to point at except whatever `dist/` a previous full build happened to
+  // leave behind — and TypeScript prefers that stale declaration over the source, which is how `next build`
+  // came to report that `@sealedtip/core` exports no `KeeperInfo` four commits after it started to. Without
+  // references, resolution follows `main`/`types` in each package.json — the source, which is what
+  // `transpilePackages` bundles and what vitest imports, so type check, bundle and test all read one file.
 }

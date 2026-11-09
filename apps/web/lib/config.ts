@@ -27,11 +27,21 @@ const HttpOrigin = z
   .regex(/^https?:\/\/[^/\s]+\/?$/, "an http(s) origin with no path")
   .transform((value) => value.replace(/\/+$/, ""));
 
+/**
+ * The two endpoints a page assumes when the deployment names neither.
+ *
+ * Exported because `lib/csp.ts` has to allow the same origins this file will later read through: two copies
+ * of a default are two things that can disagree, and a CSP that disagrees with the client is a page whose
+ * every network call is blocked.
+ */
+export const RPC_ORIGIN_DEFAULT = "https://rpc.testnet.near.org";
+export const API_ORIGIN_DEFAULT = "http://localhost:8787";
+
 const PublicEnv = z.object({
   NEXT_PUBLIC_NEAR_NETWORK: Network.default("testnet"),
-  NEXT_PUBLIC_NEAR_RPC_URL: HttpOrigin.default("https://rpc.testnet.near.org"),
+  NEXT_PUBLIC_NEAR_RPC_URL: HttpOrigin.default(RPC_ORIGIN_DEFAULT),
   NEXT_PUBLIC_SEALEDTIP_CONTRACT: ContractAccount,
-  NEXT_PUBLIC_API_URL: HttpOrigin.default("http://localhost:8787"),
+  NEXT_PUBLIC_API_URL: HttpOrigin.default(API_ORIGIN_DEFAULT),
   /** The token a funder page deposits into. Optional: the submit flow never needs it, because the panel's
    * rewards are already locked by the time a tipster arrives. */
   NEXT_PUBLIC_TOKEN_CONTRACT: ContractAccount.optional(),
