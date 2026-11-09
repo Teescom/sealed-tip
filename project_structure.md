@@ -33,7 +33,7 @@ sealed-tip/
 ├── apps/
 │   ├── web/                      # Next.js (strict CSP; no third-party loads)
 │   ├── api/                      # Hono: blobs (ciphertext only), relayer queue, AI proxy, quotes — noLogs everywhere
-│   └── keeper/                   # switch keeper: heartbeat, watch triggers, re-seal keys
+│   └── keeper/                   # switch keeper: heartbeat, view-polled trigger watch, re-seal to non-recused, release
 ├── scripts/                      # deploy, seed, demo, spam, verify-attestation, sign-statement, gen-vectors
 ├── spikes/                       # day-1 verification (ohttp-browser: WebCrypto OHTTP), hand-run, in no workspace
 ├── fixtures/                     # vectors.json (TS↔Rust), fictional files
@@ -109,7 +109,14 @@ res/                     # pinned sputnikdao2.wasm + SPUTNIK_VERSION.txt
 | `apps/api/src/routes/relay.ts`, `relay/{gate,queue,submit,ratelimit}.ts` | allow-list of four actions, random-delay queue, 2 relayers, limits keyed by claim pubkey | no IP keys; `gate.ts` validates shape and existence and leaves signature verification to the chain |
 | `apps/api/src/routes/ai.ts` + `ai/{cloud,redact}.ts` | `POST /ai/redact`: `cloud.ts` is transport (the three NEAR AI calls, timeouts, and which of them gets the bearer key), `redact.ts` is policy and assembly (order of checks, the 8 KiB byte cap, the inference-credit bucket, the bundle), the route is only status mapping | keeps nothing, caches nothing (`no-store`), verifies nothing — the bundle is graded client-side and offline |
 | `apps/api/src/json.ts` | the `Json`/`JsonObject` types and the parse-without-throwing readers, for JSON this service passes through without understanding | exists so `ai/cloud.ts` can hand back somebody else's report un-shaped |
-| `apps/keeper/src/{heartbeat,watch,release}.ts` | heartbeat, trigger watch, re-seal to non-recused | holds keeper key only |
+| `apps/keeper/src/env.ts` | the keeper's own fail-fast config: the two accounts, the `ed25519:` key prefix, the 64-hex X25519 secret, `KEEPER_HEARTBEAT_S`, `KEEPER_WATCH_S` capped at 60 s, `KEEPER_API_URL` | names and reasons, never values; refuses mainnet like the API does |
+| `apps/keeper/src/near.ts` | `KEEPER_METHODS` (the union `heartbeat` · `post_released_keys`), the per-method gas, and the one transport that names a node | **the keeper's whole write surface**, and the only file in the package with a signer |
+| `apps/keeper/src/blobs.ts` | `GET /blob/:cid` and `POST /blob` over the tip API, with the recorded cid re-hashed locally and a disagreement refused | the store's rules stay in one place (S-8.3); a 404 is `null`, not an error |
+| `apps/keeper/src/heartbeat.ts` | one beat, then the loop: first beat before the first sleep, a failure costs one interval, `stop`/`done` for a signal handler | `keeper_last_seen` is public, which is what makes a quietly dead keeper visible (B9) |
+| `apps/keeper/src/watch.ts` | tip enumeration (probe until `null`, 50 new ids per pass) and the `switch_triggered` pass; `pollOnce` returns what fired so detection is testable without a timer | reads only the **public** view; no CID, no recusal list, no key |
+| `apps/keeper/src/release.ts` | refuse-not-triggered / already-released / nobody-left, open the keeper's sealed `K_switch`, re-seal per non-recused member, `post_released_keys` | **the only live plaintext path in the repository**: `K_switch` exists here for the statements between `openSealed` and the last `sealTo`, and leaves as sealed bytes only |
+| `apps/keeper/src/index.ts` | wires the above and shuts both loops down on SIGINT/SIGTERM | `KEEPER_X25519_SECRET` is decoded by a local 32-slice parser, not `fromHex`, so a rejected value cannot be echoed by the exception that rejects it |
+| `apps/keeper/test/support.ts` | the no-network fakes: chain, blobs, calls, real X25519 members | a test never needs a port, a node, a `.env` or a timer |
 | `scripts/lib/app-cert.ts` | Node-only verify of the dstack X.509 chain in `info.app_cert`: leaf → App CA → KMS CA, validity, and the quote's MRTD + RTMR0-3 + compose hash embedded in the signed leaf | stays out of `packages/crypto` because that package must be browser-safe |
 | `scripts/lib/redaction-report.ts` | what a stored redaction bundle proves, as one pure function: the crypto package's checks plus the caller's app-cert chain, the `attestation_hash`, and the `unchecked` gaps in the order a judge reads them | the CLI prints it and `scripts/test/redaction-report.test.ts` asserts its shape, so "verified" cannot be printed over an unverifiable signature |
 | `scripts/*` | deploy, seed, demo, spam, verify-attestation, sign-statement, gen-vectors | fictional data only |
@@ -135,6 +142,7 @@ Tests use `node:test` via `tsx`. Web tests use Vitest.
 - `packages/crypto` and `packages/clean` ← `apps/web`. `crypto` is also used by `keeper` and `scripts`.
 - **`apps/api` must not import `packages/crypto` or `packages/clean`.** The server never handles keys or plaintext. `apps/api/test/no-logs.test.ts` enforces it per source file, matching import and export statements so the comments that explain the rule can still name the package.
 - The one documented exception to "never handles plaintext" is `POST /ai/redact` (ARCHITECTURE §7.5): it holds `NEAR_AI_API_KEY` — a browser cannot be given our key — and so reads the passage the tipster chose to send for AI analysis. It never holds a tipster key, an exhibit or a cleaning result, and it still imports neither client package: the proxy assembles the attestation bundle and `verifyRedactionBundle`, in `apps/web`, `keeper` and `scripts`, is what grades it.
+- **`apps/keeper` is the process that is *allowed* to hold a bundle key, and it is bounded rather than trusted.** Out of the workspace it takes `packages/core` (views only — that module carries no signer) and `packages/crypto` (`openSealed`, `sealTo`, `cidOf`); `near-api-js` is for its own two methods and nothing else. The bound is enforced, not described: `KEEPER_METHODS` is a union type in `src/near.ts`, `privacy.test.ts` scans every source file for a call outside it, runs the real heartbeat, watch pass and release behind the same five-sink console capture `apps/api` uses, and asserts that no hex or base64 of the keeper secret, the switch key or any panel member's secret appears in what got logged. The keeper never imports `packages/clean`, and `test/support.ts` is the only place a fake chain exists.
 
 ## 6. Where new code goes
 | You're adding… | Put it in… | Also update |
@@ -144,6 +152,7 @@ Tests use `node:test` via `tsx`. Web tests use Vitest.
 | A signed action field | `types.rs` + `actions.rs` + `crypto/actions.ts` | `pnpm gen-vectors`, ARCHITECTURE §4 |
 | A cleaning step | `packages/clean` + fixture + test | ARCHITECTURE §6, PRD T2 |
 | An API route | `apps/api/src/routes/` behind `noLogs` | ARCHITECTURE §9, no-logs test |
+| A keeper action | `apps/keeper/src/`, called through the `KEEPER_METHODS` union in `src/near.ts` | ARCHITECTURE §9, `.env.example`, the allow-list scan in `apps/keeper/test/privacy.test.ts` |
 | Anything loaded by a web page | bundled locally only | CSP in `next.config.ts` |
 | A spike that settles a roadmap question | `spikes/<name>/` — plain files, no workspace, no dependency | that ROADMAP row, and ARCHITECTURE §14 if it settles a hard question |
 | An env var | where it's read | `.env.example` |

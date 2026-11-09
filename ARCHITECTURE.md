@@ -257,10 +257,15 @@ what follows each one is what was measured or decided when the route was written
 - **Rate limit is two token buckets, never an IP.** Per-claim-pubkey is fairness against one misbehaving page and cannot be a defence, since a pubkey is either caller-supplied or public on the tip; the shared bucket is what a flood actually runs into. A refusal consumes nothing.
 - **`POST /ai/redact` is the one endpoint that holds a secret and reads plaintext, and that is the documented exception to §5 of `project_structure.md`, not a breach of it.** It holds `NEAR_AI_API_KEY` (which is why the browser cannot be told to call the service directly) and it sees the passage the tipster chose to send for analysis — never a tipster key, never an exhibit, never anything the cleaners produced. What it does not do is check the attestation it fetched: the bundle is assembled here and graded by a client or a script that holds `packages/crypto`, per §7.5. Its limits are about our inference credit rather than identity, because at this step of the flow there is no claim pubkey to key on and an IP is a name this service must not keep: 8 KiB of text per request, 6 requests at once, 2 a minute. An upstream failure is a 502 that names the endpoint and the status and repeats no word of the request, and nothing about a redaction request reaches a log — a test asserts that on a request that succeeds.
 
-**keeper**
-- Calls `heartbeat` every 5 minutes.
+**keeper** (`apps/keeper`, built and tested offline in P9)
+- Calls `heartbeat` every `KEEPER_HEARTBEAT_S` (5 minutes by default), and takes the first beat *before* the first sleep: a process that starts and dies inside one interval would otherwise leave `keeper_last_seen` at whatever the previous run recorded, which is the lie `set_keeper` zeroes the field to avoid (S-2.9).
 - Watches for `switch_triggered`, opens `K_switch`, re-seals it to the non-recused panel members, and calls `post_released_keys`.
-- Production plan: run it in a TEE (OutLayer or similar, **VERIFY**). The hackathon keeper is trusted, and the README says so.
+- **It watches the view, not the event.** `switch_triggered` is also a NEP-297 event (§10), and following it needs an indexer subscription (`next_follow`) that this repository has not deployed and cannot test offline. `get_tip_public` carries `switch_deadline` and `switch_triggered` — the same fact one hop further from the receipt — so a pass is a read per tip it is still watching. Detection is the interval plus one finality wait: `KEEPER_WATCH_S` defaults to 10 s and `env.ts` refuses more than 60, because a promise about a minute is only a promise if the config cannot break it.
+- **Discovery uses the contract's own invariant**, since there is no `list_tips` view: tip ids are handed out contiguously from `next_tip_id` and no code path removes a tip, so probing upward until a read answers `null` enumerates every tip there is. The probe is capped at 50 new ids per pass so a flood of submissions cannot turn one poll into an unbounded scan, and a tip with no `switch_deadline` never joins the read set — `trigger` on a disarmed tip is E19, so a tip that cannot fire can never need releasing.
+- **Its blob round trip goes through the tip API**, not a bucket: `GET /blob/:cid` and `POST /blob` (S-8.3) are the party that knows where ciphertext lives, already refuse a body that opens as a container magic, and already key by `sha256(ciphertext)`. `put` re-hashes the bytes locally and refuses a store that recorded a different cid, because that cid is the only name the panel has for the exhibit.
+- **The release refuses before it spends anything**: a tip with no switch, a switch that has not fired, or a tip that already carries `released_keys` (so a keeper restarted mid-release costs a read and no transaction), and a panel whose every member the tipster recused — an empty key set would satisfy the contract and mark the tip answered, which is the opposite of what the switch promised.
+- **Its write surface is a type.** `KEEPER_METHODS` is the union `heartbeat | post_released_keys`, both at 100 TGas and 0 deposit (the amounts the contract's own sandbox suite runs green at), the transport lives in `src/near.ts` as the only file in the package that names a node, and a test scans every source file for a call outside that union.
+- Production plan: run it in a TEE (OutLayer or similar, **VERIFY**). The hackathon keeper is trusted, and the README says so. What that costs in this build is stated rather than argued: the process holds the X25519 secret that opens `K_switch` *and* a function-call key, both from `.env`, so it is the one service here that can read a bundle and write a release.
 
 ## 10. Events (NEP-297, `sealedtip` v1.0.0)
 `programme_created, programme_funded, programme_closed, tip_submitted, tip_triaged, tip_dismissed, tip_unfunded, tip_retracted, checkin, switch_triggered, keys_released, tip_resolved, tip_paid, panel_set, keeper_heartbeat`
@@ -280,6 +285,7 @@ what follows each one is what was measured or decided when the route was written
 | Implicated panel member | Recusal (no sealed keys) | They can still vote in the DAO (documented) |
 | Switch exposes the tipster | Cleaned bundle by default; raw opt-in | Panel leak |
 | Keeper down | Heartbeat shown publicly | Delayed release |
+| Keeper is malicious, not merely down | It cannot post a release before a trigger (E20) or name a recused member (E13); its key is scoped to two methods (`set_keeper`'s allow-list, S-2.9) and, in this build, to a union type in `src/near.ts` a test scans; a restarted keeper re-posts nothing the chain already answered | **Real and stated:** the keeper's X25519 public half is chosen at submission and its secret is static, so every tip's `K_switch` is sealed to a key one account holds — the switch bounds *when the keeper must* release, not *what it can* open. A malicious keeper reads a bundle the day it is uploaded. This is why the production plan is a TEE, and why the README calls the keeper trusted rather than neutral |
 | Recovery words seized | Optional passphrase | Without a passphrase, the attacker can claim |
 | Unusable payout account | `storage_deposit` plus gas drip | None |
 
@@ -292,6 +298,7 @@ what follows each one is what was measured or decided when the route was written
 - **Recusal:** a recused member can't triage, and no sealed key exists for them.
 - **Access control:** `resolve_tip` from anyone except the DAO fails.
 - **Switch:** can't trigger before `deadline + grace`; only the keeper can post keys.
+- **Release:** every non-recused member gets a box that opens to the switch key, and a recused member gets nothing their own secret can open — the second half is proved by walking the blob store with the recused key, not by reading back a list of names. The keeper's own transactions are exactly `heartbeat` and `post_released_keys`, and none of its key material appears in what it logs.
 - **Claim:** `storage_deposit` and gas drip happen; a transfer failure rolls back to `Accepted`.
 - **Logging:** the `noLogs` test passes.
 - **Attestation:** `verify-attestation.ts` passes on the stored bundle.
@@ -433,3 +440,11 @@ Five decisions that a reader of `tip.rs` would otherwise have to re-derive, each
 - **`E20_NOT_TRIGGERED` is separate from `E18_SWITCH_NOT_DUE`.** Both mean "too early" and the
   difference matters to whoever is debugging: E18 is a watcher whose clock is wrong, E20 is the keeper
   answering a release the switch never asked for.
+- **The keeper's release condition is `switch.triggered` and nothing else — no status filter.** The
+  switch is an instruction about the *bundle*, not about the reward: a tip that was dismissed, rejected
+  or retracted still has a fired switch, and the panel still gets what the tipster said to release when
+  the outlet disappeared. The contract enforces exactly this — `post_released_keys` refuses before a
+  trigger (E20) and names no status — so a keeper that filtered on status would be inventing a rule the
+  tipster never agreed to, and would turn the dead man's switch into a second way to bury evidence.
+  The same reasoning is why an all-recused panel throws instead of posting an empty key set: silence an
+  operator can see beats a release that looks answered. (P9, `apps/keeper/src/release.ts`.)
