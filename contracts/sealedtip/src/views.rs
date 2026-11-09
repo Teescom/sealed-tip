@@ -10,7 +10,9 @@ use near_sdk::json_types::U64;
 use near_sdk::near;
 
 use crate::errors::E01_PROGRAMME_NOT_FOUND;
-use crate::types::{Programme, ProgrammeId, ProgrammeStats, Tip, TipId, TipPublic, TipStatus};
+use crate::types::{
+    KeeperInfo, Programme, ProgrammeId, ProgrammeStats, Tip, TipId, TipPublic, TipStatus,
+};
 use crate::{Contract, ContractExt};
 
 /// `from_index` is a position in insertion order, not an id: `IterableMap` keeps entries in the
@@ -98,14 +100,28 @@ impl Contract {
     pub fn get_tip_for_panel(&self, tip_id: TipId) -> Option<Tip> {
         self.tips.get(&tip_id).cloned()
     }
+
+    /// The keeper's identity, its X25519 public key, and the last time it proved it was alive.
+    ///
+    /// Read-only, and it adds no new fact to the world — every field is either an account id, a public
+    /// half, or the number `get_programme_stats` already returns. What it adds is the *source*: the
+    /// tipster's browser needs `keeper_x25519_pub` before it can arm a switch, and the chain is the only
+    /// place that knows whose key it is after a `set_keeper`.
+    pub fn get_keeper_info(&self) -> KeeperInfo {
+        KeeperInfo {
+            keeper: self.keeper.clone(),
+            keeper_x25519_pub: self.keeper_x25519_pub,
+            keeper_last_seen: U64(self.keeper_last_seen),
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::test_utils::{
-        contract_with, make_programme, make_tip, programme_balances, tip_with_status,
-        EVIDENCE_HASH, HOUR_NS,
+        acct, as_caller, contract_with, keeper, make_programme, make_tip, owner,
+        programme_balances, tip_with_status, EVIDENCE_HASH, HOUR_NS, KEEPER_X25519,
     };
     use near_sdk::json_types::U128;
 
@@ -288,6 +304,47 @@ mod tests {
         assert_eq!(panel.evidence_cid, "0a1b2c");
         assert_eq!(panel.sealed_keys.len(), 2);
         assert_eq!(contract.get_tip_for_panel(9), None);
+    }
+
+    /// The rule this view exists for: a tipster arming a switch seals `K_switch` to the keeper's key, and
+    /// the only keeper that will ever answer is the one the chain appointed. So the key must be readable
+    /// from the chain, and a rotation must show up here on the next read rather than live in whatever the
+    /// page was built with — a stale key costs the tipster their switch, at the worst possible moment.
+    #[test]
+    fn the_keeper_key_offers_for_a_switch_is_the_one_the_chain_appointed() {
+        let mut contract = four_programmes();
+        let before = contract.get_keeper_info();
+        assert_eq!(before.keeper, keeper());
+        assert_eq!(before.keeper_x25519_pub, KEEPER_X25519);
+        assert_eq!(before.keeper_last_seen, U64(0));
+
+        as_caller(owner());
+        contract.set_keeper(acct("keeper-2.testnet"), [9; 32]);
+        let after = contract.get_keeper_info();
+        assert_eq!(after.keeper, acct("keeper-2.testnet"));
+        assert_eq!(after.keeper_x25519_pub, [9; 32]);
+        assert_eq!(
+            after.keeper_last_seen,
+            U64(0),
+            "a rotated keeper has not heartbeated, and this view is where a page learns that"
+        );
+    }
+
+    /// The keeper's public half is a key in name only: it is the half meant to be given away, and the
+    /// numbers beside it are already public. Naming it here keeps a future edit from treating the view as
+    /// a place to add something private — the tipster's page reaches it with no wallet and no session.
+    #[test]
+    fn the_keeper_view_carries_nothing_a_wallet_is_needed_to_read() {
+        let contract = four_programmes();
+        let serialized =
+            near_sdk::serde_json::to_string(&contract.get_keeper_info()).expect("view serializes");
+        assert_eq!(
+            serialized.matches(':').count(),
+            3,
+            "keeper identity, public half and liveness only: {serialized}"
+        );
+        assert!(!serialized.contains("x25519_sec"));
+        assert!(!serialized.contains("0a1b2c"));
     }
 
     fn hex(bytes: [u8; 32]) -> String {

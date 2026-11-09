@@ -862,6 +862,19 @@ impl Env {
             .unwrap_or_else(|| panic!("tip {tip_id} is missing"))
     }
 
+    /// The keeper the chain appointed: account, X25519 public half, liveness. This is what a tipster's
+    /// browser reads before sealing a switch key, so a test can tell "the view is stale" apart from
+    /// "the client sealed to the wrong key".
+    pub async fn keeper_info(&self) -> serde_json::Value {
+        self.sealedtip
+            .view("get_keeper_info")
+            .args_json(json!({}))
+            .await
+            .expect("get_keeper_info view failed")
+            .json::<serde_json::Value>()
+            .expect("get_keeper_info is not JSON")
+    }
+
     /// The number of nanoseconds `get_programme_stats` reports for the keeper's last heartbeat.
     pub async fn keeper_last_seen(&self, programme_id: u64) -> u64 {
         let seen = &self.programme_stats(programme_id).await["keeper_last_seen"];

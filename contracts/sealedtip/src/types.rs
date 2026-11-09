@@ -177,6 +177,24 @@ pub struct TipPublic {
     pub switch_triggered: bool,
 }
 
+/// The keeper, as the chain has it.
+///
+/// This exists because a tipster who turns on a dead man's switch has to seal `K_switch` to the keeper's
+/// X25519 public key, and `set_keeper` (S-2.9) makes that key rotatable contract state. Read from the
+/// chain, sealing the switch key answers to whoever the owner appointed; read from the page's own config,
+/// it answers to whoever the operator of that page wrote down — and a wrong key does not fail until the
+/// switch fires, which is the worst possible moment to discover it.
+///
+/// Nothing here is private: `keeper_last_seen` was already public inside `ProgrammeStats`, an account id
+/// is an account id, and an X25519 public key is the half that is meant to be given away.
+#[near(serializers = [json])]
+#[derive(Clone, Debug, PartialEq)]
+pub struct KeeperInfo {
+    pub keeper: AccountId,
+    pub keeper_x25519_pub: X25519PublicKey,
+    pub keeper_last_seen: U64,
+}
+
 #[near(serializers = [json])]
 #[derive(Clone, Debug, PartialEq)]
 pub struct ProgrammeStats {

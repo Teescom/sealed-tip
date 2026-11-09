@@ -11,7 +11,7 @@
 import { JsonRpcProvider } from "near-api-js";
 import { z } from "zod";
 
-import { Programme, ProgrammeStats, Tip, TipPublic } from "./types.js";
+import { KeeperInfo, Programme, ProgrammeStats, Tip, TipPublic } from "./types.js";
 
 /** `from_index` is a position in insertion order, not an id (`contracts/sealedtip/src/views.rs`). */
 export const DEFAULT_PAGE = 50;
@@ -101,6 +101,12 @@ export interface ViewClient {
   getProgrammeStats(id: number): Promise<ProgrammeStats>;
   getTipPublic(id: number): Promise<TipPublic | null>;
   getTipForPanel(id: number): Promise<Tip | null>;
+  /**
+   * The keeper account, its X25519 public half and its liveness. The anonymous submission page calls this:
+   * a switch key sealed to a public key read from the page's own config is a switch that opens for whoever
+   * the deployer wrote down, and `set_keeper` means that answer changes without the build changing.
+   */
+  getKeeperInfo(): Promise<KeeperInfo>;
 }
 
 export const createViewClient = (
@@ -161,6 +167,10 @@ export const createViewClient = (
     async getTipForPanel(id) {
       checkId("tip id", id);
       return readOne(Tip, "get_tip_for_panel", { tip_id: id });
+    },
+
+    async getKeeperInfo() {
+      return read(KeeperInfo, "get_keeper_info", {});
     },
   };
 };

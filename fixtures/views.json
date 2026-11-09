@@ -1,5 +1,5 @@
 {
-  "_source": "Captured 2026-11-08 from the sandbox suite: `cargo test -p sealedtip --test switch released_keys_exclude_recused_members`, with a temporary println of the five sealedtip view methods over `serde_json::Value` read through near-workspaces RPC, i.e. these are the bytes the deployed wasm returned, not hand-written examples. The scenario: a funded programme with a 3-member panel, one tip sealed to member_1 and member_3, member_2 recused, a 1-day switch that was triggered, and the keeper's release posted. `contracts/sealedtip/tests/views_shape.rs` keeps the shape honest against the live contract; the TypeScript suite in packages/core parses these values. Times are as recorded and are the only fields that are not reproducible.",
+  "_source": "Captured 2026-11-08 from the sandbox suite: `cargo test -p sealedtip --test switch released_keys_exclude_recused_members`, with a temporary println of the sealedtip view methods over `serde_json::Value` read through near-workspaces RPC, i.e. these are the bytes the deployed wasm returned, not hand-written examples. The scenario: a funded programme with a 3-member panel, one tip sealed to member_1 and member_3, member_2 recused, a 1-day switch that was triggered, and the keeper's release posted. `contracts/sealedtip/tests/views_shape.rs` keeps the shape honest against the live contract; the TypeScript suite in packages/core parses these values. Times are as recorded and are the only fields that are not reproducible. `get_keeper_info` was added with the view of the same name (the tipster's browser needs the keeper's X25519 public half before it can arm a switch) and re-captured from the same scenario, which is why its `keeper_last_seen` is still 0: the capture has the keeper post released keys, never heartbeat.",
   "accounts": {
     "funder": "funder.test.near",
     "member_1": "member1.test.near",
@@ -136,5 +136,10 @@
         "cid": "released-member3.test.near"
       }
     ]
+  },
+  "get_keeper_info": {
+    "keeper": "keeper.test.near",
+    "keeper_x25519_pub": [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
+    "keeper_last_seen": "0"
   }
 }
