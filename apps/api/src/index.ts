@@ -8,10 +8,13 @@ import { serve } from "@hono/node-server";
 import { createViewClient } from "@sealedtip/core";
 
 import { createApp } from "./app.js";
+import { nearAiCloud } from "./ai/cloud.js";
+import { createRedactor } from "./ai/redact.js";
 import { loadEnv } from "./env.js";
 import { createQueue, randomDelayMs } from "./relay/queue.js";
 import { RELAY_LIMITS, createRateLimiter } from "./relay/ratelimit.js";
 import { createSubmitter } from "./relay/submit.js";
+import { aiRoutes } from "./routes/ai.js";
 import { relayRoutes } from "./routes/relay.js";
 import { memoryBlobStore } from "./store/blob.js";
 
@@ -62,8 +65,22 @@ const relay = relayRoutes({
   }),
 });
 
+// The optional AI step (S-8.5). The key is the one secret this service holds for somebody else's model, so
+// the proxy is built only when it exists and the route answers 503 when it does not — the tip flow works
+// without the redaction suggestion, and a deployment that has not decided to pay for inference should not
+// be told it must.
+const ai = aiRoutes({
+  redactor:
+    env.NEAR_AI_API_KEY === undefined
+      ? null
+      : createRedactor({
+          cloud: nearAiCloud({ apiKey: env.NEAR_AI_API_KEY }),
+          ...(env.NEAR_AI_MODEL === undefined ? {} : { defaultModel: env.NEAR_AI_MODEL }),
+        }),
+});
+
 serve({
-  fetch: createApp({ blobs: memoryBlobStore(env.BLOB_MAX_BYTES), relay }).fetch,
+  fetch: createApp({ blobs: memoryBlobStore(env.BLOB_MAX_BYTES), relay, ai }).fetch,
   port: env.API_PORT,
 });
 console.log(`tip-api listening on ${env.API_PORT} for ${env.SEALEDTIP_CONTRACT} on ${env.NEAR_NETWORK}`);

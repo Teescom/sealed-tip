@@ -90,7 +90,7 @@ res/                     # pinned sputnikdao2.wasm + SPUTNIK_VERSION.txt
 | `packages/crypto/src/ed25519.ts` | @noble/ed25519 with `hashes.sha512` bound (browser and Node must sign identically) | — |
 | `packages/crypto/src/seal.ts` | XChaCha20-Poly1305 bundles, sealed boxes, cid | **browser-only** (plaintext) |
 | `packages/crypto/src/pow.ts` | PoW solve/check | — |
-| `packages/crypto/src/attestation.ts` | offline re-verify of a NEAR AI Cloud attestation bundle (nonce + signing-address bindings, TDX quote v4 register offsets, RTMR replay from the event log, compose-manifest hash, OHTTP ed25519 wrapper, GPU evidence nonce, compose-manager action-log quote) | no network, no new deps; malformed input becomes a failed check, never a throw |
+| `packages/crypto/src/attestation.ts` | offline re-verify of a NEAR AI Cloud attestation bundle (nonce + signing-address bindings, TDX quote v4 register offsets, RTMR replay from the event log, compose-manifest hash, OHTTP ed25519 wrapper, GPU evidence nonce, compose-manager action-log quote) and of a whole `RedactionBundle` from the proxy (`verifyRedactionBundle`, `responseSignatureText`, `canonicalJson`, `attestationHashOf`) | no network, no new deps; malformed input becomes a failed check, never a throw; the secp256k1 validity, Intel collateral and RTMR3 gaps are returned as an `unchecked` list instead of scored as passes |
 | `packages/clean/src/gate.ts` | magic-byte sniff; PDF/JPEG/PNG only; everything else refused | **browser-only** |
 | `packages/clean/src/{pdf,image,scan,report}.ts` | rasterise, re-encode, scan mode, removal report | **browser-only** |
 | `packages/clean/src/host.ts` | the `CanvasHost` port: the one seam through which the cleaners touch pixels, so the package needs neither the DOM nor a native image module | DOM host is `apps/web` (P10), Node host is `packages/clean/test/node_host.ts` |
@@ -107,9 +107,11 @@ res/                     # pinned sputnikdao2.wasm + SPUTNIK_VERSION.txt
 | `apps/api/src/middleware/no-logs.ts` | applied to every route | enforces invariant 2 |
 | `apps/api/src/routes/blob.ts` | ciphertext store, 25 MB cap | **ciphertext-only** |
 | `apps/api/src/routes/relay.ts`, `relay/{gate,queue,submit,ratelimit}.ts` | allow-list of four actions, random-delay queue, 2 relayers, limits keyed by claim pubkey | no IP keys; `gate.ts` validates shape and existence and leaves signature verification to the chain |
-| `apps/api/src/routes/ai.ts` | stateless NEAR AI Cloud proxy + attestation bundle | keeps nothing |
+| `apps/api/src/routes/ai.ts` + `ai/{cloud,redact}.ts` | `POST /ai/redact`: `cloud.ts` is transport (the three NEAR AI calls, timeouts, and which of them gets the bearer key), `redact.ts` is policy and assembly (order of checks, the 8 KiB byte cap, the inference-credit bucket, the bundle), the route is only status mapping | keeps nothing, caches nothing (`no-store`), verifies nothing — the bundle is graded client-side and offline |
+| `apps/api/src/json.ts` | the `Json`/`JsonObject` types and the parse-without-throwing readers, for JSON this service passes through without understanding | exists so `ai/cloud.ts` can hand back somebody else's report un-shaped |
 | `apps/keeper/src/{heartbeat,watch,release}.ts` | heartbeat, trigger watch, re-seal to non-recused | holds keeper key only |
 | `scripts/lib/app-cert.ts` | Node-only verify of the dstack X.509 chain in `info.app_cert`: leaf → App CA → KMS CA, validity, and the quote's MRTD + RTMR0-3 + compose hash embedded in the signed leaf | stays out of `packages/crypto` because that package must be browser-safe |
+| `scripts/lib/redaction-report.ts` | what a stored redaction bundle proves, as one pure function: the crypto package's checks plus the caller's app-cert chain, the `attestation_hash`, and the `unchecked` gaps in the order a judge reads them | the CLI prints it and `scripts/test/redaction-report.test.ts` asserts its shape, so "verified" cannot be printed over an unverifiable signature |
 | `scripts/*` | deploy, seed, demo, spam, verify-attestation, sign-statement, gen-vectors | fictional data only |
 
 Tests use `node:test` via `tsx`. Web tests use Vitest.
@@ -131,7 +133,8 @@ Tests use `node:test` via `tsx`. Web tests use Vitest.
 - `contracts/*` has no TS dependencies.
 - `packages/core` ← `crypto`, the apps and the scripts.
 - `packages/crypto` and `packages/clean` ← `apps/web`. `crypto` is also used by `keeper` and `scripts`.
-- **`apps/api` must not import `packages/crypto` or `packages/clean`.** The server never handles keys or plaintext.
+- **`apps/api` must not import `packages/crypto` or `packages/clean`.** The server never handles keys or plaintext. `apps/api/test/no-logs.test.ts` enforces it per source file, matching import and export statements so the comments that explain the rule can still name the package.
+- The one documented exception to "never handles plaintext" is `POST /ai/redact` (ARCHITECTURE §7.5): it holds `NEAR_AI_API_KEY` — a browser cannot be given our key — and so reads the passage the tipster chose to send for AI analysis. It never holds a tipster key, an exhibit or a cleaning result, and it still imports neither client package: the proxy assembles the attestation bundle and `verifyRedactionBundle`, in `apps/web`, `keeper` and `scripts`, is what grades it.
 
 ## 6. Where new code goes
 | You're adding… | Put it in… | Also update |

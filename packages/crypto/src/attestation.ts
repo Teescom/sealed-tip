@@ -188,8 +188,11 @@ const check = (name: string, ok: boolean, detail: string): Check => ({ name, ok,
 
 const utf8 = (value: string): Uint8Array => Uint8Array.from(new TextEncoder().encode(value));
 
+/** sha256 over the UTF-8 bytes of a string, as the 64-char lowercase hex every one of these bindings is stated in. */
+export const sha256Hex = (value: string): string => toHex(sha256(utf8(value)));
+
 /** Live reports satisfy `sha256(app_compose) === compose_hash` for every party, so the manifest is checkable offline. */
-export const composeManifestHash = (appCompose: string): string => toHex(sha256(utf8(appCompose)));
+export const composeManifestHash = (appCompose: string): string => sha256Hex(appCompose);
 
 export interface ComposeManifest {
   name: string;
@@ -467,4 +470,171 @@ export const verifyAttestationBundle = (
     );
   }
   return { ok: checks.every((entry) => entry.ok), checks };
+};
+
+// --- the AI redaction bundle (S-8.5) -------------------------------------------------------------
+//
+// `POST /ai/redact` keeps nothing, so everything that would let somebody check the answer later has to
+// travel back in one payload and be stored by the tipster: the report, the exact bytes the response
+// signature is taken over, and the signature itself. This is what that stored file is re-checked against,
+// offline, by somebody who trusts none of the parties involved.
+//
+// Verification deliberately does not run in `apps/api`: §5 of `project_structure.md` keeps
+// `packages/crypto` out of that process, ARCHITECTURE §14.4 records that a browser cannot do the curve
+// checks either, and a proxy grading its own work is not evidence. The proxy assembles; the tipster and
+// `scripts/verify-attestation.ts` verify.
+
+/**
+ * JSON with keys sorted and no insignificant whitespace.
+ *
+ * The hash a tipster commits on chain has to be reproducible from a file somebody else wrote, so it
+ * cannot depend on the order a provider happened to serialize its fields in. `undefined` is dropped, the
+ * same way `JSON.stringify` drops it, so an omitted field and an absent one hash alike.
+ */
+export const canonicalJson = (value: unknown): string => {
+  if (value === null) return "null";
+  const kind = typeof value;
+  if (kind === "string" || kind === "boolean" || kind === "number") {
+    if (kind === "number" && !Number.isFinite(value)) throw new RangeError(`cannot canonicalize ${String(value)}`);
+    return JSON.stringify(value);
+  }
+  if (kind !== "object") throw new RangeError(`cannot canonicalize a ${kind} value`);
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
+  const entries = Object.entries(value as Record<string, unknown>)
+    .filter(([, entry]) => entry !== undefined)
+    .sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
+  return `{${entries.map(([key, entry]) => `${JSON.stringify(key)}:${canonicalJson(entry)}`).join(",")}}`;
+};
+
+/** What `GET /v1/signature/<chat_id>` states about one completion (ARCHITECTURE §7.3). */
+export interface RedactionSignature {
+  chat_id: string;
+  signing_algo: string;
+  signing_address: string;
+  /** `"<model>:<sha256(req)>:<sha256(resp)>"`, as the gateway words it. */
+  text: string;
+  /** 65 bytes of r‖s‖v, hex. The curve check is listed in `unchecked`, not silently passed. */
+  signature: string;
+}
+
+/** Everything the redaction proxy hands back and nothing it keeps. */
+export interface RedactionBundle {
+  version: 1;
+  /** The 32 bytes the tipster's own client chose, which the quote is made to bind. */
+  nonce: string;
+  /** Canonical model id, as it appears in the signature text. */
+  model: string;
+  /** The exact JSON string sent to `/v1/chat/completions`; its sha256 is the middle field of the signature text. */
+  request_text: string;
+  /** The exact body that came back; its sha256 is the last field. */
+  response_text: string;
+  attestation: AttestationBundle;
+  signature: RedactionSignature;
+}
+
+/** The message NEAR AI Cloud signs for a completion, from the bytes rather than from what it claims to have signed. */
+export const responseSignatureText = (model: string, requestText: string, responseText: string): string =>
+  `${model}:${sha256Hex(requestText)}:${sha256Hex(responseText)}`;
+
+const ATTESTATION_HASH_DOMAIN = "sealedtip-attestation-v1";
+
+/**
+ * The 32 bytes a tipster commits as `attestation_hash`: sha256 over a domain tag and the canonical
+ * bundle. Because the response bytes are in there, the commitment binds the model's actual answer, not
+ * just the enclave that produced it.
+ */
+export const attestationHashOf = (bundle: RedactionBundle): string =>
+  sha256Hex(`${ATTESTATION_HASH_DOMAIN}\n${canonicalJson(bundle)}`);
+
+/** What a bundle this code can read still cannot prove on its own. Said out loud instead of scored as a pass. */
+export const UNCHECKED_ATTESTATION_CLAIMS: string[] = [
+  "the secp256k1 signature over the stated text: checked here for what it claims, not that it is valid — that needs a curve implementation, and `@noble/curves` is an ask-first dependency (ROADMAP S-0.3 gap b)",
+  "the Intel DCAP certificate chain over each quote, which needs collateral; the in-band dstack chain is checked by `scripts/verify-attestation.ts`, with a root pinned by `--pin-ca`",
+  "RTMR3, which is pinned by an app/os allow-list rather than replayed from the event log",
+];
+
+export interface RedactionVerification extends Verification {
+  readonly unchecked: string[];
+}
+
+const shortHex = (value: string): string => `${value.slice(0, 24)}${value.length > 24 ? "…" : ""}`;
+const bytesOf = (value: unknown): string =>
+  typeof value === "string" ? `${new TextEncoder().encode(value).length} bytes` : typeof value;
+
+/**
+ * Re-verify a stored redaction bundle against the nonce the client chose.
+ *
+ * A detail here may state a hash, an address or a byte count, never the request text: the file being
+ * verified contains the tipster's own words, and the checks are what gets pasted into an issue.
+ */
+export const verifyRedactionBundle = (
+  bundle: RedactionBundle,
+  expectedNonce: string,
+): RedactionVerification => {
+  if (!/^[0-9a-f]{64}$/.test(expectedNonce)) {
+    throw new RangeError("expectedNonce must be 32 bytes of lowercase hex");
+  }
+  const checks: Check[] = [];
+  const add = (name: string, ok: boolean, detail: string): void => {
+    checks.push(check(`bundle.${name}`, ok, detail));
+  };
+
+  const report = bundle?.attestation;
+  const readable =
+    report !== undefined && report !== null && Array.isArray(report.model_attestations);
+  if (!readable) {
+    add("attestation_report_present", false, `bundle carries ${bytesOf(report)}`);
+    return { ok: false, checks, unchecked: [...UNCHECKED_ATTESTATION_CLAIMS] };
+  }
+  checks.push(...verifyAttestationBundle(report, expectedNonce).checks);
+
+  add("version", bundle.version === 1, `bundle version ${String(bundle.version)}`);
+  add("nonce_is_the_one_we_chose", bundle.nonce === expectedNonce, `bundle states ${bundle.nonce}`);
+  add(
+    "model_is_stated",
+    typeof bundle.model === "string" && bundle.model.length > 0,
+    `model ${bytesOf(bundle.model)}`,
+  );
+  add(
+    "request_and_response_bytes_are_stored",
+    typeof bundle.request_text === "string" &&
+      bundle.request_text.length > 0 &&
+      typeof bundle.response_text === "string" &&
+      bundle.response_text.length > 0,
+    `request ${bytesOf(bundle.request_text)}, response ${bytesOf(bundle.response_text)}`,
+  );
+
+  const signature = bundle.signature ?? ({} as RedactionSignature);
+  const recomputed = responseSignatureText(bundle.model, bundle.request_text, bundle.response_text);
+  add(
+    "signature_text_binds_request_and_response",
+    signature.text === recomputed,
+    `stated ${shortHex(String(signature.text))} vs recomputed ${shortHex(recomputed)}`,
+  );
+  const address = String(signature.signing_address ?? "").toLowerCase();
+  const signers = report.model_attestations.filter(
+    (party) => party.signing_address?.toLowerCase() === address,
+  );
+  add(
+    "signature_address_is_attested",
+    address.length > 0 && signers.length === 1,
+    `${signers.length} of ${report.model_attestations.length} model parties state signing_address ${address}`,
+  );
+  add(
+    "attested_model_is_the_bundle_model",
+    signers.length === 1 && signers[0]?.model_name === bundle.model,
+    `bundle says ${bundle.model}, the quote says ${String(signers[0]?.model_name)}`,
+  );
+  add(
+    "signature_is_65_bytes",
+    /^(0x)?[0-9a-f]{130}$/.test(String(signature.signature ?? "")),
+    `signature is ${String(signature.signature ?? "").replace(/^0x/, "").length / 2} bytes`,
+  );
+  add(
+    "chat_id_is_stated",
+    typeof signature.chat_id === "string" && signature.chat_id.length > 0,
+    `chat_id ${bytesOf(signature.chat_id)}`,
+  );
+
+  return { ok: checks.every((entry) => entry.ok), checks, unchecked: [...UNCHECKED_ATTESTATION_CLAIMS] };
 };
