@@ -106,7 +106,7 @@ res/                     # pinned sputnikdao2.wasm + SPUTNIK_VERSION.txt
 | `apps/web/next.config.ts` | strict CSP + no-referrer headers | enforces invariant 3 |
 | `apps/api/src/middleware/no-logs.ts` | applied to every route | enforces invariant 2 |
 | `apps/api/src/routes/blob.ts` | ciphertext store, 25 MB cap | **ciphertext-only** |
-| `apps/api/src/routes/relay.ts`, `relay/{queue,submit,ratelimit}.ts` | random-delay queue, 2 relayers, limits keyed by claim pubkey | no IP keys |
+| `apps/api/src/routes/relay.ts`, `relay/{gate,queue,submit,ratelimit}.ts` | allow-list of four actions, random-delay queue, 2 relayers, limits keyed by claim pubkey | no IP keys; `gate.ts` validates shape and existence and leaves signature verification to the chain |
 | `apps/api/src/routes/ai.ts` | stateless NEAR AI Cloud proxy + attestation bundle | keeps nothing |
 | `apps/keeper/src/{heartbeat,watch,release}.ts` | heartbeat, trigger watch, re-seal to non-recused | holds keeper key only |
 | `scripts/lib/app-cert.ts` | Node-only verify of the dstack X.509 chain in `info.app_cert`: leaf → App CA → KMS CA, validity, and the quote's MRTD + RTMR0-3 + compose hash embedded in the signed leaf | stays out of `packages/crypto` because that package must be browser-safe |

@@ -218,6 +218,8 @@ files ─► clean (rasterise PDF | re-encode image | optional scan mode) ─►
 
 - Run **2 relayer instances** with separate accounts, both allow-listed.
 - The `noLogs` middleware drops IPs and bodies; a test asserts it.
+- **What `POST /relay/:action` checks, and what it does not.** It forwards only `submit_tip`, `checkin`, `retract` and `claim`; validates the body against the same zod schemas that describe the deployed wasm; and for an action, reads the tip so a call naming a tip that does not exist is refused for free instead of costing relayer gas. It does **not** verify the signature: that is `env::ed25519_verify`'s job (ESSENTIALS #15), a second copy of the signed-message format in TypeScript is a copy that goes stale, and §5 of `project_structure.md` keeps `packages/crypto` out of this process. The cost of that choice is one failed relayer transaction per well-formed forgery, which is what the global token bucket bounds.
+- **Rate limit is two token buckets, never an IP.** Per-claim-pubkey is fairness against one misbehaving page and cannot be a defence, since a pubkey is either caller-supplied or public on the tip; the shared bucket is what a flood actually runs into. A refusal consumes nothing.
 
 **keeper**
 - Calls `heartbeat` every 5 minutes.

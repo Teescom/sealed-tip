@@ -10,10 +10,25 @@ import { Hono } from "hono";
 
 import { createApp } from "../src/app.js";
 import { STRIPPED_HEADERS, noLogs } from "../src/middleware/no-logs.js";
+import { createQueue } from "../src/relay/queue.js";
+import { createRateLimiter } from "../src/relay/ratelimit.js";
+import { relayRoutes } from "../src/routes/relay.js";
 import { memoryBlobStore } from "../src/store/blob.js";
 
 const IP = "203.0.113.9";
 const SECRET_BODY = "sealed-evidence-bytes-do-not-log-me";
+
+/**
+ * The real relay route over a queue that never sends and a chain that has no tips. The privacy point of
+ * using the route rather than a stub is that `/relay` is the one endpoint a tipster posts a signed action
+ * and a claim pubkey to, so it is the one body this test most needs to prove is not logged.
+ */
+const relayForTests = (): Hono =>
+  relayRoutes({
+    context: { contract: "sealedtip.testnet", tipReader: async () => null },
+    limiter: createRateLimiter({ keyBurst: 10, keyPerSecond: 1, globalBurst: 10, globalPerSecond: 1 }),
+    queue: createQueue({ delayMs: () => 60_000, send: async () => ({ txHash: "never" }) }),
+  });
 
 /** Everything a handler could have written, captured off the five sinks a Node process can log through. */
 const captureLogs = async <T>(write: () => Promise<T>): Promise<{ result: T; logged: string }> => {
@@ -74,7 +89,7 @@ test("stripping does not eat the body: the bytes a tipster uploaded still arrive
 });
 
 test("a request through the real app logs nothing at all, least of all an address", async () => {
-  const app = createApp({ blobs: memoryBlobStore(1024) });
+  const app = createApp({ blobs: memoryBlobStore(1024), relay: relayForTests() });
   const { logged } = await captureLogs(async () => {
     await app.request("/health");
     await app.request("/blob", { method: "POST", body: new Uint8Array([1, 2, 3, 4]) });
@@ -83,8 +98,33 @@ test("a request through the real app logs nothing at all, least of all an addres
   assert.equal(logged, "", `the API wrote to a console sink: ${logged}`);
 });
 
+// The relay body is the one request this service gets that carries a public key and a signature. Both are
+// useless to an eavesdropper on their own, but a log line that shows the same pubkey posting to the blob
+// store and to /relay is the linkage the 24-word identity exists to avoid — so this is checked as a
+// property of the route, not of the handler that happens to be installed.
+test("a signed action posted to /relay appears in no log and comes back in no error", async () => {
+  const app = createApp({ blobs: memoryBlobStore(1024), relay: relayForTests() });
+  const action = {
+    tip_id: 7,
+    nonce: 3,
+    signature: Buffer.alloc(64, 9).toString("base64"),
+  };
+  const { result: res, logged } = await captureLogs(async () =>
+    app.request("/relay/checkin", {
+      method: "POST",
+      headers: { ...forwardHeaders(), "content-type": "application/json" },
+      body: JSON.stringify(action),
+    }),
+  );
+  assert.equal(res.status, 404, "a tip the chain does not have must not be queued");
+  const text = JSON.stringify(await res.json()) + logged;
+  assert.equal(logged, "", `the API wrote to a console sink: ${logged}`);
+  assert.ok(!text.includes(Buffer.alloc(64, 9).toString("base64")), "the refused signature came back");
+  assert.ok(!text.includes(IP), `an address was logged: ${text}`);
+});
+
 test("an oversized upload is refused without the body being echoed into the response or a log", async () => {
-  const app = createApp({ blobs: memoryBlobStore(4) });
+  const app = createApp({ blobs: memoryBlobStore(4), relay: relayForTests() });
   const { result: res, logged } = await captureLogs(async () =>
     app.request("/blob", { method: "POST", body: new Uint8Array(64).fill(7) }),
   );
@@ -97,21 +137,39 @@ test("an oversized upload is refused without the body being echoed into the resp
 // The middleware can strip everything and still be undone by one handler that logs `c.req`. This is the
 // part a behavioural test cannot reach, so it is checked in the source instead - and, like the rest of
 // this file, it fails the moment someone adds the line it is banning.
+const API_SOURCES = [
+  "src/index.ts",
+  "src/app.ts",
+  "src/env.ts",
+  "src/middleware/no-logs.ts",
+  "src/routes/blob.ts",
+  "src/routes/relay.ts",
+  "src/routes/ai.ts",
+  "src/routes/quote.ts",
+  "src/relay/gate.ts",
+  "src/relay/queue.ts",
+  "src/relay/ratelimit.ts",
+  "src/relay/submit.ts",
+  "src/store/blob.ts",
+];
+
 test("no route may import a request logger or hand a request object to a console sink", () => {
-  const sources = [
-    "src/index.ts",
-    "src/app.ts",
-    "src/env.ts",
-    "src/middleware/no-logs.ts",
-    "src/routes/blob.ts",
-    "src/routes/relay.ts",
-    "src/routes/ai.ts",
-    "src/routes/quote.ts",
-    "src/store/blob.ts",
-  ];
-  for (const file of sources) {
+  for (const file of API_SOURCES) {
     const text = readFileSync(new URL(`../${file}`, import.meta.url), "utf8");
     assert.ok(!/hono\/middleware\/logger/.test(text), `${file} imports hono's request logger`);
     assert.ok(!/console\.\w+\(\s*(c\.req|req)\b/.test(text), `${file} logs a request object`);
+  }
+});
+
+// PRIVACY INVARIANT 2's structural half. `project_structure.md` §5 says `apps/api` must not import
+// `packages/crypto`, and the reason is not tidiness: that package is the one that holds sealed-box and
+// XChaCha20 code, so an API that can reach it is an API that is one refactor away from being able to open
+// an exhibit. The relay route is where that temptation actually arrives — the obvious way to check a
+// tipster's signature server-side is to import `verify` — so the ban is checked here, in source, where a
+// comment explaining it cannot be skipped.
+test("the API may not import client crypto or client cleaning", () => {
+  for (const file of API_SOURCES) {
+    const text = readFileSync(new URL(`../${file}`, import.meta.url), "utf8");
+    assert.ok(!/@sealedtip\/(crypto|clean)/.test(text), `${file} imports a client-side package`);
   }
 });
