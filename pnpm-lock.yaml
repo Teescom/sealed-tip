@@ -151,6 +151,9 @@ importers:
 
   packages/crypto:
     dependencies:
+      '@noble/curves':
+        specifier: ^2.2.0
+        version: 2.2.0
       '@noble/ed25519':
         specifier: ^3.2.0
         version: 3.2.0

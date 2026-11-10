@@ -221,11 +221,16 @@ what follows each one is what was measured or decided when the route was written
    JSON (sorted keys, `undefined` dropped), so the hash is reproducible from the file alone. The bundle is
    shown in the "Verified enclave" panel (P10) and re-verified offline with
    `pnpm verify-attestation -- --redaction <file> --nonce <hex32>`, which prints its verdicts, the hash, and
-   the three things it cannot prove: **secp256k1 validity** of the response signature (checking that needs a
-   curve implementation, and `@noble/curves` is an ask-first dependency), the **Intel DCAP collateral chain**
-   over each quote, and **RTMR3**, which is pinned by an app/os allow-list rather than replayed from the event
+   the two things it cannot prove: the **Intel DCAP collateral chain** over each quote, and **RTMR3**, which
+   is pinned by an app/os allow-list rather than replayed from the event
    log. They are listed as `unchecked` on purpose: a bundle this tool cannot fully grade must not print
-   "verified".
+   "verified". The response signature is no longer one of those gaps: the 65 bytes are r‖s‖v over the
+   EIP-191 `personal_sign` digest of the same `<model>:<sha256(req)>:<sha256(resp)>` text, and the address
+   they recover to must be the attested `signing_address`, with `@noble/curves` as the curve
+   implementation the owner approved on 2026-11-10. That is still a spec reading and not a live measurement
+   for the same reason as the field names above — no `NEAR_AI_API_KEY`, so no chat completion, so no
+   signature anybody actually made. What the digest encoding gets wrong on a real bundle is a ✘ on
+   `signature_recovers_from_the_signing_address_key`, never a silent pass.
 5. **Proxy:** stateless, holds the key, mounted behind `noLogs`, keeps no copy of the request or the response,
    and sends `cache-control: no-store` so the bundle is not resident in a CDN either. A text over 8 KiB is a
    413 that names bytes only, and with no `NEAR_AI_API_KEY` the route answers 503 before it spends anything.
@@ -395,11 +400,14 @@ stateless proxy is no longer the confidentiality path.
 the gateway. A browser that posts straight to `cloud-api.near.ai` makes that host both: it holds the receiver key,
 so it reads the plaintext (inside a TEE whose measurements `pnpm verify-attestation` checks — S-0.3), and it sees
 the tipster's IP. For a tipster whose IP matters, the proxy or a Tor hop in front of the relay stays mandatory, and
-the proxy is where our NEAR AI key and rate limits live — handing a key to every browser is not an option. Two
-checks cannot run in a tab: `keccak256` for the signing address and secp256k1 for the response signature are absent
-from WebCrypto, so attestation verification stays in the offline verifier and in-browser pinning would need a
-dependency. Chunked OHTTP (streaming) is implemented by the relay but unproven in the browser — irrelevant here,
-because redaction is one non-streaming call.
+the proxy is where our NEAR AI key and rate limits live — handing a key to every browser is not an option.
+Neither of the two checks that WebCrypto cannot do — `keccak256` for the signing address, secp256k1 for the
+response signature — is a reason to keep verification out of a tab any more, because `packages/crypto` ships
+both in JS (`@noble/hashes`, and `@noble/curves` since 2026-11-10) and `apps/web` already runs
+`verifyRedactionBundle` there. What keeps the offline verifier authoritative is not a missing primitive: a
+browser's verdict on evidence the proxy assembled for it is a tipster checking their own work, and only
+`pnpm verify-attestation` is a check somebody else can repeat. Chunked OHTTP (streaming) is implemented by
+the relay but unproven in the browser — irrelevant here, because redaction is one non-streaming call.
 
 ### 14.5 S-3 tip-lifecycle decisions (2026-11-06)
 

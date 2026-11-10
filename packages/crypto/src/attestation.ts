@@ -2,6 +2,8 @@
 // Offsets and field shapes below were measured against live `GET /v1/attestation/report` responses, not recalled from a spec.
 import { keccak_256 } from "@noble/hashes/sha3.js";
 import { sha256, sha384, sha512 } from "@noble/hashes/sha2.js";
+import { secp256k1 } from "@noble/curves/secp256k1.js";
+import { concatBytes } from "@noble/curves/utils.js";
 import * as ed25519 from "@noble/ed25519";
 
 /** @noble/ed25519 v3 needs the hash injected before any sync call works. */
@@ -513,7 +515,7 @@ export interface RedactionSignature {
   signing_address: string;
   /** `"<model>:<sha256(req)>:<sha256(resp)>"`, as the gateway words it. */
   text: string;
-  /** 65 bytes of r‖s‖v, hex. The curve check is listed in `unchecked`, not silently passed. */
+  /** 65 bytes of r‖s‖v, hex: an EIP-191 `personal_sign` signature the curve check recovers an address from. */
   signature: string;
 }
 
@@ -536,6 +538,45 @@ export interface RedactionBundle {
 export const responseSignatureText = (model: string, requestText: string, responseText: string): string =>
   `${model}:${sha256Hex(requestText)}:${sha256Hex(responseText)}`;
 
+/**
+ * What EIP-191 `personal_sign` hands the curve for a text: keccak256 over the prefix, the length of
+ * the message, and the message. The length is counted in bytes, so a passage with multibyte
+ * characters is prefixed with a different number than its character count would give.
+ */
+export const eip191Digest = (text: string): Uint8Array => {
+  const message = new TextEncoder().encode(text);
+  const prefix = new TextEncoder().encode(`\x19Ethereum Signed Message:\n${message.length}\n`);
+  return keccak_256(concatBytes(prefix, message));
+};
+
+/**
+ * The address whose secp256k1 key made this signature over this text, or undefined if nothing recovers.
+ *
+ * `@noble/curves` puts the recovery id first and Ethereum sends it last, so the bytes are rearranged
+ * here instead of at every call site; both `v` spellings (0/1 and 27/28) are read, because signers use
+ * either. A signature that is not 65 bytes, or whose `r`/`s` is out of range, recovers nothing rather
+ * than throwing: a stored bundle is somebody else's file.
+ */
+export const recoverSignerAddress = (signatureHex: string, text: string): string | undefined => {
+  let signature: Uint8Array;
+  try {
+    signature = fromHex(signatureHex);
+  } catch {
+    return undefined;
+  }
+  if (signature.length !== 65) return undefined;
+  const v = signature[64]!;
+  try {
+    const recovered = secp256k1.Signature.fromBytes(
+      concatBytes(Uint8Array.of(v >= 27 ? v - 27 : v), signature.subarray(0, 64)),
+      "recovered",
+    ).recoverPublicKey(eip191Digest(text));
+    return addressFromPublicKey(toHex(recovered.toBytes(false).subarray(1)));
+  } catch {
+    return undefined;
+  }
+};
+
 const ATTESTATION_HASH_DOMAIN = "sealedtip-attestation-v1";
 
 /**
@@ -548,7 +589,6 @@ export const attestationHashOf = (bundle: RedactionBundle): string =>
 
 /** What a bundle this code can read still cannot prove on its own. Said out loud instead of scored as a pass. */
 export const UNCHECKED_ATTESTATION_CLAIMS: string[] = [
-  "the secp256k1 signature over the stated text: checked here for what it claims, not that it is valid — that needs a curve implementation, and `@noble/curves` is an ask-first dependency (ROADMAP S-0.3 gap b)",
   "the Intel DCAP certificate chain over each quote, which needs collateral; the in-band dstack chain is checked by `scripts/verify-attestation.ts`, with a root pinned by `--pin-ca`",
   "RTMR3, which is pinned by an app/os allow-list rather than replayed from the event log",
 ];
@@ -629,6 +669,16 @@ export const verifyRedactionBundle = (
     "signature_is_65_bytes",
     /^(0x)?[0-9a-f]{130}$/.test(String(signature.signature ?? "")),
     `signature is ${String(signature.signature ?? "").replace(/^0x/, "").length / 2} bytes`,
+  );
+  // Recovered over the bytes we recomputed, never over `signature.text`: trusting the stated text here
+  // would let a bundle that fails the check above still pass this one by quoting itself.
+  const recovered = recoverSignerAddress(String(signature.signature ?? ""), recomputed);
+  add(
+    "signature_recovers_from_the_signing_address_key",
+    recovered !== undefined && recovered.toLowerCase() === address,
+    recovered === undefined
+      ? "no secp256k1 key recovers from these 65 bytes over the recomputed text"
+      : `recovers to ${recovered}, stated address is ${address}`,
   );
   add(
     "chat_id_is_stated",

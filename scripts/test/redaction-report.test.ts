@@ -73,12 +73,15 @@ test("a signature that does not bind the bytes it stored fails in the printed ve
   assert.ok(binding !== undefined && binding.startsWith("✘"), `not printed as a failure: ${binding}`);
 });
 
-// The point of the `unchecked` list is that this tool cannot say "verified" while the secp256k1 curve check
-// is still missing, so the word the CLI prints on a clean run has to be about bindings, not validity.
+// The curve check is scored now, so a bundle whose 65 bytes sign nothing has to print as a failure rather
+// than as a gap — and the word the CLI prints on a clean run still has to be about bindings, not validity.
 test("nothing calls an unverifiable signature verified", () => {
-  const lines = redactionReportLines(redactionReport(bundle(), NONCE)).join("\n");
-  assert.ok(!/signature verified/i.test(lines), lines);
-  assert.ok(!/✔ bundle.signature_is_valid/.test(lines), "a curve check was scored as a pass");
+  const lines = redactionReportLines(redactionReport(bundle(), NONCE));
+  const printed = lines.join("\n");
+  const curve = lines.find((line) => line.includes("signature_recovers_from_the_signing_address_key"));
+  assert.ok(curve !== undefined && curve.startsWith("✘"), `the curve check was not printed as a failure: ${curve}`);
+  assert.ok(!/signature verified/i.test(printed), printed);
+  assert.ok(!/✔ bundle.signature_recovers/.test(printed), "a curve check was scored as a pass");
 });
 
 test("no line of the verifier's output contains the tipster's passage", () => {
