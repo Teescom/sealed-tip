@@ -545,7 +545,7 @@ export const responseSignatureText = (model: string, requestText: string, respon
  */
 export const eip191Digest = (text: string): Uint8Array => {
   const message = new TextEncoder().encode(text);
-  const prefix = new TextEncoder().encode(`\x19Ethereum Signed Message:\n${message.length}\n`);
+  const prefix = new TextEncoder().encode(`\x19Ethereum Signed Message:\n${message.length}`);
   return keccak_256(concatBytes(prefix, message));
 };
 

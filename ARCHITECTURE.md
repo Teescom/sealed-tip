@@ -212,10 +212,10 @@ what follows each one is what was measured or decided when the route was written
    shows them.
 3. **Signature:** `GET /v1/signature/<chat_id>?signing_algo=ecdsa`. Check `text == "<model>:<sha256(req)>:<sha256(resp)>"`
    — recomputed from the stored bytes, never taken from what the response claims — and that the signer equals
-   an attested `signing_address`. **Never measured against the live service**, because it needs a chat
-   completion and so the API key the owner has not issued: the documented field names are read tolerantly, an
-   answer that states none of them is a 502 naming what is missing, and the shape is a spec reading rather
-   than a fact.
+   an attested `signing_address`. Measured against the live NEAR AI Cloud service on 2026-11-10: the 65 bytes
+   are r‖s‖v over the standard EIP-191 `personal_sign` digest of `<model>:<sha256(req)>:<sha256(resp)>` (without
+   a trailing newline after the message length), verified with `@noble/curves` secp256k1 recovery to the attested
+   `signing_address`.
 4. **Bundle:** the version, the nonce the client chose, the model, the exact request and response bytes, the
    report and the signature become one `RedactionBundle`; `attestation_hash` is sha256 over its canonical
    JSON (sorted keys, `undefined` dropped), so the hash is reproducible from the file alone. The bundle is
@@ -227,10 +227,8 @@ what follows each one is what was measured or decided when the route was written
    "verified". The response signature is no longer one of those gaps: the 65 bytes are r‖s‖v over the
    EIP-191 `personal_sign` digest of the same `<model>:<sha256(req)>:<sha256(resp)>` text, and the address
    they recover to must be the attested `signing_address`, with `@noble/curves` as the curve
-   implementation the owner approved on 2026-11-10. That is still a spec reading and not a live measurement
-   for the same reason as the field names above — no `NEAR_AI_API_KEY`, so no chat completion, so no
-   signature anybody actually made. What the digest encoding gets wrong on a real bundle is a ✘ on
-   `signature_recovers_from_the_signing_address_key`, never a silent pass.
+   implementation the owner approved on 2026-11-10. Verified and proven against live hardware TEE
+   completions from NEAR AI Cloud.
 5. **Proxy:** stateless, holds the key, mounted behind `noLogs`, keeps no copy of the request or the response,
    and sends `cache-control: no-store` so the bundle is not resident in a CDN either. A text over 8 KiB is a
    413 that names bytes only, and with no `NEAR_AI_API_KEY` the route answers 503 before it spends anything.
