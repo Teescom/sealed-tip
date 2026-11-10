@@ -17,8 +17,9 @@ import {
   type TipsterKeys,
 } from "@sealedtip/crypto";
 
-import { createTipApi, type TipApi } from "@/lib/api";
+import { createTipApi } from "@/lib/api";
 import { readPublicConfig, type PublicConfig } from "@/lib/config";
+import { fetchCrossChainQuote, type QuoteResponse } from "@/lib/quote";
 import { claimFlow } from "@/lib/submit-flow";
 
 export interface DerivedCredentials {
@@ -144,57 +145,6 @@ export function isTipClaimable(status: TipStatus | string | null | undefined): {
         reason: `Claim is not available for tip with status "${String(status)}". Only Accepted tips with reward > 0 can be claimed.`,
       };
   }
-}
-
-export interface QuoteRequest {
-  originAsset: string;
-  destinationAsset: string;
-  amount: string;
-  recipient: string;
-}
-
-export interface QuoteResponse {
-  depositAddress: string;
-  memo: string | null;
-  estimatedAmount: string;
-  destinationAsset: string;
-}
-
-export async function fetchCrossChainQuote(
-  api: TipApi,
-  apiUrl: string,
-  req: QuoteRequest,
-): Promise<QuoteResponse> {
-  const getQuote = (api as unknown as Record<string, unknown>).getQuote;
-  if (typeof getQuote === "function") {
-    return (await (getQuote as (req: QuoteRequest) => Promise<QuoteResponse>).call(api, req));
-  }
-
-  try {
-    const res = await fetch(`${apiUrl.replace(/\/+$/, "")}/quote`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(req),
-    });
-    if (res.ok) {
-      const data = (await res.json()) as Record<string, unknown>;
-      return {
-        depositAddress: String(data.depositAddress ?? data.deposit_address ?? "1click-intents.near"),
-        memo: data.memo ? String(data.memo) : null,
-        estimatedAmount: String(data.estimatedAmount ?? data.amountOut ?? req.amount),
-        destinationAsset: req.destinationAsset,
-      };
-    }
-  } catch {
-    // fallback if API is not running or 501
-  }
-
-  return {
-    depositAddress: "1click-intents.near",
-    memo: `intents:v1:${req.destinationAsset}:${req.recipient}`,
-    estimatedAmount: req.amount,
-    destinationAsset: req.destinationAsset,
-  };
 }
 
 export interface ClaimTipData {
@@ -455,8 +405,9 @@ function ClaimContent() {
         <div>
           <h1 className="display text-[clamp(1.75rem,5vw,2.25rem)] text-ask">Claim a bounty</h1>
           <p className="mt-2 text-sm leading-relaxed text-ink-muted">
-            Submit your signed claim anonymously. Payouts can be sent to a fresh implicit NEAR address or swapped
-            cross-chain via 1Click.
+            Submit your signed claim anonymously. A testnet NEAR payout works in this build. The
+            cross-chain route through 1Click needs a quote endpoint that is not implemented yet, so this
+            page will tell you that rather than show a made-up rate.
           </p>
         </div>
 
@@ -735,6 +686,10 @@ function ClaimContent() {
               {/* Option B: Cross-Chain 1Click */}
               {payoutOption === "crosschain" && (
                 <div className="space-y-4">
+                  <p className="text-xs text-ink-muted">
+                    The 1Click quote endpoint is not implemented in this build, so no cross-chain quote can
+                    be fetched here. A testnet NEAR payout is the route that works.
+                  </p>
                   <div>
                     <label htmlFor="chain" className="block text-xs text-ink-muted mb-1">
                       Destination Chain &amp; Asset

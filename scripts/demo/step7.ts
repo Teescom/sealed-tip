@@ -1,6 +1,7 @@
 // S-11.7 / Issue #146: Step 7 of PRD §8 acceptance test
 // Tipster claims to a brand-new testnet account using the recovery phrase → paid.
-// Mainnet path shown via a real 1Click dry-run quote (USDC on NEAR → USDT on Tron).
+// Mainnet path is illustrated with fixed example figures. It is not a live 1Click quote: the quote
+// endpoint is a stub (S-8.6) and the $1 deposit-method check (S-0.6) has not been run.
 import assert from "node:assert/strict";
 
 import type { SignedAction } from "@sealedtip/crypto";
@@ -17,7 +18,7 @@ import { fail, info, ok, step } from "../lib/log.js";
 import type { DemoContext } from "./types.js";
 
 export async function step7(ctx: DemoContext): Promise<void> {
-  step(7, "Tipster claims reward to a fresh anonymous account with gas drip; mainnet quote shown");
+  step(7, "Tipster claims reward to a fresh anonymous account with gas drip; mainnet route illustrated");
 
   if (!ctx.state.tip || !ctx.state.programme || !ctx.recoveryWords) {
     fail("Tip, programme, and recovery words required (steps 1, 4, 6 must run first)");
@@ -108,9 +109,9 @@ export async function step7(ctx: DemoContext): Promise<void> {
   assert.equal(tip.status, "Paid", "Tip status must transition to Paid");
   assert.equal(prog.reserved, "0", "Reservation must be fully released upon claim");
 
-  // 5. Mainnet cross-chain cashout preview (PRD §8 Step 7)
-  // Demonstrating the 1Click dry-run quote (USDC on NEAR → USDT on Tron)
-  info(`\nMainnet Anonymous Cash-out Route (1Click dry-run preview):`);
+  // 5. Mainnet cross-chain cashout illustration (PRD §8 Step 7)
+  // Hardcoded example, not a quote. No request leaves this process.
+  info(`\nMainnet Anonymous Cash-out Route (illustrative example, not a quote):`);
   const oneClickQuote = {
     inputToken: "USDC (NEAR)",
     outputToken: "USDT (Tron / TRC20)",
@@ -125,11 +126,13 @@ export async function step7(ctx: DemoContext): Promise<void> {
 
   info(`  Route:       ${oneClickQuote.inputToken} ➔ ${oneClickQuote.outputToken}`);
   info(`  Input:       ${oneClickQuote.inputAmount}`);
-  info(`  Receives:    ${oneClickQuote.estimatedOutput} (after swap fee & Tron bandwidth)`);
+  info(`  Receives:    ${oneClickQuote.estimatedOutput} (example figure, not a rate this build fetched)`);
   info(`  Destination: ${oneClickQuote.destinationAddress}`);
   info(`  KYC Required: ${oneClickQuote.requiresKyc} (non-custodial 1Click cross-chain swap)`);
 
   ctx.state.oneClickQuote = oneClickQuote;
 
-  ok(`Tipster claim completed: 800 tUSDC paid + 0.05 NEAR gas drip delivered; mainnet 1Click quote verified`);
+  ok(
+    `Tipster claim completed: 800 tUSDC paid + 0.05 NEAR gas drip delivered; the mainnet route above is an illustration, not a quote`,
+  );
 }
