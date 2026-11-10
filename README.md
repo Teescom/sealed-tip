@@ -5,18 +5,18 @@
 > NEAR Hackathon 2026 · track **Privacy & Private AI** · deadline 14 Nov 2026, 23:59 UTC.
 > Live plan and progress: [`ROADMAP.md`](ROADMAP.md) · decisions: [`ARCHITECTURE.md`](ARCHITECTURE.md) §14 · product spec: [`PRD.md`](PRD.md).
 
-**Status: 86 / 104 Must tasks done (83%), 89 / 111 overall** — every implementation phase through P11 is
-built and verified offline against a sandbox chain or a local simulation: 258 Rust and 399 TypeScript tests
+**Status: 87 / 104 Must tasks done (84%), 90 / 111 overall** — every implementation phase through P11 is
+built and verified offline against a sandbox chain or a local simulation: 258 Rust and 418 TypeScript tests
 pass with none skipped or ignored, and `pnpm lint`, `pnpm build`, `pnpm test` and `pnpm demo` all exit 0; CI
 runs build, lint and test on every push and PR. **P4 is live:** both contracts were deployed and initialised
 on testnet on 2026-11-10, `pnpm seed -- --apply` created the panel DAO `sealedtip-panel.sputnik-v2.testnet`,
 opened programme 0 with 1,000 tUSDC, and appointed a three-member panel through a 2-of-3 DAO vote. No tip has
 been submitted through the live contracts yet. What is left is on-chain activity and outward-facing steps:
-the first live keeper heartbeat/watch/release and the first live `POST /ai/redact` bundle (needs
-`NEAR_AI_API_KEY`), the first `POST /quote` through the proxy (needs `ONECLICK_API_KEY`; its wire request was
-measured against the live API on 2026-11-10 but the route is off until the key is set, S-8.6), the $1 mainnet
-check `S-0.6`, the response-signature half of `S-0.3`, and the P12 submission steps (Vercel, demo video, X
-post, form).
+the first live keeper heartbeat/watch/release, the first live `POST /quote` through the proxy (needs
+`ONECLICK_API_KEY`; its wire request was measured against the live API on 2026-11-10 but the route is off
+until the key is set, S-8.6), the $1 mainnet check `S-0.6`, and the P12 submission steps (Vercel, demo
+video, X post, form). S-0.3 is complete: hardware TEE completions and ECDSA response signatures were verified
+against live NEAR AI Cloud infrastructure on 2026-11-10.
 Both counts are what `python3 tools/roadmap.py ROADMAP.md` prints, measured 2026-11-10. Working and tested: the tipster key model (24
 words ↔ secret ↔ HKDF-derived ed25519/X25519 keys), the borsh + ed25519 action wire format — verified to
 be byte-identical in Rust and TypeScript from one shared fixture — the contract's access guards, PoW
