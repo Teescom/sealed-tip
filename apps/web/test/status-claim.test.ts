@@ -17,6 +17,7 @@ import {
 } from "@sealedtip/crypto";
 
 import { type TipApi } from "../lib/api";
+import { fetchCrossChainQuote, QuoteUnavailableError } from "../lib/quote";
 import { checkinFlow, claimFlow, retractFlow } from "../lib/submit-flow";
 
 // --- Logic mirroring apps/web/app/status/page.tsx ---
@@ -279,56 +280,6 @@ export function isTipClaimable(status: TipStatus | string | null | undefined): {
   }
 }
 
-export interface QuoteRequest {
-  originAsset: string;
-  destinationAsset: string;
-  amount: string;
-  recipient: string;
-}
-
-export interface QuoteResponse {
-  depositAddress: string;
-  memo: string | null;
-  estimatedAmount: string;
-  destinationAsset: string;
-}
-
-export async function fetchCrossChainQuote(
-  api: TipApi,
-  apiUrl: string,
-  req: QuoteRequest,
-): Promise<QuoteResponse> {
-  const getQuote = (api as unknown as Record<string, unknown>).getQuote;
-  if (typeof getQuote === "function") {
-    return (await (getQuote as (req: QuoteRequest) => Promise<QuoteResponse>).call(api, req));
-  }
-
-  try {
-    const res = await fetch(`${apiUrl.replace(/\/+$/, "")}/quote`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(req),
-    });
-    if (res.ok) {
-      const data = (await res.json()) as Record<string, unknown>;
-      return {
-        depositAddress: String(data.depositAddress ?? data.deposit_address ?? "1click-intents.near"),
-        memo: data.memo ? String(data.memo) : null,
-        estimatedAmount: String(data.estimatedAmount ?? data.amountOut ?? req.amount),
-        destinationAsset: req.destinationAsset,
-      };
-    }
-  } catch {
-    // fallback
-  }
-
-  return {
-    depositAddress: "1click-intents.near",
-    memo: `intents:v1:${req.destinationAsset}:${req.recipient}`,
-    estimatedAmount: req.amount,
-    destinationAsset: req.destinationAsset,
-  };
-}
 
 // ==========================================
 // Test Suites
@@ -624,7 +575,7 @@ describe("Claim page logic (S-10.6)", () => {
     assert.deepEqual(args.payout, payout);
   });
 
-  it("fetchCrossChainQuote queries custom quote or falls back to intents format", async () => {
+  it("fetchCrossChainQuote still uses an injected getQuote when the API object provides one", async () => {
     const fakeApiWithQuote = {
       putBlob: async () => ({ ok: false, status: 500, error: "" }),
       getBlob: async () => ({ ok: false, status: 500, error: "" }),
@@ -646,7 +597,9 @@ describe("Claim page logic (S-10.6)", () => {
     });
     assert.equal(q1.depositAddress, "quote-deposit.near");
     assert.equal(q1.memo, "memo-123");
+  });
 
+  it("a 501 from the quote endpoint fails loudly instead of inventing a deposit address", async () => {
     const plainApi: TipApi = {
       putBlob: async () => ({ ok: false, status: 500, error: "" }),
       getBlob: async () => ({ ok: false, status: 500, error: "" }),
@@ -654,13 +607,52 @@ describe("Claim page logic (S-10.6)", () => {
       redact: async () => ({ ok: false, status: 500, error: "" }),
     };
 
-    const q2 = await fetchCrossChainQuote(plainApi, "http://localhost:8787", {
-      originAsset: "USDC.near",
-      destinationAsset: "Ethereum USDC",
-      amount: "1000",
-      recipient: "0x123",
-    });
-    assert.equal(q2.depositAddress, "1click-intents.near");
-    assert.match(q2.memo ?? "", /Ethereum USDC/);
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = (async () =>
+      new Response(JSON.stringify({ error: "not implemented: S-8.6" }), {
+        status: 501,
+        headers: { "content-type": "application/json" },
+      })) as unknown as typeof fetch;
+    try {
+      await assert.rejects(
+        fetchCrossChainQuote(plainApi, "http://localhost:8787", {
+          originAsset: "USDC.near",
+          destinationAsset: "Ethereum USDC",
+          amount: "1000",
+          recipient: "0x123",
+        }),
+        (err: unknown) =>
+          err instanceof QuoteUnavailableError && /501/.test(err.message) && /S-8\.6/.test(err.message),
+      );
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  it("an unreachable quote service fails instead of returning the input amount", async () => {
+    const plainApi: TipApi = {
+      putBlob: async () => ({ ok: false, status: 500, error: "" }),
+      getBlob: async () => ({ ok: false, status: 500, error: "" }),
+      relay: async () => ({ ok: true, value: { queuedUntil: 0 } }),
+      redact: async () => ({ ok: false, status: 500, error: "" }),
+    };
+
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = (async () => {
+      throw new Error("ECONNREFUSED");
+    }) as unknown as typeof fetch;
+    try {
+      await assert.rejects(
+        fetchCrossChainQuote(plainApi, "http://localhost:8787", {
+          originAsset: "USDC.near",
+          destinationAsset: "Ethereum USDC",
+          amount: "1000",
+          recipient: "0x123",
+        }),
+        (err: unknown) => err instanceof QuoteUnavailableError && /ECONNREFUSED/.test(err.message),
+      );
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
   });
 });
