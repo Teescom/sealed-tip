@@ -406,8 +406,8 @@ function ClaimContent() {
           <h1 className="display text-[clamp(1.75rem,5vw,2.25rem)] text-ask">Claim a bounty</h1>
           <p className="mt-2 text-sm leading-relaxed text-ink-muted">
             Submit your signed claim anonymously. A testnet NEAR payout works in this build. The
-            cross-chain route through 1Click needs a quote endpoint that is not implemented yet, so this
-            page will tell you that rather than show a made-up rate.
+            cross-chain route through 1Click needs the tip API to hold a 1Click key; until this deployment
+            does, this page will say so rather than show a made-up rate.
           </p>
         </div>
 
@@ -687,8 +687,9 @@ function ClaimContent() {
               {payoutOption === "crosschain" && (
                 <div className="space-y-4">
                   <p className="text-xs text-ink-muted">
-                    The 1Click quote endpoint is not implemented in this build, so no cross-chain quote can
-                    be fetched here. A testnet NEAR payout is the route that works.
+                    The quote endpoint answers only when the tip API is configured with a 1Click key.
+                    Without one it says so, and no cross-chain quote is fetched here. A testnet NEAR payout
+                    is the route that works.
                   </p>
                   <div>
                     <label htmlFor="chain" className="block text-xs text-ink-muted mb-1">

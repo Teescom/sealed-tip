@@ -13,8 +13,10 @@ on testnet on 2026-11-10, `pnpm seed -- --apply` created the panel DAO `sealedti
 opened programme 0 with 1,000 tUSDC, and appointed a three-member panel through a 2-of-3 DAO vote. No tip has
 been submitted through the live contracts yet. What is left is on-chain activity and outward-facing steps:
 the first live keeper heartbeat/watch/release and the first live `POST /ai/redact` bundle (needs
-`NEAR_AI_API_KEY`), the 501 quote stub `S-8.6`, the $1 mainnet check `S-0.6`, the response-signature half of
-`S-0.3`, and the P12 submission steps (Vercel, demo video, X post, form).
+`NEAR_AI_API_KEY`), the first `POST /quote` through the proxy (needs `ONECLICK_API_KEY`; its wire request was
+measured against the live API on 2026-11-10 but the route is off until the key is set, S-8.6), the $1 mainnet
+check `S-0.6`, the response-signature half of `S-0.3`, and the P12 submission steps (Vercel, demo video, X
+post, form).
 Both counts are what `python3 tools/roadmap.py ROADMAP.md` prints, measured 2026-11-10. Working and tested: the tipster key model (24
 words ↔ secret ↔ HKDF-derived ed25519/X25519 keys), the borsh + ed25519 action wire format — verified to
 be byte-identical in Rust and TypeScript from one shared fixture — the contract's access guards, PoW
@@ -199,7 +201,7 @@ on a clean Linux checkout, which is not the machine anyone here builds on.
 | `packages/crypto/` | Everything in it works now: 24 words ↔ secret, HKDF key derivation, borsh action encoding, ed25519 signing, attestation verification (including a whole redaction bundle: `verifyRedactionBundle` and the `attestationHashOf` the panel displays), XChaCha bundle sealing plus sealed boxes and `cidOf` (S-6.5), and the PoW solver that shares `fixtures/vectors.json` with the contract's `pow::check` (S-6.6). 73 tests, 0 failing. |
 | `packages/core/` | The read path the web app and the keeper both bind against. `types.ts` is the zod mirror of the contract's own JSON — validated against `fixtures/views.json`, the six view responses captured from the deployed wasm, and kept honest from the Rust side by `contracts/sealedtip/tests/views_shape.rs` (S-6.1). `contract.ts` is `createViewClient(rpcUrl, contractId, { view?, finality? })`: the six views over JSON-RPC, `final` by default, reading only — no key, no signer, nothing that can spend — and the transport is injectable so tests never need a node (S-6.2). A failing view keeps the node's own text as the message, because a contract panic reason like `E01_PROGRAMME_NOT_FOUND` survives nowhere else. `bundle.ts` is the exhibit container the tipster's browser writes and the panel's browser reads, and it has no field for metadata and strips unknown keys. 23 tests, 0 failing. |
 | `packages/clean/` | In-browser evidence cleaning and its report, and it all works: magic-byte gate that refuses anything but PDF/JPEG/PNG (S-6.7), PDF rasterised and rebuilt from its own pages (S-6.8), images re-encoded (S-6.9), optional scan mode that kills a tracking-dot grid (S-6.10), and a report that re-opens the cleaned file before it is allowed to claim anything (S-6.11). It talks to a canvas through a `CanvasHost` port so nothing in it needs the DOM or a native module — the browser host is P10's. 22 tests, 0 failing, against the four fictional dirty files in `fixtures/files/` (S-6.12). |
-| `apps/web` · `apps/api` · `apps/keeper` | Tipster/panel UI (Next.js 16 + Tailwind, fully implemented across all 7 routes: `/`, `/p/[id]`, `/submit/[programme]`, `/status`, `/claim`, `/panel`, `/programmes/new`; strict CSP with a per-request nonce on every inline script and no third-party origin of any kind; client-side destructive cleaning host; tested with 72 tests covering flows, access control, accessibility, mobile responsiveness, and CSP headers) · the tip API: `noLogs`, the fail-fast `env.ts`, the ciphertext-only blob store, the relay queue and the stateless AI redaction proxy with its attestation bundle are written and tested (S-8.1–S-8.5); the quote proxy is a 501 stub (S-8.6) · the keeper: `env.ts`, `near.ts` (the two-method union and the only signer in the package), `blobs.ts`, `heartbeat.ts`, `watch.ts`, `release.ts` and the process that wires them, written and tested offline (S-9.1–S-9.3, 45 tests, 0 `todo`). |
+| `apps/web` · `apps/api` · `apps/keeper` | Tipster/panel UI (Next.js 16 + Tailwind, fully implemented across all 7 routes: `/`, `/p/[id]`, `/submit/[programme]`, `/status`, `/claim`, `/panel`, `/programmes/new`; strict CSP with a per-request nonce on every inline script and no third-party origin of any kind; client-side destructive cleaning host; tested with 72 tests covering flows, access control, accessibility, mobile responsiveness, and CSP headers) · the tip API: `noLogs`, the fail-fast `env.ts`, the ciphertext-only blob store, the relay queue and the stateless AI redaction proxy with its attestation bundle are written and tested (S-8.1–S-8.5), and the 1Click quote proxy is written and tested but answers 503 until `ONECLICK_API_KEY` is set (S-8.6, 121 tests in the package) · the keeper: `env.ts`, `near.ts` (the two-method union and the only signer in the package), `blobs.ts`, `heartbeat.ts`, `watch.ts`, `release.ts` and the process that wires them, written and tested offline (S-9.1–S-9.3, 45 tests, 0 `todo`). |
 | `scripts/` | `demo` executes the PRD §8 acceptance test suite end-to-end (~3.5s offline); `spam` runs the anti-spam stress test (20 submissions verifying 0 reservation for dismissed tips); `sign-statement` signs and verifies identity statements with ed25519 claim keys (S-6.13); `gen-vectors`, `verify-attestation` (both `--fetch` for a live report and `--redaction` for a bundle the proxy returned), `deploy-testnet` and `seed` complete the script suite (49 tests in `scripts/test/`). The pure half of the testnet scripts and of the bundle verifier sits in `scripts/lib/` and is unit-tested against a fake `.env` and a fake chain snapshot. |
 | `spikes/` | The day-1 proofs (OHTTP from a browser, offline attestation verifier, borsh/ed25519 vectors). |
 
@@ -253,9 +255,16 @@ the design, and `ROADMAP.md` says which rows are still stubs.
   withdraw 800 today while the 200 behind the claim is still held (S-2.6, S-2.10, S-3.2, S-3.3).
 - **Paying a tip costs the programme NEAR as well as tokens.** Every `claim` spends a token storage deposit for the destination and a gas drip out of `ops_balance`, and nothing but the NEAR attached at `create_programme` ever puts NEAR there — there is no top-up call. So a programme can run out of the money that makes payouts legal: the claim after that refuses with E32 and moves no number at all, and in the last one the drip shrinks to zero, which still pays the reward but never creates the fresh implicit account, so the tipster has to fund it before they can spend it. With today's constants that is 1.25 mNEAR of storage deposit plus whatever gas drip the programme was opened with, per tip (S-3.5, S-5.5).
 - Everything runs on **testnet** with a mock token. The mainnet payout path is designed
-  (`Payout::Intents` from a 1Click quote) but unverified: the $1 on-chain check of the 1Click NEP-141
-  deposit method (S-0.6) has not been run, because it spends real funds and needs your go-ahead. Until
-  then treat "any chain" as intent, not fact.
+  (`Payout::Intents` from a 1Click quote) and the quote call has been measured: on 2026-11-10 the live API
+  returned `201` for USDC on NEAR to USDC on Ethereum with the exact body `POST /quote` builds, and refused
+  a NEAR origin with `depositType: ORIGIN_CHAIN`, which is why the proxy sends `INTENTS` (ARCHITECTURE §8).
+  What is still unverified is the deposit: the $1 on-chain check of the 1Click NEP-141 path (S-0.6) has not
+  been run, because it spends real funds and needs your go-ahead. Until then treat "any chain" as intent,
+  not fact.
+- **A cross-chain quote tells 1Click the destination address and the amount.** There is no way to ask a
+  swap service what it would pay without telling it where the money goes, so that one request is the whole
+  disclosure: the proxy adds no database, no cache and no log, and the key it holds is sent to that host
+  only. The testnet `Payout::Near` route involves no third party at all.
 - This code has not been externally audited. Do not use it for real secrets.
 
 ## Libraries and AI disclosure

@@ -12,6 +12,7 @@ import { createApp } from "../src/app.js";
 import { nearAiCloud } from "../src/ai/cloud.js";
 import { AI_LIMITS, AI_SYSTEM_PROMPT, AI_TEXT_MAX_BYTES, createRedactor, createTokenBucket } from "../src/ai/redact.js";
 import { aiRoutes } from "../src/routes/ai.js";
+import { quoteRoutes } from "../src/routes/quote.js";
 import { readJson, type Json, type JsonObject } from "../src/json.js";
 import { memoryBlobStore } from "../src/store/blob.js";
 
@@ -109,7 +110,7 @@ const harness = (
         });
 
   const ai = aiRoutes({ redactor });
-  const app = createApp({ blobs: memoryBlobStore(1024), relay: new Hono(), ai });
+  const app = createApp({ blobs: memoryBlobStore(1024), relay: new Hono(), ai, quote: quoteRoutes({ quoter: null }) });
   return { app, urls, bodies };
 };
 

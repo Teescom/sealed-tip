@@ -15,9 +15,9 @@ export interface QuoteResponse {
 }
 
 /**
- * The quote endpoint is a stub until S-8.6 lands. A caller must never be handed an invented payout
- * route: an address the tipster signs a claim against is spent on chain, so a fabricated one is worse
- * than no quote at all. Every failure below throws.
+ * The tip API's `/quote` route exists (S-8.6) but answers 503 until it is configured with a 1Click key. A
+ * caller must never be handed an invented payout route: an address the tipster signs a claim against is
+ * spent on chain, so a fabricated one is worse than no quote at all. Every failure below throws.
  */
 export class QuoteUnavailableError extends Error {}
 

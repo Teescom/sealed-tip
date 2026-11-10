@@ -11,10 +11,12 @@ import { createApp } from "./app.js";
 import { nearAiCloud } from "./ai/cloud.js";
 import { createRedactor } from "./ai/redact.js";
 import { loadEnv } from "./env.js";
+import { createQuoter } from "./quote/oneclick.js";
 import { createQueue, randomDelayMs } from "./relay/queue.js";
 import { RELAY_LIMITS, createRateLimiter } from "./relay/ratelimit.js";
 import { createSubmitter } from "./relay/submit.js";
 import { aiRoutes } from "./routes/ai.js";
+import { quoteRoutes } from "./routes/quote.js";
 import { relayRoutes } from "./routes/relay.js";
 import { memoryBlobStore } from "./store/blob.js";
 
@@ -79,8 +81,17 @@ const ai = aiRoutes({
         }),
 });
 
+// The quote proxy (S-8.6), gated the same way: no key, no route. A failed cross-chain swap refunds to the
+// contract that paid the reward out, because that is whose money it is until the swap lands.
+const quote = quoteRoutes({
+  quoter:
+    env.ONECLICK_API_KEY === undefined
+      ? null
+      : createQuoter({ apiKey: env.ONECLICK_API_KEY, refundTo: env.SEALEDTIP_CONTRACT }),
+});
+
 serve({
-  fetch: createApp({ blobs: memoryBlobStore(env.BLOB_MAX_BYTES), relay, ai }).fetch,
+  fetch: createApp({ blobs: memoryBlobStore(env.BLOB_MAX_BYTES), relay, ai, quote }).fetch,
   port: env.API_PORT,
 });
 console.log(`tip-api listening on ${env.API_PORT} for ${env.SEALEDTIP_CONTRACT} on ${env.NEAR_NETWORK}`);
