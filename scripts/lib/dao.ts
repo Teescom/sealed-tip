@@ -166,8 +166,12 @@ export const waitForProposal = async (
   { attempts = 30, intervalMs = 1_000 }: { attempts?: number; intervalMs?: number } = {},
 ): Promise<void> => {
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
-    const proposal = await read(id);
-    if (proposal !== null && proposal !== undefined) return;
+    try {
+      const proposal = await read(id);
+      if (proposal !== null && proposal !== undefined) return;
+    } catch {
+      // Sputnik DAO panics with ERR_NO_PROPOSAL until the proposal receipt completes
+    }
     if (attempt < attempts) await new Promise((resolve) => setTimeout(resolve, intervalMs));
   }
   throw new Error(`proposal ${id} still cannot be read after ${attempts} attempts — the propose transaction did not land`);
