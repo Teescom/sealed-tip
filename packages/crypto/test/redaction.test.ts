@@ -2,19 +2,24 @@
 // these tests are about bindings that survive the file being rewritten by hand. Two properties matter more
 // than the rest: `attestation_hash` has to be reproducible from a re-serialized file (it is what goes on
 // chain, and a hash that depends on the order a provider happened to write its keys in is not), and every
-// check has to fail as a check rather than as a crash or a silent pass — including the secp256k1 one this
-// code cannot do without a curve dependency, which is reported as unchecked instead of scored.
+// check has to fail as a check rather than as a crash or a silent pass — the secp256k1 one included, which
+// is why the fixtures below sign with real keys instead of a hex pattern nobody could have produced.
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { test } from "node:test";
+
+import { secp256k1 } from "@noble/curves/secp256k1.js";
+import { concatBytes } from "@noble/curves/utils.js";
 
 import {
   UNCHECKED_ATTESTATION_CLAIMS,
   addressFromPublicKey,
   attestationHashOf,
   canonicalJson,
+  eip191Digest,
   fromHex,
   quoteReportData,
+  recoverSignerAddress,
   replayRegisters,
   responseSignatureText,
   sha256Hex,
@@ -29,12 +34,27 @@ const NONCE = "33".repeat(32);
 const MODEL = "fictional-lab/Fictional-Model-0001";
 const REGISTER_BYTES = 48;
 const QUOTE_BYTES = 5006;
+/** The seed `buildBundle` gives the model party, which is the key a passing signature has to come from. */
+const MODEL_SEED = 3;
 
 const repeat = (byte: number, length: number): Uint8Array => Uint8Array.from({ length }, () => byte);
 const hex = (value: Uint8Array): string =>
   Array.from(value, (byte) => byte.toString(16).padStart(2, "0")).join("");
-const fakeKey = (seed: number): string =>
-  hex(Uint8Array.from({ length: 64 }, (_, i) => (seed * 31 + i * 7) % 256));
+
+/** A fictional but real secp256k1 key: 64 bytes of X‖Y that a signature can actually recover to. */
+const fixtureKey = (seed: number): { secret: Uint8Array; publicKey: string } => {
+  const secret = createHash("sha256").update(`sealedtip-fixture-signing-key-${seed}`).digest();
+  return { secret, publicKey: hex(secp256k1.getPublicKey(secret, false).subarray(1)) };
+};
+
+/** What `GET /v1/signature/<chat_id>` states: r‖s‖v over the EIP-191 digest, with Ethereum's `v` of 27+. */
+const personalSign = (secret: Uint8Array, text: string): string => {
+  const recoverable = secp256k1.sign(eip191Digest(text), secret, {
+    prehash: false,
+    format: "recovered",
+  });
+  return `0x${hex(concatBytes(recoverable.subarray(1), Uint8Array.of(recoverable[0]! + 27)))}`;
+};
 
 const eventLog = (seed: number): EventLogEntry[] => [
   ...[0, 1, 2, 0, 1, 2].map((imr, i) => ({ imr, digest: hex(repeat(seed + i, REGISTER_BYTES)) })),
@@ -54,7 +74,7 @@ const buildQuote = (address: string, nonce: string, mrtd: string, registers: str
 
 /** A party whose quote, registers and stated measurements all agree, so a passing bundle has to fail for a real reason. */
 const buildParty = (seed: number, nonce = NONCE): AttestedParty => {
-  const publicKey = fakeKey(seed);
+  const { publicKey } = fixtureKey(seed);
   const address = addressFromPublicKey(publicKey).slice(2);
   const log = eventLog(seed * 5);
   const registers = replayRegisters(log);
@@ -86,7 +106,7 @@ const buildBundle = (nonce = NONCE): AttestationBundle => {
   delete gateway.model_name;
   gateway.report_data = quoteReportData(gateway.intel_quote);
   gateway.event_log = JSON.stringify(gateway.event_log);
-  return { gateway_attestation: gateway, model_attestations: [buildParty(3, nonce)] };
+  return { gateway_attestation: gateway, model_attestations: [buildParty(MODEL_SEED, nonce)] };
 };
 
 const REQUEST = JSON.stringify({
@@ -103,6 +123,7 @@ const RESPONSE = JSON.stringify({
 
 const buildRedaction = (overrides: Partial<RedactionBundle> = {}): RedactionBundle => {
   const attestation = buildBundle();
+  const text = responseSignatureText(MODEL, REQUEST, RESPONSE);
   return {
     version: 1,
     nonce: NONCE,
@@ -114,8 +135,8 @@ const buildRedaction = (overrides: Partial<RedactionBundle> = {}): RedactionBund
       chat_id: "chat-fictional-1",
       signing_algo: "ecdsa",
       signing_address: attestation.model_attestations[0]!.signing_address,
-      text: responseSignatureText(MODEL, REQUEST, RESPONSE),
-      signature: `0x${"ab".repeat(65)}`,
+      text,
+      signature: personalSign(fixtureKey(MODEL_SEED).secret, text),
     },
     ...overrides,
   };
@@ -157,17 +178,58 @@ test("a redaction bundle built from a report that binds everything verifies", ()
   }
 });
 
-test("the secp256k1 gap is named, not scored", () => {
-  const result = verifyRedactionBundle(buildRedaction(), NONCE);
-  assert.equal(result.ok, true, summary(buildRedaction()));
-  assert.deepEqual(result.unchecked, UNCHECKED_ATTESTATION_CLAIMS);
-  const unchecked = result.unchecked.join(" ");
-  assert.match(unchecked, /secp256k1/);
-  assert.match(unchecked, /@noble\/curves/);
-  assert.ok(
-    result.checks.every((entry) => !/curve|_is_valid|signature_valid/.test(entry.name)),
-    "a check that pretends to verify the curve",
+test("the secp256k1 signature is scored, and the gap list no longer claims it is missing", () => {
+  const bundle = buildRedaction();
+  const result = verifyRedactionBundle(bundle, NONCE);
+  assert.equal(result.ok, true, summary(bundle));
+  const curve = result.checks.find(
+    (entry) => entry.name === "bundle.signature_recovers_from_the_signing_address_key",
   );
+  assert.ok(curve?.ok, `the curve check did not pass: ${JSON.stringify(curve)}`);
+  assert.equal(
+    curve!.detail.includes(REQUEST),
+    false,
+    "the detail of a curve check quoted the tipster's request",
+  );
+  assert.deepEqual(result.unchecked, UNCHECKED_ATTESTATION_CLAIMS);
+  assert.equal(
+    /secp256k1|@noble\/curves/.test(result.unchecked.join(" ")),
+    false,
+    "a gap the code now closes is still listed as unproven",
+  );
+});
+
+test("a signature nobody could have made fails the curve check and nothing else", () => {
+  for (const [what, signature] of [
+    ["a hex pattern", `0x${"ab".repeat(65)}`],
+    ["a signature over other bytes", personalSign(fixtureKey(MODEL_SEED).secret, `${MODEL}:0:0`)],
+    ["a signature from a key no quote attests", personalSign(fixtureKey(9).secret, responseSignatureText(MODEL, REQUEST, RESPONSE))],
+  ] as [string, string][]) {
+    const bundle = buildRedaction();
+    bundle.signature.signature = signature;
+    const failed = verifyRedactionBundle(bundle, NONCE).checks.filter((entry) => !entry.ok);
+    assert.deepEqual(
+      failed.map((entry) => entry.name),
+      ["bundle.signature_recovers_from_the_signing_address_key"],
+      `${what} was not caught, or caught too much: ${JSON.stringify(failed)}`,
+    );
+  }
+});
+
+test("recovering an address needs a curve, not just the right number of bytes", () => {
+  const text = `${MODEL}: fictional-lab/Ünicode-Модель:0:0`;
+  const { secret, publicKey } = fixtureKey(MODEL_SEED);
+  const address = addressFromPublicKey(publicKey).toLowerCase();
+  assert.equal(recoverSignerAddress(personalSign(secret, text), text)?.toLowerCase(), address);
+  // one character more is a different digest, and a different digest recovers a different signer
+  assert.notEqual(recoverSignerAddress(personalSign(secret, text), `${text}x`), address);
+  const evm = fromHex(personalSign(secret, text));
+  // the same key signs with `v` of 0/1 too, and a `v` outside 0..3 or 27..30 recovers nothing
+  const low = `0x${hex(concatBytes(evm.subarray(0, 64), Uint8Array.of(evm[64]! - 27)))}`;
+  assert.equal(recoverSignerAddress(low, text)?.toLowerCase(), address);
+  for (const unusable of ["", "0xzz", `0x${"ab".repeat(64)}`, `0x${"ab".repeat(66)}`, `0x${"ab".repeat(64)}ff`]) {
+    assert.equal(recoverSignerAddress(unusable, text), undefined, unusable);
+  }
 });
 
 test("the hash is sha256 over the canonical bundle and is 32 bytes of hex", () => {
