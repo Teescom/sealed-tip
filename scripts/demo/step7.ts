@@ -1,7 +1,8 @@
 // S-11.7 / Issue #146: Step 7 of PRD §8 acceptance test
 // Tipster claims to a brand-new testnet account using the recovery phrase → paid.
-// Mainnet path is illustrated with fixed example figures. It is not a live 1Click quote: the quote
-// endpoint is a stub (S-8.6) and the $1 deposit-method check (S-0.6) has not been run.
+// Mainnet path is illustrated with fixed example figures. It is not a live 1Click quote: the demo runs
+// offline, the quote proxy answers 503 without an ONECLICK_API_KEY (S-8.6), and the $1 deposit-method
+// check (S-0.6) has not been run.
 import assert from "node:assert/strict";
 
 import type { SignedAction } from "@sealedtip/crypto";

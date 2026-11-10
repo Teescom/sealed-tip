@@ -235,12 +235,24 @@ what follows each one is what was measured or decided when the route was written
 
 ## 8. Payout
 - **Testnet:** `Payout::Near` to a fresh implicit account generated at claim time. The contract calls `storage_deposit` and sends the gas drip.
-- **Mainnet:** a 1Click quote via `POST /v0/quote`:
-  - `originAsset`: USDC on NEAR; `destinationAsset`: e.g., USDT on Tron.
-  - `depositType` and `refundType`: `ORIGIN_CHAIN`; `recipientType`: `DESTINATION_CHAIN`.
-  - `swapType`: `EXACT_INPUT`, plus `slippageTolerance` and `deadline`.
+- **Mainnet:** a 1Click quote via `POST /v0/quote`, proxied by `tip-api` as `POST /quote` (S-8.6):
+  - `originAsset`: USDC on NEAR; `destinationAsset`: e.g., USDT on Tron. Both are 1Click asset ids
+    (`nep141:…`), taken from `GET /v0/tokens`; the proxy maps the four labels the claim page offers and
+    passes a canonical id straight through.
+  - `depositType` and `refundType`: `INTENTS`; `recipientType`: `DESTINATION_CHAIN`.
+  - `swapType`: `EXACT_INPUT`, plus `slippageTolerance` (basis points), `amount` in base units as an
+    integer string, `refundTo` (a NEAR account; the proxy defaults it to the contract that paid out), and
+    `deadline` (an ISO timestamp the proxy sets to ten minutes out).
 
-  The quote returns a `depositAddress` (and a memo if needed). The tipster signs `Payout::Intents`. Track progress with `GET /v0/status?depositAddress=…`.
+  **Measured 2026-11-10, which corrected this section.** The live API's own 400 lists the required fields,
+  and it answered a NEAR origin with `depositType: "ORIGIN_CHAIN"` — what this section said before — with
+  `400 {"message":"Internal server error"}`. The same request with `INTENTS` answered `201`. A quote with
+  `dry: false` carries `quote.depositAddress` (a 64-hex intents account, no memo); a `dry: true` quote
+  carries no address at all. The proxy therefore always asks for a real quote, flattens the answer into
+  `{depositAddress, memo, estimatedAmount, destinationAsset}`, and refuses a reply without an address
+  instead of filling one in. The tipster signs `Payout::Intents`; track progress with
+  `GET /v0/status?depositAddress=…`. The cheapest live quote measured was **$100** (a $50 request was
+  refused with "Temporary swap limits: minimum swap amount is $100"), which a 500 tUSDC demo reward clears.
 - **VERIFY with $1 on day 2** that a plain `ft_transfer` to the deposit address is the correct NEP-141 deposit. If not, mainnet payout falls back to `Payout::Near`, followed by a swap the tipster does themselves.
 
 ## 9. Services
@@ -250,7 +262,7 @@ what follows each one is what was measured or decided when the route was written
 | `POST /blob`, `GET /blob/:cid` | Ciphertext only; 25 MB cap |
 | `POST /relay/:action` | Queue signed actions; random delay; per-IP-less rate limit (token bucket keyed by claim pubkey + global) |
 | `POST /ai/redact` | Stateless proxy plus attestation bundle (built, S-8.5); answers 503 with no API key and keeps nothing |
-| `POST /quote` | 1Click quote proxy |
+| `POST /quote` | 1Click quote proxy (built, S-8.6); answers 503 with no API key, 502 on an upstream failure, and caches nothing |
 
 - Run **2 relayer instances** with separate accounts, both allow-listed.
 - The `noLogs` middleware drops IPs and bodies; a test asserts it.
@@ -258,7 +270,14 @@ what follows each one is what was measured or decided when the route was written
 - **Rate limit is two token buckets, never an IP.** Per-claim-pubkey is fairness against one misbehaving page and cannot be a defence, since a pubkey is either caller-supplied or public on the tip; the shared bucket is what a flood actually runs into. A refusal consumes nothing.
 - **`POST /ai/redact` is the one endpoint that holds a secret and reads plaintext, and that is the documented exception to §5 of `project_structure.md`, not a breach of it.** It holds `NEAR_AI_API_KEY` (which is why the browser cannot be told to call the service directly) and it sees the passage the tipster chose to send for analysis — never a tipster key, never an exhibit, never anything the cleaners produced. What it does not do is check the attestation it fetched: the bundle is assembled here and graded by a client or a script that holds `packages/crypto`, per §7.5. Its limits are about our inference credit rather than identity, because at this step of the flow there is no claim pubkey to key on and an IP is a name this service must not keep: 8 KiB of text per request, 6 requests at once, 2 a minute. An upstream failure is a 502 that names the endpoint and the status and repeats no word of the request, and nothing about a redaction request reaches a log — a test asserts that on a request that succeeds.
 
-**keeper** (`apps/keeper`, built and tested offline in P9)
+- **`POST /quote` is the one endpoint that sends a tipster's address to a third party, and it says so.** A
+  cross-chain quote means 1Click learns the destination address and the amount; there is no way to ask a
+  swap service what it would pay without telling it where the money goes. The proxy keeps that to the one
+  request, sends the key from `ONECLICK_API_KEY` only to `1click.chaindefuser.com`, keeps no cache
+  (`no-store`, because a deposit address with a deadline must never reach the next caller), and never
+  repeats a request field in an error. It does not check the address shape — 1Click validates the address
+  for its own chain and its 400 goes back as a 400.
+- **keeper** (`apps/keeper`, built and tested offline in P9)
 - Calls `heartbeat` every `KEEPER_HEARTBEAT_S` (5 minutes by default), and takes the first beat *before* the first sleep: a process that starts and dies inside one interval would otherwise leave `keeper_last_seen` at whatever the previous run recorded, which is the lie `set_keeper` zeroes the field to avoid (S-2.9).
 - Watches for `switch_triggered`, opens `K_switch`, re-seals it to the non-recused panel members, and calls `post_released_keys`.
 - **It watches the view, not the event.** `switch_triggered` is also a NEP-297 event (§10), and following it needs an indexer subscription (`next_follow`) that this repository has not deployed and cannot test offline. `get_tip_public` carries `switch_deadline` and `switch_triggered` — the same fact one hop further from the receipt — so a pass is a read per tip it is still watching. Detection is the interval plus one finality wait: `KEEPER_WATCH_S` defaults to 10 s and `env.ts` refuses more than 60, because a promise about a minute is only a promise if the config cannot break it.

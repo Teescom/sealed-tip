@@ -599,7 +599,7 @@ describe("Claim page logic (S-10.6)", () => {
     assert.equal(q1.memo, "memo-123");
   });
 
-  it("a 501 from the quote endpoint fails loudly instead of inventing a deposit address", async () => {
+  it("a quote endpoint that is off fails loudly instead of inventing a deposit address", async () => {
     const plainApi: TipApi = {
       putBlob: async () => ({ ok: false, status: 500, error: "" }),
       getBlob: async () => ({ ok: false, status: 500, error: "" }),
@@ -609,8 +609,8 @@ describe("Claim page logic (S-10.6)", () => {
 
     const originalFetch = globalThis.fetch;
     globalThis.fetch = (async () =>
-      new Response(JSON.stringify({ error: "not implemented: S-8.6" }), {
-        status: 501,
+      new Response(JSON.stringify({ error: "the 1Click quote proxy is not configured on this service" }), {
+        status: 503,
         headers: { "content-type": "application/json" },
       })) as unknown as typeof fetch;
     try {
@@ -622,7 +622,7 @@ describe("Claim page logic (S-10.6)", () => {
           recipient: "0x123",
         }),
         (err: unknown) =>
-          err instanceof QuoteUnavailableError && /501/.test(err.message) && /S-8\.6/.test(err.message),
+          err instanceof QuoteUnavailableError && /503/.test(err.message) && /not configured/.test(err.message),
       );
     } finally {
       globalThis.fetch = originalFetch;

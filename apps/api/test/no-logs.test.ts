@@ -14,6 +14,7 @@ import { STRIPPED_HEADERS, noLogs } from "../src/middleware/no-logs.js";
 import { createQueue } from "../src/relay/queue.js";
 import { createRateLimiter } from "../src/relay/ratelimit.js";
 import { aiRoutes } from "../src/routes/ai.js";
+import { quoteRoutes } from "../src/routes/quote.js";
 import { relayRoutes } from "../src/routes/relay.js";
 import { memoryBlobStore } from "../src/store/blob.js";
 
@@ -116,7 +117,7 @@ test("stripping does not eat the body: the bytes a tipster uploaded still arrive
 });
 
 test("a request through the real app logs nothing at all, least of all an address", async () => {
-  const app = createApp({ blobs: memoryBlobStore(1024), relay: relayForTests(), ai: aiForTests() });
+  const app = createApp({ blobs: memoryBlobStore(1024), relay: relayForTests(), ai: aiForTests(), quote: quoteRoutes({ quoter: null }) });
   const { logged } = await captureLogs(async () => {
     await app.request("/health");
     await app.request("/blob", { method: "POST", body: new Uint8Array([1, 2, 3, 4]) });
@@ -130,7 +131,7 @@ test("a request through the real app logs nothing at all, least of all an addres
 // store and to /relay is the linkage the 24-word identity exists to avoid — so this is checked as a
 // property of the route, not of the handler that happens to be installed.
 test("a signed action posted to /relay appears in no log and comes back in no error", async () => {
-  const app = createApp({ blobs: memoryBlobStore(1024), relay: relayForTests(), ai: aiForTests() });
+  const app = createApp({ blobs: memoryBlobStore(1024), relay: relayForTests(), ai: aiForTests(), quote: quoteRoutes({ quoter: null }) });
   const action = {
     tip_id: 7,
     nonce: 3,
@@ -151,7 +152,7 @@ test("a signed action posted to /relay appears in no log and comes back in no er
 });
 
 test("an oversized upload is refused without the body being echoed into the response or a log", async () => {
-  const app = createApp({ blobs: memoryBlobStore(4), relay: relayForTests(), ai: aiForTests() });
+  const app = createApp({ blobs: memoryBlobStore(4), relay: relayForTests(), ai: aiForTests(), quote: quoteRoutes({ quoter: null }) });
   const { result: res, logged } = await captureLogs(async () =>
     app.request("/blob", { method: "POST", body: new Uint8Array(64).fill(7) }),
   );
@@ -165,7 +166,7 @@ test("an oversized upload is refused without the body being echoed into the resp
 // is the worst one this service can have. The upstream is a fake, which is also the point: a real call puts
 // the text on NEAR AI's host — a linkage ARCHITECTURE §7 accepts and a log line would make permanent.
 test("the text posted to /ai/redact reaches no log, not even on the request that succeeds", async () => {
-  const app = createApp({ blobs: memoryBlobStore(1024), relay: relayForTests(), ai: aiForTests() });
+  const app = createApp({ blobs: memoryBlobStore(1024), relay: relayForTests(), ai: aiForTests(), quote: quoteRoutes({ quoter: null }) });
   const { result: res, logged } = await captureLogs(async () =>
     app.request("/ai/redact", {
       method: "POST",
@@ -198,6 +199,7 @@ const API_SOURCES = [
   "src/relay/ratelimit.ts",
   "src/relay/submit.ts",
   "src/store/blob.ts",
+  "src/quote/oneclick.ts",
 ];
 
 // `src/ai/cloud.ts` is the one file here that makes an outbound request, and the URL it builds carries the

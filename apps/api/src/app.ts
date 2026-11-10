@@ -4,7 +4,6 @@ import { Hono } from "hono";
 
 import { noLogs } from "./middleware/no-logs.js";
 import { blobRoutes } from "./routes/blob.js";
-import { quote } from "./routes/quote.js";
 import type { BlobStore } from "./store/blob.js";
 
 export interface AppDeps {
@@ -17,6 +16,8 @@ export interface AppDeps {
   readonly relay: Hono;
   /** Same reason as `relay`: the AI proxy is the only route that holds an upstream key, so a test builds it with a fake one. */
   readonly ai: Hono;
+  /** Same reason again: the quote proxy holds the 1Click key, and a test drives it against a fake transport. */
+  readonly quote: Hono;
 }
 
 export const createApp = (deps: AppDeps): Hono => {
@@ -27,6 +28,6 @@ export const createApp = (deps: AppDeps): Hono => {
   app.route("/blob", blobRoutes(deps.blobs));
   app.route("/relay", deps.relay);
   app.route("/ai", deps.ai);
-  app.route("/quote", quote);
+  app.route("/quote", deps.quote);
   return app;
 };
