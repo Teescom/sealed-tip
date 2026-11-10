@@ -22,7 +22,7 @@ describe("the public config", () => {
     if (!result.ok) return;
     assert.equal(result.config.contractId, "sealedtip.st-hack-f8d075.testnet");
     assert.equal(result.config.network, "testnet", "testnet is the default because mainnet is not a demo");
-    assert.equal(result.config.rpcUrl, "https://rpc.testnet.near.org");
+    assert.equal(result.config.rpcUrl, "https://rpc.testnet.fastnear.com");
     assert.equal(result.config.apiUrl, "http://localhost:8787");
     assert.equal(result.config.tokenContract, null, "the funder page needs a token; the tipster page does not");
   });

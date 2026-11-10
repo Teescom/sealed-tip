@@ -34,7 +34,7 @@ const HttpOrigin = z
  * of a default are two things that can disagree, and a CSP that disagrees with the client is a page whose
  * every network call is blocked.
  */
-export const RPC_ORIGIN_DEFAULT = "https://rpc.testnet.near.org";
+export const RPC_ORIGIN_DEFAULT = "https://rpc.testnet.fastnear.com";
 export const API_ORIGIN_DEFAULT = "http://localhost:8787";
 
 const PublicEnv = z.object({

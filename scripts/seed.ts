@@ -24,6 +24,7 @@ import {
   daoIdentity,
   daoProposalBond,
   panelMember,
+  waitForProposal,
   type PanelMember,
 } from "./lib/dao.js";
 import { deployBuffer } from "./lib/deploy.js";
@@ -391,6 +392,7 @@ const main = async (): Promise<void> => {
         );
         console.log(`  proposed  ${transactionUrl(net, proposed)}`);
         const id = await lastProposalId(net, plan.dao.id);
+        await waitForProposal((proposalId) => view(net, plan.dao.id, "get_proposal", { id: proposalId }), id);
         for (const voter of approvers) {
           // `act_proposal` is not payable, so nothing is attached; the second approval executes.
           const voted = await transact(

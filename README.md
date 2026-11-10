@@ -5,16 +5,17 @@
 > NEAR Hackathon 2026 · track **Privacy & Private AI** · deadline 14 Nov 2026, 23:59 UTC.
 > Live plan and progress: [`ROADMAP.md`](ROADMAP.md) · decisions: [`ARCHITECTURE.md`](ARCHITECTURE.md) §14 · product spec: [`PRD.md`](PRD.md).
 
-**Status: 83 / 104 Must tasks done (80%), 86 / 110 overall** — every implementation phase through P11 is
+**Status: 86 / 104 Must tasks done (83%), 89 / 111 overall** — every implementation phase through P11 is
 built and verified offline against a sandbox chain or a local simulation: 258 Rust and 399 TypeScript tests
 pass with none skipped or ignored, and `pnpm lint`, `pnpm build`, `pnpm test` and `pnpm demo` all exit 0; CI
-runs build, lint and test on every push and PR. What is left is on-chain and outward-facing rather than code:
-P4 (both contracts on testnet — the deployer root holds 1.43597 NEAR against the 2.24264 the plan moves once
-`pnpm build:contract` has refreshed the wasm it prices, so it waits on a faucet top-up and an explicit
-`pnpm deploy:testnet -- --apply`), the first live keeper heartbeat/watch/release and the first live
-`POST /ai/redact` bundle (needs `NEAR_AI_API_KEY`), the 501 quote stub `S-8.6`, the $1 mainnet check `S-0.6`,
-the response-signature half of `S-0.3`, and the P12 submission steps (Vercel, demo video, X post, form).
-Both counts are what `python3 tools/roadmap.py ROADMAP.md` prints, measured 2026-11-09. Working and tested: the tipster key model (24
+runs build, lint and test on every push and PR. **P4 is live:** both contracts were deployed and initialised
+on testnet on 2026-11-10, `pnpm seed -- --apply` created the panel DAO `sealedtip-panel.sputnik-v2.testnet`,
+opened programme 0 with 1,000 tUSDC, and appointed a three-member panel through a 2-of-3 DAO vote. No tip has
+been submitted through the live contracts yet. What is left is on-chain activity and outward-facing steps:
+the first live keeper heartbeat/watch/release and the first live `POST /ai/redact` bundle (needs
+`NEAR_AI_API_KEY`), the 501 quote stub `S-8.6`, the $1 mainnet check `S-0.6`, the response-signature half of
+`S-0.3`, and the P12 submission steps (Vercel, demo video, X post, form).
+Both counts are what `python3 tools/roadmap.py ROADMAP.md` prints, measured 2026-11-10. Working and tested: the tipster key model (24
 words ↔ secret ↔ HKDF-derived ed25519/X25519 keys), the borsh + ed25519 action wire format — verified to
 be byte-identical in Rust and TypeScript from one shared fixture — the contract's access guards, PoW
 check, time scaling and NEP-297 events, programme accounting (open, fund over NEP-141, withdraw what is

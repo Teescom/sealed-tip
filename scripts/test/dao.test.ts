@@ -12,6 +12,7 @@ import {
   daoDeposit,
   parseDaoPolicy,
   panelMember,
+  waitForProposal,
   type FunctionCallInput,
 } from "../lib/dao.js";
 import { YOCTO_PER_NEAR, near } from "../lib/units.js";
@@ -144,4 +145,34 @@ test("a policy that is not a 2.0.0 council policy is refused, not guessed at", (
   // A JSON number for the bond is how a newer contract would answer, and this one is not that.
   const numericBond = { ...LIVE_POLICY, proposal_bond: 1_000_000_000_000_000_000_000_000 };
   assert.throws(() => parseDaoPolicy(numericBond), /expected a decimal string/);
+});
+
+test("a vote waits for the proposal it is about to approve to be readable", async () => {
+  const answers: unknown[] = [null, undefined, { id: 0, status: "InProgress" }];
+  const asked: number[] = [];
+  await waitForProposal(
+    async (id) => {
+      asked.push(id);
+      return answers.shift();
+    },
+    7,
+    { intervalMs: 0 },
+  );
+  assert.deepEqual(asked, [7, 7, 7], "every poll asks for the same proposal id");
+});
+
+test("a proposal that never appears fails loudly instead of voting on an empty id", async () => {
+  let polls = 0;
+  await assert.rejects(
+    waitForProposal(
+      async () => {
+        polls += 1;
+        return null;
+      },
+      3,
+      { attempts: 4, intervalMs: 0 },
+    ),
+    /proposal 3 still cannot be read after 4 attempts/,
+  );
+  assert.equal(polls, 4);
 });
