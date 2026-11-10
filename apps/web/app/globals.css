@@ -1,1 +1,240 @@
 @import "tailwindcss";
+
+/*
+ * The condensed display face, served from this origin (privacy invariant 3: nothing a visitor loads comes
+ * from a third party, and `font-src 'self'` in the CSP is what enforces it).
+ *
+ * `next/font/local` would be the idiomatic Next way to do this, and it was wired up that way first. It
+ * broke `apps/web/test/a11y-mobile.test.ts`, which imports `viewport` out of the root layout: the loader is
+ * a build-time transform, so under Vitest `localFont` is not a function at runtime and the whole suite
+ * failed to collect. A committed woff2 plus `@font-face` is the same privacy outcome — one 12,004-byte
+ * latin subset, SIL OFL 1.1, licence at public/fonts/ANTON-LICENCE.txt — with no build step in the middle.
+ * The preload link in the root layout is what keeps the first headline from repainting.
+ */
+@font-face {
+  font-family: "Anton";
+  src: url("/fonts/anton-latin.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/*
+ * The project's design tokens. Until 2026-11-10 this file was one line and every route picked its own
+ * Tailwind colours by hand, so "the palette" was really a class-frequency count. These are now the only
+ * place a colour, a radius or a shadow is named: a page may say `bg-paper text-ink`, never `bg-[#f2efe3]`
+ * and never `bg-neutral-900`.
+ *
+ * Two grounds, never mixed in one surface. A green band carries the page structure and speaks in paper
+ * colour; a cream card carries content and speaks in ink. Every semantic colour therefore has two values,
+ * one for each ground, because the emerald that reads as "paid" on cream is the same hue that goes mud on
+ * green. `apps/web/test/a11y-mobile.test.ts` and the contrast sweep below are what keep that honest.
+ */
+@theme {
+  /* Ground: the green the page is built on. */
+  --color-ground: #062a12;
+  --color-ground-2: #041d0c; /* header, footer, the deepest band */
+  --color-ground-3: #0a3d1c; /* raised panels still on green */
+
+  /* Paper: the cream every card is made of. */
+  --color-paper: #f2efe3;
+  --color-paper-2: #e7e3d2; /* inputs, table stripes, disabled cards */
+  --color-paper-3: #dcd7c4; /* hovered and pressed surfaces on paper */
+
+  /* Ink: words on paper. */
+  --color-ink: #14160f;
+  --color-ink-muted: #525a4d;
+
+  /* Words on ground. */
+  --color-on-ground: #eef1e6;
+  --color-on-ground-muted: #a5b39c;
+
+  /* Hairlines, the only structural line weight in the product. */
+  --color-rule: #d5d0bd; /* row separators inside a card: decoration, carries no state */
+  --color-rule-dark: #1c4429; /* the same on green */
+  /*
+   * `edge` is for the boundaries you have to be able to see: a form field, a checkbox, a panel outline.
+   * WCAG 1.4.11 wants 3:1 for anything whose state a user has to perceive, and a hairline cream-on-cream
+   * separator is not that. Measured: #6f7563 is 4.14:1 on paper, #4d7a58 is 3.15:1 on the ground.
+   */
+  --color-edge: #6f7563;
+  --color-edge-dark: #4d7a58;
+
+  /* The question colour: what asks, and what you press. */
+  --color-ask: #0b46d6;
+  --color-ask-2: #0a3aae; /* pressed */
+  --color-ask-on-ground: #8fa6ff;
+
+  /* Three verdicts, one per ground. */
+  --color-ok: #0b6e42;
+  --color-ok-on-ground: #66d19a;
+  --color-warn: #8a5206;
+  --color-warn-on-ground: #f3bc63;
+  --color-bad: #a9251d;
+  --color-bad-on-ground: #ff968b;
+
+  /* Three radii, and no others. */
+  --radius-card: 24px; /* content cards */
+  --radius-field: 10px; /* inputs, buttons, chips */
+  --radius-inset: 4px; /* table cells, tags, the smallest thing */
+
+  /* One shadow recipe. */
+  --shadow-card: 0 1px 0 rgb(0 0 0 / 0.08), 0 18px 40px -26px rgb(0 0 0 / 0.6);
+
+  --font-display: "Anton", "Arial Narrow", ui-sans-serif, sans-serif;
+  --font-text: ui-sans-serif, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+@layer base {
+  html {
+    /* The ground is dark, so form controls, scrollbars and the browser chrome follow it. */
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: var(--color-ground);
+    color: var(--color-on-ground);
+    font-family: var(--font-text);
+  }
+
+  ::selection {
+    background-color: var(--color-ask);
+    color: var(--color-paper);
+  }
+
+  /*
+   * One focus ring for the whole site. Tipsters tab through forms with their hands shaking, and a
+   * 1px browser default on a cream card is invisible.
+   */
+  :focus-visible {
+    outline: 2px solid var(--color-ask-on-ground);
+    outline-offset: 2px;
+  }
+
+  .on-paper :focus-visible {
+    outline-color: var(--color-ask);
+  }
+
+  /*
+   * A cream card is a light surface even on a dark site, so native controls inside one (the select
+   * dropdown, the date picker, a checkbox) have to be drawn light or they arrive as dark rectangles on
+   * cream. `color-scheme` is what tells the browser that, and it costs nothing to set.
+   */
+  .on-paper {
+    color-scheme: light;
+  }
+
+  /* A field on paper is a field you can find. Utilities still win where a page needs to differ. */
+  .on-paper :is(input, textarea, select):not([type="checkbox"]):not([type="radio"]) {
+    border: 1px solid var(--color-edge);
+    border-radius: var(--radius-field);
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+  }
+
+  .on-paper input::placeholder {
+    color: var(--color-ink-muted);
+    opacity: 1;
+  }
+}
+
+@layer components {
+  /* A content card: cream, square-on, carries the section's artifact. */
+  .card {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+  }
+
+  /* A card that sits on cream, separated by a hairline instead of a second shadow. */
+  .card-inset {
+    background-color: var(--color-paper-2);
+    border: 1px solid var(--color-rule);
+    border-radius: var(--radius-field);
+  }
+
+  /* A panel that stays on the green band: outline, no fill. */
+  .panel {
+    background-color: var(--color-ground-3);
+    border: 1px solid var(--color-edge-dark);
+    border-radius: var(--radius-card);
+  }
+
+  /* The one verb a page can have. */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    background-color: var(--color-ask);
+    color: var(--color-paper);
+    border-radius: var(--radius-field);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--color-ask-2);
+  }
+
+  .btn-quiet {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    border: 1px solid var(--color-rule-dark);
+    color: var(--color-on-ground);
+    border-radius: var(--radius-field);
+  }
+
+  .btn-quiet:hover {
+    border-color: var(--color-on-ground-muted);
+    background-color: var(--color-ground-3);
+  }
+
+  /* The same outline, drawn for a button that sits on cream instead of on the green. */
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    border: 1px solid var(--color-edge);
+    background-color: transparent;
+    color: var(--color-ink);
+    border-radius: var(--radius-field);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .btn-secondary:hover {
+    background-color: var(--color-paper-3);
+  }
+
+  /* Chain data is not prose: it is set in mono and never breaks the way a word does. */
+  .datum {
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+    overflow-wrap: anywhere;
+  }
+
+  /* The condensed voice, used for a headline or a big number and nothing else. */
+  .display {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    text-transform: uppercase;
+    line-height: 0.94;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
@@ -27,8 +27,8 @@ export interface DerivedCredentials {
 }
 
 /**
- * Derives the tipster's secret and claim pubkey from 24 recovery words and optional passphrase.
- */
+  * Derives the tipster's secret and claim pubkey from 24 recovery words and optional passphrase.
+    */
 export async function credentialsFromWords(
   words: string[] | string,
   passphrase?: string,
@@ -51,8 +51,8 @@ export async function credentialsFromWords(
 }
 
 /**
- * Compares expected public key (from chain) with derived public key.
- */
+  * Compares expected public key (from chain) with derived public key.
+    */
 export function matchPubkeys(
   expected: Uint8Array | number[] | null | undefined,
   derived: Uint8Array | number[],
@@ -65,8 +65,8 @@ export function matchPubkeys(
 }
 
 /**
- * Checks whether a tip status allows retraction (before DAO decision: Submitted, UnderReview/Triaged, Unfunded).
- */
+  * Checks whether a tip status allows retraction (before DAO decision: Submitted, UnderReview/Triaged, Unfunded).
+    */
 export function canRetractTip(status: TipStatus | string | null | undefined): boolean {
   if (!status) return false;
   if (typeof status === "string") {
@@ -117,8 +117,42 @@ export function formatTipStatus(status: TipStatus | string | null | undefined): 
   }
 }
 
-export function formatDeadline(ns: string | number | null | undefined): string {
-  if (!ns) return "None";
+/**
+ * `formatTipStatus` returns its colour key ("emerald", "amber", …") and tests assert on it, so the key
+ * stays. This is where that key becomes the product's own token, so a status reads in the same three
+ * verdict colours as the rest of the site instead of a leftover Tailwind palette.
+ */
+const STATUS_TONES: Record<
+  "blue" | "amber" | "emerald" | "red" | "purple" | "neutral",
+  string
+> = {
+  blue: "text-ask",
+  emerald: "text-ok",
+  amber: "text-warn",
+  red: "text-bad",
+  purple: "text-ask",
+  neutral: "text-ink-muted",
+};
+
+/** One line of chain data: the label quiet, the value in mono, a hairline under the row. */
+function Fact({
+  label,
+  tone = "text-ink",
+  children,
+}: {
+  label: string;
+  tone?: string;
+  children?: ReactNode;
+}) {
+  return (
+    <div className="flex items-baseline justify-between gap-4 border-b border-rule py-2">
+      <dt className="shrink-0 text-xs text-ink-muted">{label}</dt>
+      <dd className={`datum text-right ${tone}`}>{children}</dd>
+    </div>
+  );
+}
+
+export function formatDeadline(ns: string | number | null | undefined): string {  if (!ns) return "None";
   try {
     const ms = Number(BigInt(ns) / 1_000_000n);
     return new Date(ms).toLocaleString();
@@ -355,55 +389,20 @@ function StatusContent() {
   const isSwitchArmed = Boolean(tip && tip.switch_deadline !== null);
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100 selection:bg-sky-500/30 selection:text-sky-200">
-      {/* Header */}
-      <header className="border-b border-neutral-800 bg-neutral-900/60 backdrop-blur sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 min-h-[4rem] py-2 flex flex-wrap items-center justify-between gap-2">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-sky-500/20 border border-sky-500/40 flex items-center justify-center font-bold text-sky-400 font-mono text-sm" aria-hidden="true">
-              ST
-            </div>
-            <div>
-              <span className="font-bold tracking-tight text-white block leading-tight text-sm sm:text-base">
-                Sealed Tip
-              </span>
-              <span className="text-[10px] text-neutral-400 uppercase tracking-widest font-mono block">
-                Whistleblower Tip Line
-              </span>
-            </div>
-          </Link>
-
-          <nav aria-label="Navigation" className="flex items-center flex-wrap gap-1 sm:gap-2 text-xs font-medium">
-            <Link href="/p/0" className="min-h-[44px] px-2.5 sm:px-3 text-neutral-300 hover:text-white transition-colors flex items-center justify-center rounded-lg hover:bg-neutral-800/50">
-              Programmes
-            </Link>
-            <Link href="/status" className="min-h-[44px] px-2.5 sm:px-3 text-sky-400 font-semibold transition-colors flex items-center justify-center rounded-lg bg-sky-950/40 border border-sky-800/40">
-              Status
-            </Link>
-            <Link href="/claim" className="min-h-[44px] px-2.5 sm:px-3 text-neutral-300 hover:text-white transition-colors flex items-center justify-center rounded-lg hover:bg-neutral-800/50">
-              Claim
-            </Link>
-            <Link href="/panel" className="min-h-[44px] px-2.5 sm:px-3 text-neutral-300 hover:text-white transition-colors hidden md:flex items-center justify-center rounded-lg hover:bg-neutral-800/50">
-              Panel DAO
-            </Link>
-          </nav>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main id="main-content" className="max-w-3xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold tracking-tight text-white">Check Tip Status</h1>
-          <p className="mt-1 text-sm text-neutral-400">
+    <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
+      <div className="card on-paper space-y-6 p-6 sm:p-8">
+        <div>
+          <h1 className="display text-[clamp(1.75rem,5vw,2.25rem)] text-ask">Check tip status</h1>
+          <p className="mt-2 text-sm leading-relaxed text-ink-muted">
             Enter your Tip ID and 24-word recovery phrase to view live status, check in with the dead man&apos;s switch,
             or retract before review. Key verification runs entirely in your browser.
           </p>
         </div>
 
         {/* Lookup Form */}
-        <form onSubmit={handleLookup} className="rounded-xl border border-neutral-800 bg-neutral-900/50 p-6 space-y-5">
+        <form onSubmit={handleLookup} className="card-inset space-y-5 p-5">
           <div>
-            <label htmlFor="tipId" className="block text-xs font-medium uppercase tracking-wider text-neutral-300 mb-1">
+            <label htmlFor="tipId" className="block text-xs font-medium text-ink-muted mb-1">
               Tip ID
             </label>
             <input
@@ -414,18 +413,18 @@ function StatusContent() {
               value={tipIdInput}
               onChange={(e) => setTipIdInput(e.target.value)}
               placeholder="e.g. 0"
-              className="w-full min-h-[44px] bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 focus:outline-none focus:border-sky-500 font-mono"
+              className="w-full min-h-[44px] bg-paper border border-edge rounded-field px-3 py-2 text-sm text-ink placeholder:text-ink-muted font-mono"
             />
           </div>
 
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label htmlFor="words" className="block text-xs font-medium uppercase tracking-wider text-neutral-300">
+              <label htmlFor="words" className="block text-xs font-medium text-ink-muted">
                 24 Recovery Words
               </label>
               <span
                 className={`text-xs font-mono ${
-                  wordCount === 24 ? "text-emerald-400" : wordCount > 0 ? "text-amber-400" : "text-neutral-500"
+                  wordCount === 24 ? "text-ok" : wordCount > 0 ? "text-warn" : "text-ink-muted"
                 }`}
               >
                 {wordCount} / 24 words
@@ -437,14 +436,14 @@ function StatusContent() {
               rows={3}
               value={wordsInput}
               onChange={(e) => setWordsInput(e.target.value)}
-              placeholder="paste your 24 words separated by spaces..."
-              className="w-full bg-neutral-900 border border-neutral-700 rounded-lg p-3 text-sm text-neutral-100 placeholder-neutral-500 focus:outline-none focus:border-sky-500 font-mono"
+              placeholder="paste your 24 words separated by spaces…"
+              className="w-full bg-paper border border-edge rounded-field p-3 text-sm text-ink placeholder:text-ink-muted font-mono"
             />
           </div>
 
           <div>
-            <label htmlFor="passphrase" className="block text-xs font-medium uppercase tracking-wider text-neutral-300 mb-1">
-              Passphrase <span className="text-neutral-500 normal-case font-normal">(optional, if used during submit)</span>
+            <label htmlFor="passphrase" className="block text-xs font-medium text-ink-muted mb-1">
+              Passphrase <span className="text-ink-muted normal-case font-normal">(optional, if used during submit)</span>
             </label>
             <input
               id="passphrase"
@@ -452,216 +451,126 @@ function StatusContent() {
               value={passphraseInput}
               onChange={(e) => setPassphraseInput(e.target.value)}
               placeholder="leave empty if none was set"
-              className="w-full min-h-[44px] bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 focus:outline-none focus:border-sky-500"
+              className="w-full min-h-[44px] bg-paper border border-edge rounded-field px-3 py-2 text-sm text-ink placeholder:text-ink-muted"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full min-h-[48px] py-3 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-semibold text-sm transition disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed shadow-md"
+            className="btn-primary w-full py-3 text-sm disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {loading ? "Verifying Credentials & Loading Tip..." : "Check Status"}
+            {loading ? "Loading the tip…" : "Check the status"}
           </button>
         </form>
 
         {/* Global Error Banner */}
         {error && (
-          <div className="mt-6 rounded-lg border border-red-500/40 bg-red-950/20 p-4 text-sm text-red-200">
-            <span className="font-semibold block mb-0.5">Error</span>
-            {error}
-          </div>
+          <p className="mt-6 border-l-4 border-l-bad bg-paper p-4 text-sm text-bad">{error}</p>
         )}
 
         {/* Credential Warning Banner */}
         {credentialWarning && (
-          <div className="mt-6 rounded-lg border border-amber-500/50 bg-amber-950/30 p-4 text-sm text-amber-200">
-            <div className="font-semibold text-amber-300 flex items-center gap-2">
-              <svg className="w-5 h-5 text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span>Tip credentials do not match this Tip ID</span>
-            </div>
-            <p className="mt-1 text-xs text-amber-300/90">
-              The public key derived from these 24 words does not match the claim public key on record for this tip.
-              Check your Tip ID and passphrase.
+          <div className="mt-6 border-l-4 border-l-warn bg-paper p-4">
+            <h2 className="text-sm font-semibold text-ink">These words do not match tip #{tip?.id}</h2>
+            <p className="mt-1 text-xs text-ink-muted">
+              The public key derived from these 24 words is not the claim key recorded for this tip. Check the tip ID
+              and the passphrase, if you used one.
             </p>
           </div>
         )}
 
-        {/* Tip Status Results */}
+        {/* What the chain holds about this tip. Facts in a list, one hairline between groups. */}
         {tip && (
-          <div className="mt-8 space-y-6">
-            {/* Overview Card */}
-            <div className="rounded-xl border border-neutral-800 bg-neutral-900/50 p-6">
-              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-neutral-800 pb-4 mb-4">
-                <div>
-                  <span className="text-xs uppercase tracking-wider text-neutral-400">Tip Reference</span>
-                  <div className="text-xl font-bold font-mono text-white">Tip #{tip.id}</div>
-                </div>
-
-                {statusInfo && (
-                  <div>
-                    <span className="text-xs uppercase tracking-wider text-neutral-400 block mb-1">Current Status</span>
-                    <span
-                      className={`inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${
-                        statusInfo.variant === "emerald"
-                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
-                          : statusInfo.variant === "amber"
-                          ? "bg-amber-500/10 text-amber-400 border border-amber-500/30"
-                          : statusInfo.variant === "blue"
-                          ? "bg-blue-500/10 text-blue-400 border border-blue-500/30"
-                          : statusInfo.variant === "purple"
-                          ? "bg-purple-500/10 text-purple-400 border border-purple-500/30"
-                          : statusInfo.variant === "red"
-                          ? "bg-red-500/10 text-red-400 border border-red-500/30"
-                          : "bg-neutral-800 text-neutral-300 border border-neutral-700"
-                      }`}
-                    >
-                      {statusInfo.label}
-                    </span>
-                  </div>
-                )}
+          <div className="space-y-5 border-t border-rule pt-6">
+            <div className="flex flex-wrap items-baseline justify-between gap-4">
+              <div>
+                <h2 className="text-xs text-ink-muted">Tip</h2>
+                <p className="datum text-2xl font-semibold text-ink">#{tip.id}</p>
               </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-neutral-400 text-xs block">Programme ID</span>
-                  <Link
-                    href={`/p/${tip.programme_id}`}
-                    className="text-sky-400 hover:underline font-mono font-medium"
-                  >
-                    Programme #{tip.programme_id}
-                  </Link>
-                </div>
-
-                <div>
-                  <span className="text-neutral-400 text-xs block">Submitted At</span>
-                  <span className="font-mono text-neutral-200">{formatDeadline(tip.submitted_at)}</span>
-                </div>
-
-                {statusInfo?.reward && (
-                  <div>
-                    <span className="text-neutral-400 text-xs block">Approved Reward</span>
-                    <span className="font-mono text-emerald-400 font-semibold">{statusInfo.reward} token units</span>
-                  </div>
-                )}
-
-                <div>
-                  <span className="text-neutral-400 text-xs block">Tip Action Nonce</span>
-                  <span className="font-mono text-neutral-200">{tip.nonce}</span>
-                </div>
-              </div>
-
-              {/* Accepted reward claim link */}
-              {statusInfo?.label === "Accepted" && (
-                <div className="mt-5 pt-4 border-t border-neutral-800 flex items-center justify-between">
-                  <span className="text-xs text-emerald-400 font-medium">
-                    This tip has been accepted for reward payment!
+              {statusInfo && (
+                <p className="text-right">
+                  <span className="block text-xs text-ink-muted">Status</span>
+                  <span className={`text-sm font-semibold ${STATUS_TONES[statusInfo.variant]}`}>
+                    {statusInfo.label}
                   </span>
-                  <Link
-                    href={`/claim?tipId=${tip.id}`}
-                    className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition"
-                  >
-                    Claim Reward &rarr;
-                  </Link>
-                </div>
+                </p>
               )}
             </div>
 
-            {/* Dead Man's Switch Card */}
-            <div className="rounded-xl border border-neutral-800 bg-neutral-900/50 p-6">
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-300 mb-4 flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-amber-400"></span>
-                Dead Man&apos;s Switch &amp; Deadlines
-              </h2>
+            <dl className="grid grid-cols-1 gap-x-8 text-sm sm:grid-cols-2">
+              <Fact label="Programme">
+                <Link href={`/p/${tip.programme_id}`} className="datum text-ask hover:underline">
+                  Programme #{tip.programme_id}
+                </Link>
+              </Fact>
+              <Fact label="Submitted">{formatDeadline(tip.submitted_at)}</Fact>
+              <Fact label="Action nonce">{tip.nonce}</Fact>
+              {statusInfo?.reward ? (
+                <Fact label="Approved reward" tone="text-ok">
+                  {statusInfo.reward} token units
+                </Fact>
+              ) : null}
+              <Fact label="Dead man&apos;s switch" tone={isSwitchArmed ? "text-ok" : "text-ink-muted"}>
+                {isSwitchArmed ? "Armed" : "Not armed"}
+              </Fact>
+              <Fact label="Check in by">{formatDeadline(tip.switch_deadline)}</Fact>
+              {tip.switch_interval ? (
+                <Fact label="Check-in interval">{tip.switch_interval} ns</Fact>
+              ) : null}
+              {tip.switch_triggered ? (
+                <Fact label="Release" tone="text-bad">
+                  Deadline passed. Keys were released to the panel.
+                </Fact>
+              ) : null}
+            </dl>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm mb-4">
-                <div>
-                  <span className="text-neutral-400 text-xs block">Switch Armed</span>
-                  <span
-                    className={`font-medium ${
-                      isSwitchArmed ? "text-emerald-400" : "text-neutral-500"
-                    }`}
-                  >
-                    {isSwitchArmed ? "Armed & Active" : "Not Armed"}
-                  </span>
-                </div>
-
-                <div>
-                  <span className="text-neutral-400 text-xs block">Switch Triggered</span>
-                  <span
-                    className={`font-medium ${
-                      tip.switch_triggered ? "text-red-400 font-bold" : "text-neutral-300"
-                    }`}
-                  >
-                    {tip.switch_triggered ? "TRIGGERED (Keys Released)" : "No (Normal)"}
-                  </span>
-                </div>
-
-                <div>
-                  <span className="text-neutral-400 text-xs block">Current Switch Deadline</span>
-                  <span className="font-mono text-neutral-200">{formatDeadline(tip.switch_deadline)}</span>
-                </div>
-
-                {tip.switch_interval && (
-                  <div>
-                    <span className="text-neutral-400 text-xs block">Check-in Interval (ns)</span>
-                    <span className="font-mono text-neutral-400 text-xs">{tip.switch_interval}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Action Buttons */}
-              <div className="pt-4 border-t border-neutral-800 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-                <button
-                  type="button"
-                  onClick={handleCheckin}
-                  disabled={!isSwitchArmed || tip.switch_triggered || checkinLoading}
-                  aria-label="Check in with dead man's switch to reset timer"
-                  className="min-h-[44px] px-5 py-2.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer shadow-sm"
+            {statusInfo?.label === "Accepted" ? (
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-rule pt-4">
+                <p className="text-sm text-ok">The panel accepted this tip. Its bounty is reserved for you.</p>
+                <Link
+                  href={`/claim?tipId=${tip.id}`}
+                  className="btn-primary inline-flex min-h-[48px] items-center justify-center px-5 text-sm"
                 >
-                  {checkinLoading ? "Checking in..." : "✓ Check In with Switch"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleRetract}
-                  disabled={!isRetractable || retractLoading}
-                  aria-label="Retract this anonymous tip before review"
-                  className="min-h-[44px] px-5 py-2.5 rounded-lg bg-red-600/80 hover:bg-red-500 text-white text-xs font-semibold transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer border border-red-700/50"
-                >
-                  {retractLoading ? "Retracting..." : "✕ Retract Tip"}
-                </button>
+                  Claim the reward
+                </Link>
               </div>
+            ) : null}
 
-              {/* Action confirmations */}
-              {checkinMessage && (
-                <div className="mt-4 rounded-lg bg-emerald-950/30 border border-emerald-500/40 p-3 text-xs text-emerald-300">
-                  {checkinMessage}
-                </div>
-              )}
+            <div className="flex flex-col gap-3 border-t border-rule pt-4 sm:flex-row">
+              <button
+                type="button"
+                onClick={handleCheckin}
+                disabled={!isSwitchArmed || tip.switch_triggered || checkinLoading}
+                aria-label="Check in with dead man's switch to reset timer"
+                className="btn-primary inline-flex min-h-[48px] items-center justify-center px-5 text-sm disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {checkinLoading ? "Checking in…" : "Check in with the switch"}
+              </button>
 
-              {retractMessage && (
-                <div className="mt-4 rounded-lg bg-neutral-800 border border-neutral-700 p-3 text-xs text-neutral-200">
-                  {retractMessage}
-                </div>
-              )}
+              <button
+                type="button"
+                onClick={handleRetract}
+                disabled={!isRetractable || retractLoading}
+                aria-label="Retract this anonymous tip before review"
+                className="btn-secondary px-5 text-sm text-bad disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {retractLoading ? "Retracting…" : "Retract the tip"}
+              </button>
             </div>
+
+            {checkinMessage ? <p className="text-sm text-ok">{checkinMessage}</p> : null}
+            {retractMessage ? <p className="text-sm text-ink-muted">{retractMessage}</p> : null}
           </div>
         )}
-      </main>
+      </div>
     </div>
   );
 }
 
 export default function StatusPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-neutral-950 p-8 text-neutral-400">Loading Status...</div>}>
+    <Suspense fallback={<p className="mx-auto w-full max-w-3xl px-4 py-10 text-sm text-on-ground-muted sm:px-6">Loading status…</p>}>
       <StatusContent />
     </Suspense>
   );

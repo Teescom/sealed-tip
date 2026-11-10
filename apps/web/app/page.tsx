@@ -1,390 +1,407 @@
-"use client";
-
 import Link from "next/link";
+import React from "react";
 
+/**
+ * Landing page (S-10.2).
+ *
+ * Every number and every claim on this page is readable in this repository: the cleaning parameters come
+ * from `packages/clean/src/host.ts`, the refusals from `gate.ts`, the invariants from `AGENTS.md`, the test
+ * counts from `pnpm test`. What we cannot prove yet is stated on the page rather than left out, because a
+ * tip line that oversells its own guarantees is the thing this product exists to replace.
+ */
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100 selection:bg-sky-500/30 selection:text-sky-200">
-      {/* Top Header / Navigation */}
-      <header className="border-b border-neutral-800 bg-neutral-900/60 backdrop-blur sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 min-h-[4rem] py-2 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-sky-500/20 border border-sky-500/40 flex items-center justify-center font-bold text-sky-400 font-mono text-sm" aria-hidden="true">
-              ST
-            </div>
-            <div>
-              <span className="font-bold tracking-tight text-white block leading-tight text-sm sm:text-base">
-                Sealed Tip
-              </span>
-              <span className="text-[10px] text-neutral-400 uppercase tracking-widest font-mono block">
-                Whistleblower Tip Line
-              </span>
-            </div>
-          </div>
-
-          <nav aria-label="Main Navigation" className="flex items-center flex-wrap gap-1 sm:gap-2 text-xs font-medium">
-            <Link
-              href="/p/0"
-              className="min-h-[44px] px-2.5 sm:px-3 text-neutral-300 hover:text-white transition-colors flex items-center justify-center rounded-lg hover:bg-neutral-800/50"
-            >
-              Programmes
-            </Link>
-            <Link
-              href="/status"
-              className="min-h-[44px] px-2.5 sm:px-3 text-neutral-300 hover:text-white transition-colors flex items-center justify-center rounded-lg hover:bg-neutral-800/50"
-            >
-              Status
-            </Link>
-            <Link
-              href="/claim"
-              className="min-h-[44px] px-2.5 sm:px-3 text-neutral-300 hover:text-white transition-colors flex items-center justify-center rounded-lg hover:bg-neutral-800/50"
-            >
-              Claim
-            </Link>
-            <Link
-              href="/panel"
-              className="min-h-[44px] px-2.5 sm:px-3 text-neutral-300 hover:text-white transition-colors hidden md:flex items-center justify-center rounded-lg hover:bg-neutral-800/50"
-            >
-              Panel DAO
-            </Link>
-            <Link
-              href="/submit/0"
-              className="min-h-[44px] bg-sky-600 hover:bg-sky-500 text-white px-3.5 sm:px-4 rounded-lg transition-colors font-semibold flex items-center justify-center shadow-sm"
-            >
-              Submit Tip
-            </Link>
-          </nav>
-        </div>
-      </header>
-
-      <main id="main-content" className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-12">
-        {/* Hero & Problem Statement */}
-        <section aria-labelledby="hero-title" className="space-y-6 max-w-4xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono bg-sky-950/40 border border-sky-800/60 text-sky-400">
-            <span className="h-1.5 w-1.5 rounded-full bg-sky-400 animate-pulse" />
-            <span>NEAR Privacy & Private AI • Zero-Knowledge Architecture</span>
-          </div>
-
-          <h1
-            id="hero-title"
-            className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight"
-          >
-            Anonymous, verified whistleblowing with guaranteed bounties.
-          </h1>
-
-          <div className="p-6 rounded-xl border border-red-900/40 bg-red-950/20 space-y-3">
-            <div className="flex items-center gap-2 text-red-400 font-semibold text-sm">
-              <svg
-                className="w-5 h-5 shrink-0"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                />
-              </svg>
-              <span>The Problem: Whistleblowing is dangerous</span>
-            </div>
-            <p className="text-sm text-neutral-300 leading-relaxed">
-              Whistleblowing is dangerous. Documents and leak files carry invisible forensics:
-              yellow printer tracking dots (Machine Identification Codes), high-precision EXIF GPS coordinates,
-              hidden PDF revision histories and undo logs, font-render metadata, and unique stylometric fingerprints.
-              Traditional tip lines claim confidentiality while logging your IP address, storing plaintext on central servers,
-              and relying on promises rather than cryptography.
-            </p>
-          </div>
-        </section>
-
-        {/* Tor Guidance / Operational Security Callout */}
-        <section
-          aria-labelledby="tor-guidance-heading"
-          className="p-6 sm:p-8 rounded-2xl border border-amber-800/60 bg-gradient-to-br from-amber-950/30 to-neutral-900/40 space-y-4"
+    <div className="selection:bg-ask selection:text-paper">
+      <section aria-labelledby="hero-title" className="mx-auto w-full max-w-6xl px-4 pt-12 pb-10 sm:px-6 sm:pt-20">
+        <p className="mb-4 text-[11px] uppercase tracking-[0.22em] text-on-ground-muted">
+          NEAR testnet. Hackathon build. No contract has run on a live chain.
+        </p>
+        <h1
+          id="hero-title"
+          className="display max-w-[16ch] text-[clamp(2.5rem,8vw,4.75rem)] text-paper"
         >
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-400">
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                />
-              </svg>
-            </div>
-            <div>
-              <h2 id="tor-guidance-heading" className="text-lg font-bold text-amber-300">
-                Operational Security & Tor Guidance
-              </h2>
-              <p className="text-xs text-amber-400/80">
-                Network-level privacy requires strict operational discipline before you begin.
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-neutral-300 pt-2">
-            <div className="p-4 rounded-lg bg-neutral-950/60 border border-neutral-800 space-y-1.5">
-              <span className="font-semibold text-white block">1. Use Tor Browser or Tails OS</span>
-              <p className="text-neutral-400">
-                Always access Sealed Tip through the official Tor Browser or booted inside Tails OS.
-                Tor onion routing masks your real IP address from internet service providers, relay nodes, and adversaries.
-              </p>
-            </div>
-
-            <div className="p-4 rounded-lg bg-neutral-950/60 border border-neutral-800 space-y-1.5">
-              <span className="font-semibold text-white block">2. Avoid Personal Wi-Fi & Work Nets</span>
-              <p className="text-neutral-400">
-                Never submit tips or check status from home broadband, employer VPNs, or personal mobile data.
-                Use a public Wi-Fi access point without security cameras or captive login portals.
-              </p>
-            </div>
-
-            <div className="p-4 rounded-lg bg-neutral-950/60 border border-neutral-800 space-y-1.5">
-              <span className="font-semibold text-white block">3. Use a Dedicated Clean Device</span>
-              <p className="text-neutral-400">
-                Disable persistent tracking, close background syncing applications (cloud backups, messaging apps),
-                and avoid logging into any personal accounts on the hardware you use for whistleblowing.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* How Sealed Tip Protects You */}
-        <section aria-labelledby="protection-heading" className="space-y-6">
-          <div className="space-y-2">
-            <h2 id="protection-heading" className="text-2xl font-bold text-white tracking-tight">
-              How Sealed Tip Protects You
-            </h2>
-            <p className="text-sm text-neutral-400">
-              Privacy is the product. Every layer of Sealed Tip is designed so that even our own servers cannot identify you.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Feature 1 */}
-            <article className="p-5 rounded-xl border border-neutral-800 bg-neutral-900/40 space-y-3">
-              <div className="h-9 w-9 rounded-lg bg-sky-950/60 border border-sky-800/60 flex items-center justify-center text-sky-400 font-bold">
-                01
-              </div>
-              <h3 className="text-base font-semibold text-white">
-                Destructive Browser-Side Cleaning
-              </h3>
-              <p className="text-xs text-neutral-400 leading-relaxed">
-                Evidence files are sanitised entirely inside your web browser prior to encryption. PDFs are rasterised to pure pixels to strip revision histories, images are re-encoded to discard EXIF GPS metadata, and photocopier composite scan mode destroys printer tracking dots.
-              </p>
-            </article>
-
-            {/* Feature 2 */}
-            <article className="p-5 rounded-xl border border-neutral-800 bg-neutral-900/40 space-y-3">
-              <div className="h-9 w-9 rounded-lg bg-emerald-950/60 border border-emerald-800/60 flex items-center justify-center text-emerald-400 font-bold">
-                02
-              </div>
-              <h3 className="text-base font-semibold text-white">
-                Strict Privacy Invariants
-              </h3>
-              <p className="text-xs text-neutral-400 leading-relaxed">
-                Zero plaintext ever touches any server. Ciphertext is stored exclusively. Servers run strict <code>noLogs</code> middleware with zero IP logging, zero cookies, no web trackers, and zero third-party CDNs or external web fonts.
-              </p>
-            </article>
-
-            {/* Feature 3 */}
-            <article className="p-5 rounded-xl border border-neutral-800 bg-neutral-900/40 space-y-3">
-              <div className="h-9 w-9 rounded-lg bg-purple-950/60 border border-purple-800/60 flex items-center justify-center text-purple-400 font-bold">
-                03
-              </div>
-              <h3 className="text-base font-semibold text-white">
-                Verifiable TEE AI Redaction
-              </h3>
-              <p className="text-xs text-neutral-400 leading-relaxed">
-                Tip text can optionally be redacted using NEAR AI Cloud Confidential Computing enclaves. Hardware Intel SGX/TDX attestation reports verify the exact model and enclave state without decrypting your submission on the host.
-              </p>
-            </article>
-
-            {/* Feature 4 */}
-            <article className="p-5 rounded-xl border border-neutral-800 bg-neutral-900/40 space-y-3">
-              <div className="h-9 w-9 rounded-lg bg-amber-950/60 border border-amber-800/60 flex items-center justify-center text-amber-400 font-bold">
-                04
-              </div>
-              <h3 className="text-base font-semibold text-white">
-                Dead Man&apos;s Switch Protection
-              </h3>
-              <p className="text-xs text-neutral-400 leading-relaxed">
-                Arm an automated dead man&apos;s switch. If you are detained, silenced, or fail to check in before your deadline, an autonomous keeper daemon releases decryption keys to the DAO panel to ensure the truth cannot be suppressed.
-              </p>
-            </article>
-
-            {/* Feature 5 */}
-            <article className="p-5 rounded-xl border border-neutral-800 bg-neutral-900/40 space-y-3">
-              <div className="h-9 w-9 rounded-lg bg-teal-950/60 border border-teal-800/60 flex items-center justify-center text-teal-400 font-bold">
-                05
-              </div>
-              <h3 className="text-base font-semibold text-white">
-                Accountless 24-Word Identity
-              </h3>
-              <p className="text-xs text-neutral-400 leading-relaxed">
-                You never connect a wallet or register an account. Your tipster identity is derived entirely in memory from a 24-word secret recovery phrase. Actions are signed locally and submitted through an anonymous relayer.
-              </p>
-            </article>
-
-            {/* Feature 6 */}
-            <article className="p-5 rounded-xl border border-neutral-800 bg-neutral-900/40 space-y-3">
-              <div className="h-9 w-9 rounded-lg bg-rose-950/60 border border-rose-800/60 flex items-center justify-center text-rose-400 font-bold">
-                06
-              </div>
-              <h3 className="text-base font-semibold text-white">
-                On-Chain Escrowed Rewards
-              </h3>
-              <p className="text-xs text-neutral-400 leading-relaxed">
-                Bounty rewards are locked in the NEAR smart contract beforehand. Funder balances are cryptographically reserved upon positive triage, and payouts can be directed to fresh, unlinked addresses on NEAR or multi-chain.
-              </p>
-            </article>
-          </div>
-        </section>
-
-        {/* Quick Navigation / Action Hub */}
-        <section aria-labelledby="quick-nav-heading" className="space-y-6">
-          <div className="space-y-1">
-            <h2 id="quick-nav-heading" className="text-2xl font-bold text-white tracking-tight">
-              Programmes & Navigation
-            </h2>
-            <p className="text-sm text-neutral-400">
-              Access active whistleblower programmes, track submissions, or participate in governance.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <Link
-              href="/p/0"
-              className="group p-5 rounded-xl border border-neutral-800 bg-neutral-900/40 hover:border-sky-500/60 hover:bg-neutral-900/80 transition-all space-y-2 block"
-            >
-              <div className="flex items-center justify-between text-xs text-neutral-400 font-mono">
-                <span>Programme #0</span>
-                <span className="text-emerald-400 font-semibold group-hover:translate-x-1 transition-transform">
-                  View Rules →
-                </span>
-              </div>
-              <h3 className="text-base font-bold text-white group-hover:text-sky-300 transition-colors">
-                Open Programme (Demo)
-              </h3>
-              <p className="text-xs text-neutral-400">
-                Explore the reference whistleblower bounty programme, inspection rules, and locked escrow funds.
-              </p>
-            </Link>
-
-            <Link
-              href="/submit/0"
-              className="group p-5 rounded-xl border border-sky-800/60 bg-sky-950/20 hover:border-sky-500 hover:bg-sky-950/40 transition-all space-y-2 block"
-            >
-              <div className="flex items-center justify-between text-xs text-sky-400 font-mono">
-                <span>Action</span>
-                <span className="font-semibold group-hover:translate-x-1 transition-transform">
-                  Start Submission →
-                </span>
-              </div>
-              <h3 className="text-base font-bold text-white group-hover:text-sky-300 transition-colors">
-                Submit Anonymous Tip
-              </h3>
-              <p className="text-xs text-neutral-300">
-                Clean files, configure dead man&apos;s switch, apply optional AI redaction, and submit anonymously.
-              </p>
-            </Link>
-
-            <Link
-              href="/status"
-              className="group p-5 rounded-xl border border-neutral-800 bg-neutral-900/40 hover:border-sky-500/60 hover:bg-neutral-900/80 transition-all space-y-2 block"
-            >
-              <div className="flex items-center justify-between text-xs text-neutral-400 font-mono">
-                <span>Tipster Portal</span>
-                <span className="text-sky-400 font-semibold group-hover:translate-x-1 transition-transform">
-                  Check →
-                </span>
-              </div>
-              <h3 className="text-base font-bold text-white group-hover:text-sky-300 transition-colors">
-                Check Tip Status
-              </h3>
-              <p className="text-xs text-neutral-400">
-                Enter your 24-word recovery phrase to view triage outcome, reset switch heartbeat, or retract your tip.
-              </p>
-            </Link>
-
-            <Link
-              href="/claim"
-              className="group p-5 rounded-xl border border-neutral-800 bg-neutral-900/40 hover:border-sky-500/60 hover:bg-neutral-900/80 transition-all space-y-2 block"
-            >
-              <div className="flex items-center justify-between text-xs text-neutral-400 font-mono">
-                <span>Payout</span>
-                <span className="text-emerald-400 font-semibold group-hover:translate-x-1 transition-transform">
-                  Claim →
-                </span>
-              </div>
-              <h3 className="text-base font-bold text-white group-hover:text-sky-300 transition-colors">
-                Claim Bounty Reward
-              </h3>
-              <p className="text-xs text-neutral-400">
-                Redeem your accepted tip reward to a fresh, unlinked account using your cryptographic proof.
-              </p>
-            </Link>
-
-            <Link
-              href="/panel"
-              className="group p-5 rounded-xl border border-neutral-800 bg-neutral-900/40 hover:border-sky-500/60 hover:bg-neutral-900/80 transition-all space-y-2 block"
-            >
-              <div className="flex items-center justify-between text-xs text-neutral-400 font-mono">
-                <span>Governance</span>
-                <span className="text-purple-400 font-semibold group-hover:translate-x-1 transition-transform">
-                  Review →
-                </span>
-              </div>
-              <h3 className="text-base font-bold text-white group-hover:text-sky-300 transition-colors">
-                Panel DAO Review
-              </h3>
-              <p className="text-xs text-neutral-400">
-                Panel members unseal evidence keys locally and vote on credibility and bounty distributions.
-              </p>
-            </Link>
-
-            <Link
-              href="/programmes/new"
-              className="group p-5 rounded-xl border border-neutral-800 bg-neutral-900/40 hover:border-sky-500/60 hover:bg-neutral-900/80 transition-all space-y-2 block"
-            >
-              <div className="flex items-center justify-between text-xs text-neutral-400 font-mono">
-                <span>Funder</span>
-                <span className="text-amber-400 font-semibold group-hover:translate-x-1 transition-transform">
-                  Create →
-                </span>
-              </div>
-              <h3 className="text-base font-bold text-white group-hover:text-sky-300 transition-colors">
-                Create Programme
-              </h3>
-              <p className="text-xs text-neutral-400">
-                Deploy a new bounty programme, configure inspection scopes, deposit reward escrow, and appoint panel members.
-              </p>
-            </Link>
-          </div>
-        </section>
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t border-neutral-800 bg-neutral-900/40 mt-16 py-8">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-neutral-500">
-          <p>
-            Sealed Tip • MIT Licensed • Built for NEAR Privacy &amp; Private AI
-          </p>
-          <p className="font-mono text-[11px]">
-            Privacy is the product: no logs, no cookies, no tracking.
-          </p>
+          A tip line whose servers cannot read your files
+        </h1>
+        <p className="mt-6 max-w-prose text-base leading-relaxed text-on-ground sm:text-lg">
+          Evidence is cleaned inside your browser, encrypted before it leaves, and stored as ciphertext. The
+          server that receives it keeps no logs, sets no cookies, and loads nothing that is not part of this
+          build. A reward is held in escrow on-chain before anyone reads what you sent.
+        </p>
+        <div className="mt-8 flex flex-wrap gap-3">
+          <Link
+            href="/submit/0"
+            className="btn-primary flex min-h-[44px] items-center px-5 text-sm no-underline"
+          >
+            Submit a tip
+          </Link>
+          <Link
+            href="#what-leaks"
+            className="btn-quiet flex min-h-[44px] items-center px-5 text-sm no-underline"
+          >
+            What gives a document away
+          </Link>
         </div>
-      </footer>
+      </section>
+
+      <section
+        aria-labelledby="what-leaks"
+        className="card on-paper mx-auto -mt-2 w-full max-w-6xl px-5 py-10 sm:px-10 sm:py-14"
+      >
+        <h2 id="what-leaks" className="display text-[clamp(1.75rem,5vw,2.75rem)] text-ask">
+          What gives a document away
+        </h2>
+        <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-muted">
+          Leaked files carry identifying detail their authors never meant to publish. This is what the
+          cleaner in this build does with each of it. Nothing here is a promise about formats we do not
+          handle.
+        </p>
+
+        <dl className="mt-8 space-y-0">
+          {STRIPS.map((row) => (
+            <div
+              key={row.carrier}
+              className="grid gap-1 border-t border-rule py-5 last:border-b sm:grid-cols-[1fr_1.4fr] sm:gap-6"
+            >
+              <dt className="text-sm font-semibold text-ink">{row.carrier}</dt>
+              <dd className="space-y-2 text-sm leading-relaxed text-ink-muted">
+                <p>{row.action}</p>
+                {row.detail ? (
+                  <p className="border-l-2 border-rule pl-3 text-[13px]">{row.detail}</p>
+                ) : null}
+              </dd>
+            </div>
+          ))}
+        </dl>
+
+        <p className="mt-6 max-w-prose text-[13px] leading-relaxed text-ink-muted">
+          Scan mode is a mitigation, not a guarantee. It is the one option on this page that we are willing
+          to call imperfect in public, because the alternative is claiming coverage the technique does not
+          have.
+        </p>
+      </section>
+
+      <section
+        aria-labelledby="server-side"
+        className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6"
+      >
+        <div className="grid gap-8 md:grid-cols-[1fr_1.5fr] md:gap-12">
+          <div>
+            <h2 id="server-side" className="display text-[clamp(1.75rem,5vw,2.5rem)] text-paper">
+              What the servers hold
+            </h2>
+            <p className="mt-4 max-w-prose text-sm leading-relaxed text-on-ground-muted">
+              Three rules, each enforced by code in this repository rather than by a policy page.
+            </p>
+          </div>
+          <table className="w-full border-collapse text-left text-sm">
+            <caption className="sr-only">
+              What each Sealed Tip server component can see, and what it keeps
+            </caption>
+            <thead>
+              <tr className="border-b border-rule-dark text-[11px] uppercase tracking-[0.14em] text-on-ground-muted">
+                <th scope="col" className="py-3 pr-4 font-medium">
+                  Component
+                </th>
+                <th scope="col" className="py-3 pr-4 font-medium">
+                  Can it read your evidence
+                </th>
+                <th scope="col" className="py-3 font-medium">
+                  What it stores about you
+                </th>
+              </tr>
+            </thead>
+            <tbody className="text-on-ground">
+              {SERVERS.map((row) => (
+                <tr key={row.name} className="border-b border-rule-dark/70 align-top">
+                  <th scope="row" className="py-4 pr-4 font-semibold text-paper">
+                    {row.name}
+                  </th>
+                  <td className="py-4 pr-4">
+                    <span className={row.reads ? "text-warn-on-ground" : "text-ok-on-ground"}>
+                      {row.reads ? row.reads : "No"}
+                    </span>
+                  </td>
+                  <td className="py-4 text-on-ground-muted">{row.stores}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section
+        aria-labelledby="switch"
+        className="card on-paper mx-auto w-full max-w-6xl px-5 py-10 sm:px-10 sm:py-14"
+      >
+        <div className="grid gap-8 lg:grid-cols-[1.3fr_1fr] lg:gap-12">
+          <div>
+            <h2 id="switch" className="display text-[clamp(1.75rem,5vw,2.5rem)] text-ask">
+              If you stop checking in
+            </h2>
+            <p className="mt-4 max-w-prose text-sm leading-relaxed text-ink-muted">
+              A tip can carry a dead man&apos;s switch. You pick a check-in interval and a grace period when
+              you submit; a keeper service watches the deadline on-chain. If you check in, nothing happens.
+              If you do not, the decryption keys go to the panel so the evidence can still be reviewed
+              without you.
+            </p>
+            <ul className="mt-5 space-y-2 text-sm leading-relaxed text-ink-muted">
+              <li className="border-l-2 border-rule pl-3">
+                The keys are released to the panel, not published. A tip still needs at least two
+                non-recused members to open it.
+              </li>
+              <li className="border-l-2 border-rule pl-3">
+                Raw originals are never included unless you tick that box yourself, and the box says what it
+                means.
+              </li>
+              <li className="border-l-2 border-rule pl-3">
+                Your identity is a 24-word phrase held in the page&apos;s memory. No account, no wallet, no
+                email.
+              </li>
+            </ul>
+          </div>
+          <div className="card-inset p-5">
+            <h3 className="text-sm font-semibold text-ink">Not yet proved</h3>
+            <p className="mt-3 text-[13px] leading-relaxed text-ink-muted">
+              The switch is written, tested, and has never run against a live contract. Deploying it is the
+              next step, and it needs testnet funds. Until that happens, treat every on-chain behaviour on
+              this page as tested rather than demonstrated.
+            </p>
+            <p className="mt-4 text-[13px] leading-relaxed text-ink-muted">
+              The quote endpoint that would show a cross-chain payout is still a stub answering 501.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section
+        aria-labelledby="go"
+        className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6"
+      >
+        <h2 id="go" className="display mb-8 text-[clamp(1.75rem,5vw,2.5rem)] text-paper">
+          Where you go from here
+        </h2>
+        <div className="grid gap-6 lg:grid-cols-[1.15fr_1fr]">
+          <Link
+            href="/submit/0"
+            className="panel group flex flex-col justify-between gap-6 p-6 no-underline sm:p-8"
+          >
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.18em] text-on-ground-muted">
+                Step 1 of 9
+              </p>
+              <h3 className="mt-3 text-xl font-semibold text-paper">Submit a tip</h3>
+              <p className="mt-3 max-w-prose text-sm leading-relaxed text-on-ground-muted">
+                Attach files, read the cleaning report, choose whether to run the confidential-computing
+                redaction step, arm a switch, and copy your 24 words. The page generates a key pair and
+                signs your submission locally; an anonymous relayer puts it on chain.
+              </p>
+            </div>
+            <p className="datum text-xs text-ask-on-ground">
+              /submit/[programme]
+            </p>
+          </Link>
+
+          <ul className="divide-y divide-rule-dark border-y border-rule-dark">
+            {DESTINATIONS.map((row) => (
+              <li key={row.href}>
+                <Link
+                  href={row.href}
+                  className="group flex min-h-[64px] items-baseline justify-between gap-4 py-4 no-underline"
+                >
+                  <span>
+                    <span className="block text-sm font-semibold text-paper group-hover:text-ask-on-ground">
+                      {row.label}
+                    </span>
+                    <span className="mt-1 block text-[13px] leading-relaxed text-on-ground-muted">
+                      {row.who}
+                    </span>
+                  </span>
+                  <span className="datum shrink-0 text-[11px] text-on-ground-muted">{row.path}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section aria-labelledby="opsec" className="mx-auto w-full max-w-6xl px-4 pb-14 sm:px-6">
+        <div className="grid gap-8 md:grid-cols-[1fr_1.6fr] md:gap-12">
+          <h2 id="opsec" className="display text-[clamp(1.5rem,4vw,2.25rem)] text-paper">
+            Before you start
+          </h2>
+          <ul className="space-y-4 text-sm leading-relaxed text-on-ground-muted">
+            <li>
+              Use Tor Browser or boot Tails.
+              <ul className="mt-2 space-y-1 pl-4 text-[13px]">
+                <li className="border-l-2 border-rule-dark pl-3">
+                  Tor hides your IP from the relay nodes and from whoever owns the exit.
+                </li>
+                <li className="border-l-2 border-rule-dark pl-3">
+                  This site does not publish an onion address yet, so Tor gives you routing privacy, not
+                  an untraceable destination.
+                </li>
+              </ul>
+            </li>
+            <li>
+              Not on your employer&apos;s network, and not on your own phone.
+              <ul className="mt-2 space-y-1 pl-4 text-[13px]">
+                <li className="border-l-2 border-rule-dark pl-3">
+                  Corporate VPNs and captive portals log the connection before it reaches us.
+                </li>
+              </ul>
+            </li>
+            <li>
+              Close the syncing apps first.
+              <ul className="mt-2 space-y-1 pl-4 text-[13px]">
+                <li className="border-l-2 border-rule-dark pl-3">
+                  Cloud backup and messaging clients re-upload a file you have already cleaned.
+                </li>
+              </ul>
+            </li>
+            <li>
+              Sign nothing with a full-access key.
+              <ul className="mt-2 space-y-1 pl-4 text-[13px]">
+                <li className="border-l-2 border-rule-dark pl-3">
+                  Tipster actions are signed in the page with the per-tip key, and every relayer call is
+                  scoped to one method.
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section aria-labelledby="proof" className="mx-auto w-full max-w-6xl px-4 pb-16 sm:px-6">
+        <h2 id="proof" className="display mb-6 text-[clamp(1.5rem,4vw,2.25rem)] text-paper">
+          How we know any of this
+        </h2>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[34rem] border-collapse text-left text-sm">
+            <caption className="sr-only">
+              Verification status of the claims on this page, measured on the commit this site was built
+              from
+            </caption>
+            <thead>
+              <tr className="border-b border-rule-dark text-[11px] uppercase tracking-[0.14em] text-on-ground-muted">
+                <th scope="col" className="py-3 pr-4 font-medium">
+                  Claim
+                </th>
+                <th scope="col" className="py-3 pr-4 font-medium">
+                  Evidence
+                </th>
+                <th scope="col" className="py-3 font-medium">
+                  What it does not prove
+                </th>
+              </tr>
+            </thead>
+            <tbody className="text-on-ground">
+              {PROOF.map((row) => (
+                <tr key={row.claim} className="border-b border-rule-dark/70 align-top">
+                  <th scope="row" className="py-4 pr-4 text-left font-semibold text-paper">
+                    {row.claim}
+                  </th>
+                  <td className="datum py-4 pr-4 text-[13px] text-ok-on-ground">{row.evidence}</td>
+                  <td className="py-4 text-[13px] leading-relaxed text-on-ground-muted">
+                    {row.gap}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   );
 }
+
+const STRIPS = [
+  {
+    carrier: "PDF metadata and revision history",
+    action:
+      "Each page is rasterised to pixels at 150 dpi and re-encoded as JPEG at quality 0.85, then rebuilt as a new document. The text layer, the embedded fonts, the producer string, and the creation and modification timestamps do not survive, because there is nothing left to carry them.",
+    detail:
+      "Rasterising is the only step that removes the things a PDF can hide: invisible text layers, attached files, and the XMP packet that records who saved it last.",
+  },
+  {
+    carrier: "Photo GPS and camera identity",
+    action:
+      "JPEG and PNG go through decode, canvas, re-encode. EXIF, XMP and IPTC are dropped by that route rather than parsed and filtered, so a field the code has never heard of is still gone.",
+    detail:
+      "The report names up to 64 metadata tags it found before the rebuild, so you can see what was removed instead of trusting that it was.",
+  },
+  {
+    carrier: "Printer tracking dots",
+    action:
+      "Optional scan mode converts to grayscale and thresholds the page, which is what breaks up the faint yellow dot grid a colour laser printer stamps on every sheet.",
+    detail:
+      "It costs you colour and sharpness, and the cleaning report records the mitigation as a warning rather than a fix.",
+  },
+  {
+    carrier: "Formats we cannot clean",
+    action:
+      "Refused at the byte level. Only PDF, JPEG and PNG are accepted, judged from the file's first bytes, not its name or its MIME type.",
+    detail:
+      "A .docx is a ZIP, a TIFF is the metadata carrier we cannot re-encode losslessly, and a GIF has frames we would silently throw away. Nothing is handled best effort.",
+  },
+  {
+    carrier: "Your own words",
+    action:
+      "Optional. If you choose the redaction step, your text goes to a model running inside attested hardware through a stateless proxy, and the enclave returns a report you can verify offline.",
+    detail:
+      "The curve check on that report is implemented. The signature chain over it needs Intel's collateral and a live enclave, and neither is in this build.",
+  },
+];
+
+const SERVERS = [
+  {
+    name: "Blob store",
+    reads: false,
+    stores: "Ciphertext and nothing else. The route goes through noLogs middleware: no IP, no x-forwarded-for, no body in any log line.",
+  },
+  {
+    name: "Relayer",
+    reads: false,
+    stores: "A rate-limit counter and the signed action it already forwarded. It sees a transaction, not a document.",
+  },
+  {
+    name: "AI proxy",
+    reads: "Only the text you select for redaction",
+    stores: "Nothing. It is stateless, and the request never carries a file.",
+  },
+  {
+    name: "Keeper",
+    reads: false,
+    stores: "The switch deadline and the sealed key bundle. It can hold K_switch and still cannot identify you.",
+  },
+];
+
+const DESTINATIONS = [
+  { href: "/p/0", label: "Programme rules and escrow", who: "Anyone, before submitting", path: "/p/[id]" },
+  { href: "/status", label: "Check a tip, keep the switch alive", who: "You, with your 24 words", path: "/status" },
+  { href: "/claim", label: "Claim an accepted reward", who: "You, to a fresh address", path: "/claim" },
+  { href: "/panel", label: "Triage and vote", who: "Appointed panel members", path: "/panel" },
+  { href: "/programmes/new", label: "Fund a programme", who: "Funders", path: "/programmes/new" },
+];
+
+const PROOF = [
+  {
+    claim: "Ciphertext-only storage",
+    evidence: "apps/api privacy middleware, 106 tests",
+    gap: "The API has never served a real tipster. It runs locally.",
+  },
+  {
+    claim: "Destructive cleaning",
+    evidence: "packages/clean, 22 tests, all on fictional fixtures",
+    gap: "Tested against fictional documents only, and the browser canvas path is exercised by a Node stand-in.",
+  },
+  {
+    claim: "Contracts enforce escrow and the switch",
+    evidence: "258 Rust tests, 176 of them contract units, 55 in a sandbox chain",
+    gap: "No contract has been deployed. The deploy script has only ever run as a read-only plan.",
+  },
+  {
+    claim: "No third-party loads",
+    evidence: "Per-request CSP nonce, 7 tests, and a served-page audit with zero console violations",
+    gap: "Audited on localhost. The panel-side Tor deployment is not checked.",
+  },
+];

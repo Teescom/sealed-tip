@@ -22,16 +22,20 @@ export function RecoveryWords({ words }: RecoveryWordsProps) {
     "section",
     {
       "aria-labelledby": "recovery-words-title",
-      className: "rounded-xl border border-amber-500/40 bg-amber-950/20 p-4 sm:p-5 text-amber-200",
+      className: "card-inset space-y-4 p-4 sm:p-5",
     },
     h(
       "div",
-      { className: "flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3" },
+      { className: "flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between" },
       h(
         "div",
-        null,
-        h("h2", { id: "recovery-words-title", className: "font-semibold text-amber-300 text-sm sm:text-base" }, "Recovery Words (Save Offline Now)"),
-        h("p", { className: "text-xs text-amber-400/90 mt-0.5" }, "You have no account. These 24 words are your ONLY key to check status, check in, and claim rewards."),
+        { className: "space-y-1" },
+        h("h2", { id: "recovery-words-title", className: "text-base font-semibold text-ink" }, "Your 24 recovery words"),
+        h(
+          "p",
+          { className: "text-xs leading-relaxed text-ink-muted" },
+          "There is no account and no email to recover. These words are the only way back into this tip: status, check-ins and the claim all come from them.",
+        ),
       ),
       h(
         "button",
@@ -40,24 +44,25 @@ export function RecoveryWords({ words }: RecoveryWordsProps) {
           onClick: handleCopy,
           "aria-label": "Copy all 24 recovery words to clipboard",
           className:
-            "min-h-[44px] px-4 py-2 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-200 text-xs font-semibold transition-colors flex items-center justify-center shrink-0 cursor-pointer",
+            "btn-primary min-h-[44px] shrink-0 px-4 text-sm disabled:cursor-not-allowed",
         },
-        copied ? "✓ Words Copied!" : "📋 Copy All Words",
+        copied ? "Copied" : "Copy all 24 words",
       ),
     ),
     h(
-      "div",
-      { className: "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 font-mono text-xs sm:text-sm" },
+      "p",
+      { className: "border-l-4 border-l-warn bg-paper py-2 pl-3 pr-2 text-xs text-ink" },
+      "Write them down on paper before anything else. A screenshot lives on a device that can be taken from you.",
+    ),
+    h(
+      "ol",
+      { className: "grid grid-cols-2 gap-x-4 gap-y-1 sm:grid-cols-3 md:grid-cols-4" },
       words.map((w, i) =>
         h(
-          "div",
-          {
-            key: i,
-            className:
-              "min-h-[40px] rounded-lg bg-black/50 px-2.5 py-2 flex items-center justify-center text-center border border-amber-800/30",
-          },
-          h("span", { className: "text-amber-500 text-xs mr-1.5 select-none font-semibold" }, `${i + 1}.`),
-          h("span", { className: "text-amber-100 select-all" }, w),
+          "li",
+          { key: i, className: "flex min-h-[40px] items-baseline gap-2 border-b border-rule py-1.5 text-sm" },
+          h("span", { className: "datum w-6 shrink-0 text-right text-xs text-ink-muted select-none" }, `${i + 1}`),
+          h("span", { className: "datum text-ink select-all" }, w),
         ),
       ),
     ),

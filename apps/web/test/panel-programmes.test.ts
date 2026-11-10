@@ -365,10 +365,10 @@ describe("Programme Creation & Funder Command Generation (S-10.8)", () => {
     // 3. Top-up command
     assert.ok(res.topUpCommand.includes("top_up_ops"));
 
-    // 4. Reserve-on-triage security guarantee
+    // 4. What the contract does to the balance, in tip order
     assert.equal(RESERVE_ON_TRIAGE_GUARANTEE.points.length, 4);
-    assert.ok(RESERVE_ON_TRIAGE_GUARANTEE.points[0]?.heading.includes("Zero Capital"));
-    assert.ok(RESERVE_ON_TRIAGE_GUARANTEE.points[1]?.heading.includes("Triage"));
+    assert.ok(RESERVE_ON_TRIAGE_GUARANTEE.points[0]?.heading.includes("Nothing is locked"));
+    assert.ok(RESERVE_ON_TRIAGE_GUARANTEE.points[1]?.heading.includes("reserve is taken at triage"));
   });
 });
 
