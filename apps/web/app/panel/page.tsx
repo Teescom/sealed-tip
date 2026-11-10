@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
 import {
   createViewClient,
   type Tip,
@@ -15,76 +14,11 @@ import {
   fromHex,
 } from "@sealedtip/crypto";
 import { createTipApi } from "../../lib/api";
+import { AttestationPanel } from "../../components/AttestationPanel";
+import { CleaningReportView } from "../../components/CleaningReportView";
 import { publicConfig, type PublicConfig } from "../../lib/config";
 
 const h = React.createElement;
-
-export function CleaningReportViewInline({ report }: { report: TipBundle["report"] }) {
-  if (report.files.length === 0 && report.warnings.length === 0) return null;
-  return h(
-    "div",
-    { className: "rounded-lg border border-emerald-800/40 bg-emerald-950/20 p-4 text-emerald-200 text-sm" },
-    h("div", { className: "mb-2 font-semibold text-emerald-300" }, "Cleaning Report"),
-    report.warnings.map((w, i) =>
-      h(
-        "div",
-        { key: i, className: "mb-2 text-xs text-amber-400 bg-amber-950/30 p-2 rounded border border-amber-800/30" },
-        `⚠️ ${w}`,
-      ),
-    ),
-    h(
-      "div",
-      { className: "space-y-2" },
-      report.files.map((file, i) =>
-        h(
-          "div",
-          { key: i, className: "rounded bg-black/40 p-2 border border-emerald-900/30" },
-          h(
-            "div",
-            { className: "font-mono text-xs text-emerald-400 font-medium" },
-            `${file.name} ${file.pages ? `(${file.pages} pages)` : ""}`,
-          ),
-          file.removed.length > 0
-            ? h(
-                "div",
-                { className: "mt-1 text-xs text-neutral-300" },
-                h("span", { className: "text-emerald-500" }, "Stripped metadata: "),
-                file.removed.join(", "),
-              )
-            : h("div", { className: "mt-1 text-xs text-neutral-400" }, "No metadata tags found."),
-        ),
-      ),
-    ),
-  );
-}
-
-export function AttestationPanelInline(props: {
-  bundleHash: string;
-  model?: string | undefined;
-  nonce?: string | undefined;
-}) {
-  return h(
-    "div",
-    { className: "rounded-lg border border-sky-800/40 bg-sky-950/20 p-4 text-sky-200 text-xs" },
-    h(
-      "div",
-      { className: "mb-1 font-semibold text-sky-300 flex items-center gap-1.5" },
-      h("span", null, "🔒 Verified TEE Attestation"),
-    ),
-    h(
-      "p",
-      { className: "text-sky-400 mb-2" },
-      "Verified against the NEAR AI Cloud Intel TDX hardware attestation quote. Text never touches un-attested servers.",
-    ),
-    h(
-      "div",
-      { className: "font-mono space-y-1 text-[11px] text-sky-300" },
-      h("div", null, h("span", { className: "text-sky-500" }, "Hash: "), props.bundleHash),
-      props.model ? h("div", null, h("span", { className: "text-sky-500" }, "Model: "), props.model) : null,
-      props.nonce ? h("div", null, h("span", { className: "text-sky-500" }, "Nonce: "), `${props.nonce.slice(0, 16)}…`) : null,
-    ),
-  );
-}
 
 export const RECUSAL_ALERT_MESSAGE =
   "You are recused from this tip. Per Invariant 6, you were not given a decryption key. Triage and decryption are blocked.";
@@ -444,42 +378,28 @@ export default function PanelPage() {
   });
 
   return h(
-    "main",
-    { className: "min-h-screen bg-black text-neutral-200 px-4 py-8" },
+    "div",
+    { className: "mx-auto w-full max-w-4xl px-4 py-10 sm:px-6" },
     h(
       "div",
-      { className: "max-w-4xl mx-auto space-y-8" },
-      // Header
+      { className: "card on-paper space-y-8 p-5 sm:p-8" },
       h(
         "div",
-        null,
-        h(Link, { href: "/", className: "text-xs text-sky-400 hover:underline" }, "← Home"),
+        { className: "space-y-3" },
+        h("h1", { className: "display text-[clamp(1.75rem,5vw,2.25rem)] text-ask" }, "Panel review"),
         h(
-          "div",
-          { className: "flex items-center justify-between mt-2" },
-          h(
-            "div",
-            null,
-            h("h1", { className: "text-2xl font-bold text-white" }, "Panel Review & Governance"),
-            h(
-              "p",
-              { className: "text-xs text-neutral-400 mt-1" },
-              "Triage submitted tips, decrypt evidence locally, and sponsor Sputnik DAO resolution proposals.",
-            ),
-          ),
-          h(
-            "div",
-            { className: "text-xs font-mono px-2.5 py-1 rounded bg-neutral-900 border border-neutral-800 text-neutral-300" },
-            `Contract: ${contractId}`,
-          ),
+          "p",
+          { className: "text-sm leading-relaxed text-ink-muted" },
+          "Unseal an evidence bundle in your own browser, vote on credibility, and sponsor the DAO proposal that pays the bounty.",
         ),
+        h("p", { className: "datum text-xs text-ink-muted" }, `Contract ${contractId}`),
       ),
 
       // 1. Credentials Section
       h(
         "div",
-        { className: "rounded-lg border border-neutral-800 bg-neutral-900/60 p-5 space-y-4" },
-        h("h2", { className: "text-sm font-semibold text-white uppercase tracking-wider" }, "1. Panel Member Credentials"),
+        { className: "card-inset p-5 space-y-4" },
+        h("h2", { className: "text-sm font-semibold text-ink" }, "1. Panel Member Credentials"),
         h(
           "div",
           { className: "grid grid-cols-1 md:grid-cols-2 gap-4" },
@@ -488,9 +408,9 @@ export default function PanelPage() {
             null,
             h(
               "label",
-              { className: "block text-xs font-medium text-neutral-300 mb-1" },
-              "Panel Member Account ID ",
-              h("span", { className: "text-red-400" }, "*"),
+              { className: "block text-xs font-medium text-ink-muted mb-1" },
+              "Panel member account ",
+              h("span", { className: "text-bad" }, "*"),
             ),
             h("input", {
               id: "panel-member-account",
@@ -499,7 +419,7 @@ export default function PanelPage() {
               onChange: (e: React.ChangeEvent<HTMLInputElement>) => setMemberAccount(e.target.value),
               placeholder: "e.g. panel1.testnet",
               className:
-                "w-full min-h-[44px] bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm font-mono text-white placeholder-neutral-600 focus:outline-none focus:border-sky-500",
+              "w-full min-h-[44px] bg-paper border border-edge rounded-field px-3 py-2 text-sm font-mono text-ink placeholder:text-ink-muted ",
             }),
           ),
           h(
@@ -507,9 +427,9 @@ export default function PanelPage() {
             null,
             h(
               "label",
-              { htmlFor: "panel-private-key", className: "block text-xs font-medium text-neutral-300 mb-1" },
+              { htmlFor: "panel-private-key", className: "block text-xs font-medium text-ink-muted mb-1" },
               "X25519 Private Key (Hex or Base64) ",
-              h("span", { className: "text-red-400" }, "*"),
+              h("span", { className: "text-bad" }, "*"),
             ),
             h("input", {
               id: "panel-private-key",
@@ -518,7 +438,7 @@ export default function PanelPage() {
               onChange: (e: React.ChangeEvent<HTMLInputElement>) => setPrivateKeyInput(e.target.value),
               placeholder: "32 bytes hex (64 chars) or base64",
               className:
-                "w-full min-h-[44px] bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm font-mono text-white placeholder-neutral-600 focus:outline-none focus:border-sky-500",
+              "w-full min-h-[44px] bg-paper border border-edge rounded-field px-3 py-2 text-sm font-mono text-ink placeholder:text-ink-muted ",
             }),
           ),
         ),
@@ -527,15 +447,15 @@ export default function PanelPage() {
       // 2. Tip Selection
       h(
         "div",
-        { className: "rounded-lg border border-neutral-800 bg-neutral-900/60 p-5 space-y-4" },
-        h("h2", { className: "text-sm font-semibold text-white uppercase tracking-wider" }, "2. Tip Inspection"),
+        { className: "card-inset p-5 space-y-4" },
+        h("h2", { className: "text-sm font-semibold text-ink" }, "2. Tip Inspection"),
         h(
           "div",
           { className: "flex flex-col sm:flex-row gap-3 sm:items-end" },
           h(
             "div",
             { className: "flex-1 max-w-xs" },
-            h("label", { htmlFor: "tip-id-inspect", className: "block text-xs font-medium text-neutral-300 mb-1" }, "Tip ID to Inspect"),
+            h("label", { htmlFor: "tip-id-inspect", className: "block text-xs font-medium text-ink-muted mb-1" }, "Tip ID to Inspect"),
             h("input", {
               id: "tip-id-inspect",
               type: "number",
@@ -543,7 +463,7 @@ export default function PanelPage() {
               value: tipIdInput,
               onChange: (e: React.ChangeEvent<HTMLInputElement>) => setTipIdInput(e.target.value),
               className:
-                "w-full min-h-[44px] bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-sky-500",
+              "w-full min-h-[44px] bg-paper border border-edge rounded-field px-3 py-2 text-sm font-mono text-ink ",
             }),
           ),
           h(
@@ -553,40 +473,40 @@ export default function PanelPage() {
               onClick: handleFetchTip,
               disabled: loadingTip,
               className:
-                "min-h-[44px] px-5 py-2.5 bg-sky-600 hover:bg-sky-500 disabled:bg-neutral-800 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center justify-center shrink-0",
+                "btn-primary shrink-0 px-5 text-xs disabled:cursor-not-allowed disabled:opacity-40",
             },
-            loadingTip ? "Fetching On-Chain..." : "Fetch Tip Details",
+            loadingTip ? "Fetching from the chain…" : "Fetch tip",
           ),
         ),
 
         tipError &&
-          h("div", { className: "text-xs text-red-400 bg-red-950/30 p-3 rounded-lg border border-red-800/40" }, tipError),
+          h("div", { className: "text-xs text-bad p-3 card-inset border-l-4 border-l-bad" }, tipError),
 
         tip &&
           h(
             "div",
-            { className: "mt-4 pt-4 border-t border-neutral-800/80 space-y-3" },
+            { className: "mt-4 pt-4 border-t border-rule space-y-3" },
             h(
               "div",
               { className: "flex flex-wrap items-center gap-4 text-xs font-mono" },
-              h("span", { className: "text-white font-semibold" }, `Tip #${tip.id}`),
-              h("span", { className: "text-neutral-400" }, `Programme: #${tip.programme_id}`),
+              h("span", { className: "text-ink font-semibold" }, `Tip #${tip.id}`),
+              h("span", { className: "text-ink-muted" }, `Programme: #${tip.programme_id}`),
               h(
                 "span",
-                { className: "text-neutral-400" },
+                { className: "text-ink-muted" },
                 "Status: ",
                 h(
                   "span",
-                  { className: "text-sky-400 font-semibold" },
+                  { className: "text-ask font-semibold" },
                   typeof tip.status === "string" ? tip.status : JSON.stringify(tip.status),
                 ),
               ),
               h(
                 "span",
-                { className: "text-neutral-400" },
+                { className: "text-ink-muted" },
                 `Recused: ${tip.recused.length > 0 ? tip.recused.join(", ") : "None"}`,
               ),
-              h("span", { className: "text-neutral-400" }, `Sealed Keys: ${tip.sealed_keys.length}`),
+              h("span", { className: "text-ink-muted" }, `Sealed Keys: ${tip.sealed_keys.length}`),
             ),
 
             // Prominent red recusal alert banner
@@ -596,14 +516,13 @@ export default function PanelPage() {
                   {
                     role: "alert",
                     className:
-                      "rounded-lg border-2 border-red-600 bg-red-950/60 p-4 text-red-200 text-sm font-semibold flex items-start gap-3 shadow-lg",
+                      "border-l-4 border-l-bad bg-paper p-4 text-sm text-bad",
                   },
-                  h("span", { className: "text-xl" }, "⛔"),
                   h(
                     "div",
                     null,
-                    h("div", { className: "font-bold text-red-100" }, "RECUSAL SAFETY ENFORCEMENT"),
-                    h("div", { className: "mt-1 font-normal text-red-200" }, RECUSAL_ALERT_MESSAGE),
+                    h("h3", { className: "font-semibold text-ink" }, "You are recused from this tip"),
+                    h("p", { className: "mt-1 text-bad" }, RECUSAL_ALERT_MESSAGE),
                   ),
                 )
               : h(
@@ -616,16 +535,16 @@ export default function PanelPage() {
                       onClick: handleDecrypt,
                       disabled: decrypting || !privateKeyInput.trim(),
                       className:
-                        "px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-neutral-800 text-white rounded-lg text-xs font-medium transition-colors cursor-pointer",
+                        "btn-primary px-4 text-xs disabled:cursor-not-allowed disabled:opacity-40",
                     },
-                    decrypting ? "Decrypting Evidence..." : "🔓 Decrypt Evidence Exhibit",
+                    decrypting ? "Decrypting evidence…" : "Decrypt evidence exhibit",
                   ),
                   !privateKeyInput.trim() &&
-                    h("span", { className: "ml-3 text-[11px] text-neutral-500" }, "Enter your X25519 private key above to decrypt."),
+                    h("span", { className: "ml-3 text-[11px] text-ink-muted" }, "Enter your X25519 private key above to decrypt."),
                 ),
 
             decryptError &&
-              h("div", { className: "text-xs text-red-400 bg-red-950/30 p-3 rounded-lg border border-red-800/40" }, decryptError),
+              h("p", { className: "border-l-4 border-l-bad bg-paper p-3 text-xs text-bad" }, decryptError),
           ),
       ),
 
@@ -633,38 +552,38 @@ export default function PanelPage() {
       bundle &&
         h(
           "div",
-          { className: "rounded-lg border border-emerald-900/50 bg-emerald-950/10 p-5 space-y-6" },
+          { className: "card-inset border-l-4 border-l-ok p-5 space-y-6" },
           h(
             "div",
-            { className: "flex items-center justify-between border-b border-emerald-900/40 pb-3" },
+            { className: "flex items-center justify-between border-b border-ok pb-3" },
             h(
               "h2",
-              { className: "text-sm font-semibold text-emerald-400 uppercase tracking-wider flex items-center gap-2" },
+              { className: "text-sm font-semibold text-ok flex items-center gap-2" },
               h("span", null, "📁"),
               " Decrypted Evidence Exhibit",
             ),
-            h("span", { className: "text-xs font-mono text-emerald-500" }, "Plaintext Verified in Browser"),
+            h("span", { className: "text-xs font-mono text-ok" }, "Plaintext Verified in Browser"),
           ),
           h(
             "div",
             { className: "space-y-2" },
-            h("h3", { className: "text-base font-bold text-white" }, bundle.title),
+            h("h3", { className: "text-base font-semibold text-ink" }, bundle.title),
             h(
               "div",
               {
                 className:
-                  "bg-neutral-950/90 rounded-lg p-4 border border-neutral-800 text-xs text-neutral-200 whitespace-pre-wrap font-sans leading-relaxed",
+                  "bg-paper-2 rounded-field p-4 border border-rule text-xs text-ink whitespace-pre-wrap font-text leading-relaxed",
               },
               bundle.description,
             ),
           ),
-          h("div", { className: "space-y-2" }, h(CleaningReportViewInline, { report: bundle.report })),
+          h(CleaningReportView, { report: bundle.report }),
           h(
             "div",
             { className: "space-y-3" },
-            h("h3", { className: "text-xs font-semibold text-neutral-300 uppercase tracking-wider" }, `Attached Files (${bundle.files.length})`),
+            h("h3", { className: "text-xs font-semibold text-ink-muted" }, `Attached Files (${bundle.files.length})`),
             bundle.files.length === 0
-              ? h("p", { className: "text-xs text-neutral-500" }, "No files attached to this tip.")
+              ? h("p", { className: "text-xs text-ink-muted" }, "No files attached to this tip.")
               : h(
                   "div",
                   { className: "grid grid-cols-1 md:grid-cols-2 gap-3" },
@@ -680,23 +599,23 @@ export default function PanelPage() {
                       "div",
                       {
                         key: idx,
-                        className: "rounded-lg bg-neutral-950 border border-neutral-800 p-3 flex flex-col justify-between space-y-2",
+                        className: "card-inset p-3 flex flex-col justify-between space-y-2",
                       },
                       h(
                         "div",
                         null,
-                        h("div", { className: "text-xs font-medium text-white truncate", title: file.name }, file.name),
-                        h("div", { className: "text-[11px] font-mono text-neutral-400 mt-0.5" }, `${file.mime} • ${formattedSize}`),
+                        h("div", { className: "text-xs font-medium text-ink truncate", title: file.name }, file.name),
+                        h("div", { className: "text-[11px] font-mono text-ink-muted mt-0.5" }, `${file.mime}, ${formattedSize}`),
                       ),
                       h(
                         "div",
-                        { className: "flex gap-2 pt-2 border-t border-neutral-800/80" },
+                        { className: "flex gap-2 pt-2 border-t border-rule" },
                         h(
                           "button",
                           {
                             type: "button",
                             onClick: () => setPreviewFile({ name: file.name, mime: file.mime, dataUrl }),
-                            className: "text-xs px-2.5 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-sky-400 font-medium cursor-pointer",
+                            className: "btn-secondary px-3.5 text-xs",
                           },
                           "Preview",
                         ),
@@ -705,7 +624,7 @@ export default function PanelPage() {
                           {
                             href: dataUrl,
                             download: file.name,
-                            className: "text-xs px-2.5 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-emerald-400 font-medium",
+                            className: "btn-secondary px-3.5 text-xs no-underline",
                           },
                           "Download",
                         ),
@@ -718,28 +637,33 @@ export default function PanelPage() {
             h(
               "div",
               { className: "space-y-3 pt-2" },
-              h("h3", { className: "text-xs font-semibold text-sky-400 uppercase tracking-wider" }, "Intel TDX AI Redaction Record"),
-              h(AttestationPanelInline, {
-                bundleHash: tip?.attestation_hash ? toHex(tip.attestation_hash) : "Verified in Enclave",
-                model: bundle.redaction.model,
-                nonce: bundle.redaction.nonce,
-              }),
+              tip?.attestation_hash
+                ? h(AttestationPanel, {
+                    bundleHash: toHex(tip.attestation_hash),
+                    model: bundle.redaction.model,
+                    nonce: bundle.redaction.nonce,
+                  })
+                : h(
+                    "p",
+                    { className: "border-l-4 border-l-warn bg-paper p-3 text-xs text-ink-muted" },
+                    "This tip carries no attestation hash, so the enclave report in it is not verified against the chain. Read the replacements below on that basis.",
+                  ),
               bundle.redaction.suggestions.length > 0 &&
                 h(
                   "div",
-                  { className: "rounded-lg bg-neutral-950 border border-sky-900/30 p-3 space-y-2 text-xs" },
-                  h("div", { className: "font-semibold text-neutral-300" }, "Enclave Redaction Suggestions Applied:"),
+                  { className: "card-inset border-l-4 border-l-ask p-3 space-y-2 text-xs" },
+                  h("h4", { className: "text-sm font-semibold text-ink" }, "What the enclave changed"),
                   h(
                     "ul",
-                    { className: "space-y-1 list-disc list-inside text-neutral-400 text-[11px]" },
+                    { className: "divide-y divide-rule text-xs" },
                     bundle.redaction.suggestions.map((s, idx) =>
                       h(
                         "li",
-                        { key: idx },
-                        h("span", { className: "text-red-400 font-mono" }, `"${s.span}"`),
+                        { key: idx, className: "py-2" },
+                        h("span", { className: "datum break-all text-ink-muted line-through" }, s.span),
                         " → ",
-                        h("span", { className: "text-emerald-400 font-mono" }, `"${s.replacement}"`),
-                        ` (${s.reason})`,
+                        h("span", { className: "datum break-all font-semibold text-ink" }, s.replacement),
+                        h("p", { className: "mt-1 text-[11px] text-ink-muted" }, s.reason),
                       ),
                     ),
                   ),
@@ -752,18 +676,18 @@ export default function PanelPage() {
         !recused &&
         h(
           "div",
-          { className: "rounded-lg border border-neutral-800 bg-neutral-900/60 p-5 space-y-4" },
+          { className: "card-inset p-5 space-y-4" },
           h(
             "div",
             { className: "flex items-center justify-between" },
-            h("h2", { className: "text-sm font-semibold text-white uppercase tracking-wider" }, "3. Member Triage Actions"),
-            h("span", { className: "text-xs text-neutral-400" }, "Direct panel member call"),
+            h("h2", { className: "text-sm font-semibold text-ink" }, "3. Member Triage Actions"),
+            h("span", { className: "text-xs text-ink-muted" }, "Direct panel member call"),
           ),
           h(
             "p",
-            { className: "text-xs text-neutral-400" },
+            { className: "text-xs text-ink-muted" },
             "Any non-recused panel member can call ",
-            h("code", { className: "text-neutral-300 font-mono" }, "triage"),
+            h("code", { className: "text-ink-muted font-mono" }, "triage"),
             " to mark a submitted tip as credible (locking escrow funds into review) or dismissed.",
           ),
           h(
@@ -771,41 +695,41 @@ export default function PanelPage() {
             { className: "grid grid-cols-1 gap-3" },
             h(
               "div",
-              { className: "rounded bg-neutral-950 p-3 border border-neutral-800" },
+              { className: "card-inset p-3" },
               h(
                 "div",
                 { className: "flex justify-between items-center mb-1" },
-                h("span", { className: "text-xs font-semibold text-emerald-400" }, "Mark as Credible"),
+                h("span", { className: "text-xs font-semibold text-ok" }, "Mark as Credible"),
                 h(
                   "button",
                   {
                     type: "button",
                     onClick: () => copyToClipboard(triageCredibleCmd, "credible"),
-                    className: "text-[11px] text-sky-400 hover:text-sky-300 cursor-pointer",
+                    className: "text-[11px] text-ask hover:text-ask cursor-pointer",
                   },
-                  copiedKey === "credible" ? "Copied!" : "Copy Command",
+                  copiedKey === "credible" ? "Copied!" : "Copy command",
                 ),
               ),
-              h("pre", { className: "text-[11px] font-mono text-neutral-300 overflow-x-auto p-2 bg-black/60 rounded" }, triageCredibleCmd),
+              h("pre", { className: "datum overflow-x-auto rounded-field bg-paper-3 p-3 text-[11px] text-ink-muted" }, triageCredibleCmd),
             ),
             h(
               "div",
-              { className: "rounded bg-neutral-950 p-3 border border-neutral-800" },
+              { className: "card-inset p-3" },
               h(
                 "div",
                 { className: "flex justify-between items-center mb-1" },
-                h("span", { className: "text-xs font-semibold text-amber-400" }, "Dismiss Tip"),
+                h("span", { className: "text-xs font-semibold text-warn" }, "Dismiss tip"),
                 h(
                   "button",
                   {
                     type: "button",
                     onClick: () => copyToClipboard(triageDismissCmd, "dismiss"),
-                    className: "text-[11px] text-sky-400 hover:text-sky-300 cursor-pointer",
+                    className: "text-[11px] text-ask hover:text-ask cursor-pointer",
                   },
-                  copiedKey === "dismiss" ? "Copied!" : "Copy Command",
+                  copiedKey === "dismiss" ? "Copied!" : "Copy command",
                 ),
               ),
-              h("pre", { className: "text-[11px] font-mono text-neutral-300 overflow-x-auto p-2 bg-black/60 rounded" }, triageDismissCmd),
+              h("pre", { className: "text-[11px] font-mono text-ink-muted overflow-x-auto p-2 bg-paper-3 rounded-inset" }, triageDismissCmd),
             ),
           ),
         ),
@@ -815,20 +739,20 @@ export default function PanelPage() {
         !recused &&
         h(
           "div",
-          { className: "rounded-lg border border-neutral-800 bg-neutral-900/60 p-5 space-y-4" },
+          { className: "card-inset p-5 space-y-4" },
           h(
             "div",
             { className: "flex items-center justify-between" },
-            h("h2", { className: "text-sm font-semibold text-white uppercase tracking-wider" }, "4. Sputnik DAO Resolution Generator"),
-            h("span", { className: "text-xs font-mono text-purple-400" }, "Sputnik v2.0.0 Proposal"),
+            h("h2", { className: "text-sm font-semibold text-ink" }, "4. Sputnik DAO Resolution Generator"),
+            h("span", { className: "text-xs font-mono text-ask" }, "Sputnik v2.0.0 Proposal"),
           ),
           h(
             "p",
-            { className: "text-xs text-neutral-400" },
+            { className: "text-xs text-ink-muted" },
             "Final resolution (",
-            h("code", { className: "text-neutral-300 font-mono" }, "resolve_tip"),
+            h("code", { className: "text-ink-muted font-mono" }, "resolve_tip"),
             ") can ONLY be executed by the Programme's Sputnik DAO council (",
-            h("code", { className: "text-neutral-300 font-mono" }, panelDao),
+            h("code", { className: "text-ink-muted font-mono" }, panelDao),
             ").",
           ),
           h(
@@ -837,35 +761,35 @@ export default function PanelPage() {
             h(
               "div",
               null,
-              h("label", { className: "block text-xs font-medium text-neutral-300 mb-1" }, "Proposed Outcome"),
+              h("label", { className: "block text-xs font-medium text-ink-muted mb-1" }, "Proposed outcome"),
               h(
                 "div",
                 { className: "flex gap-4 mt-1" },
                 h(
                   "label",
-                  { className: "flex items-center gap-2 text-xs text-neutral-200 cursor-pointer" },
+                  { className: "flex items-center gap-2 text-xs text-ink cursor-pointer" },
                   h("input", {
                     type: "radio",
                     name: "outcome",
                     value: "Accept",
                     checked: voteOutcome === "Accept",
                     onChange: () => setVoteOutcome("Accept"),
-                    className: "accent-emerald-500",
+                    className: "accent-ok",
                   }),
-                  h("span", { className: "text-emerald-400 font-medium" }, "Accept Tip"),
+                  h("span", { className: "text-ok font-medium" }, "Accept tip"),
                 ),
                 h(
                   "label",
-                  { className: "flex items-center gap-2 text-xs text-neutral-200 cursor-pointer" },
+                  { className: "flex items-center gap-2 text-xs text-ink cursor-pointer" },
                   h("input", {
                     type: "radio",
                     name: "outcome",
                     value: "Reject",
                     checked: voteOutcome === "Reject",
                     onChange: () => setVoteOutcome("Reject"),
-                    className: "accent-red-500",
+                    className: "accent-bad",
                   }),
-                  h("span", { className: "text-red-400 font-medium" }, "Reject Tip"),
+                  h("span", { className: "text-bad font-medium" }, "Reject tip"),
                 ),
               ),
             ),
@@ -873,7 +797,7 @@ export default function PanelPage() {
               h(
                 "div",
                 null,
-                h("label", { className: "block text-xs font-medium text-neutral-300 mb-1" }, "Reward Amount (USDC)"),
+                h("label", { className: "block text-xs font-medium text-ink-muted mb-1" }, "Reward (USDC)"),
                 h("input", {
                   type: "number",
                   min: "1",
@@ -881,11 +805,11 @@ export default function PanelPage() {
                   value: rewardUsdc,
                   onChange: (e: React.ChangeEvent<HTMLInputElement>) => setRewardUsdc(e.target.value),
                   className:
-                    "w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-sky-500",
+                  "w-full bg-paper border border-edge rounded-field px-3 py-2 text-xs font-mono text-ink ",
                 }),
                 h(
                   "p",
-                  { className: "text-[11px] text-neutral-500 mt-1" },
+                  { className: "text-[11px] text-ink-muted mt-1" },
                   `Base units: ${BigInt(Math.round(Number(rewardUsdc) * 1_000_000)).toString()}`,
                 ),
               ),
@@ -895,71 +819,71 @@ export default function PanelPage() {
             { className: "space-y-3 pt-3" },
             h(
               "div",
-              { className: "rounded bg-neutral-950 p-3 border border-neutral-800" },
+              { className: "card-inset p-3" },
               h(
                 "div",
                 { className: "flex justify-between items-center mb-1" },
-                h("span", { className: "text-xs font-semibold text-neutral-300" }, "Sputnik DAO Proposal JSON (Proposal bond: 0.1 NEAR)"),
+                h("span", { className: "text-xs font-semibold text-ink-muted" }, "Sputnik DAO Proposal JSON (Proposal bond: 0.1 NEAR)"),
                 h(
                   "button",
                   {
                     type: "button",
                     onClick: () => copyToClipboard(JSON.stringify(proposalData.proposal, null, 2), "proposalJson"),
-                    className: "text-[11px] text-sky-400 hover:text-sky-300 cursor-pointer",
+                    className: "text-[11px] text-ask hover:text-ask cursor-pointer",
                   },
                   copiedKey === "proposalJson" ? "Copied!" : "Copy JSON",
                 ),
               ),
               h(
                 "pre",
-                { className: "text-[11px] font-mono text-neutral-300 overflow-x-auto p-2 bg-black/60 rounded max-h-48" },
+                { className: "text-[11px] font-mono text-ink-muted overflow-x-auto p-2 bg-paper-3 rounded-inset max-h-48" },
                 JSON.stringify(proposalData.proposal, null, 2),
               ),
             ),
             h(
               "div",
-              { className: "rounded bg-neutral-950 p-3 border border-neutral-800" },
+              { className: "card-inset p-3" },
               h(
                 "div",
                 { className: "flex justify-between items-center mb-1" },
-                h("span", { className: "text-xs font-semibold text-purple-400" }, "1. Create Proposal CLI Command"),
+                h("span", { className: "text-xs font-semibold text-ask" }, "1. Create Proposal CLI Command"),
                 h(
                   "button",
                   {
                     type: "button",
                     onClick: () => copyToClipboard(proposalCliCmd, "proposeCmd"),
-                    className: "text-[11px] text-sky-400 hover:text-sky-300 cursor-pointer",
+                    className: "text-[11px] text-ask hover:text-ask cursor-pointer",
                   },
-                  copiedKey === "proposeCmd" ? "Copied!" : "Copy Command",
+                  copiedKey === "proposeCmd" ? "Copied!" : "Copy command",
                 ),
               ),
-              h("pre", { className: "text-[11px] font-mono text-neutral-300 overflow-x-auto p-2 bg-black/60 rounded" }, proposalCliCmd),
+              h("pre", { className: "text-[11px] font-mono text-ink-muted overflow-x-auto p-2 bg-paper-3 rounded-inset" }, proposalCliCmd),
             ),
             h(
               "div",
-              { className: "rounded bg-neutral-950 p-3 border border-neutral-800" },
+              { className: "card-inset p-3" },
               h(
                 "div",
                 { className: "flex justify-between items-center mb-1" },
-                h("span", { className: "text-xs font-semibold text-purple-400" }, "2. Vote Approve CLI Command"),
+                h("span", { className: "text-xs font-semibold text-ask" }, "2. Vote Approve CLI Command"),
                 h(
                   "button",
                   {
                     type: "button",
                     onClick: () => copyToClipboard(voteCliCmd, "voteCmd"),
-                    className: "text-[11px] text-sky-400 hover:text-sky-300 cursor-pointer",
+                    className: "text-[11px] text-ask hover:text-ask cursor-pointer",
                   },
-                  copiedKey === "voteCmd" ? "Copied!" : "Copy Command",
+                  copiedKey === "voteCmd" ? "Copied!" : "Copy command",
                 ),
               ),
-              h("pre", { className: "text-[11px] font-mono text-neutral-300 overflow-x-auto p-2 bg-black/60 rounded" }, voteCliCmd),
+              h("pre", { className: "text-[11px] font-mono text-ink-muted overflow-x-auto p-2 bg-paper-3 rounded-inset" }, voteCliCmd),
               h(
                 "p",
-                { className: "text-[11px] text-neutral-500 mt-1" },
+                { className: "text-[11px] text-ink-muted mt-1" },
                 "Replace ",
-                h("code", { className: "text-neutral-400" }, "<PROPOSAL_ID>"),
+                h("code", { className: "text-ink-muted" }, "<PROPOSAL_ID>"),
                 " with the ID returned by ",
-                h("code", { className: "text-neutral-400" }, "add_proposal"),
+                h("code", { className: "text-ink-muted" }, "add_proposal"),
                 ".",
               ),
             ),
@@ -970,28 +894,31 @@ export default function PanelPage() {
       previewFile &&
         h(
           "div",
-          { className: "fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" },
+          { className: "fixed inset-0 z-50 flex items-end justify-center bg-ground-2/80 p-0 sm:items-center sm:p-4",
+            role: "dialog",
+            "aria-modal": "true",
+            "aria-label": `Exhibit preview: ${previewFile.name}` },
           h(
             "div",
-            { className: "bg-neutral-900 border border-neutral-700 rounded-lg max-w-2xl w-full max-h-[85vh] flex flex-col p-4 space-y-4" },
+            { className: "card flex max-h-[85vh] w-full max-w-2xl flex-col gap-4 p-4 sm:p-5" },
             h(
               "div",
               { className: "flex justify-between items-center" },
-              h("h3", { className: "text-sm font-semibold text-white truncate" }, previewFile.name),
+              h("h3", { className: "text-sm font-semibold text-ink truncate" }, previewFile.name),
               h(
                 "button",
                 {
                   type: "button",
                   onClick: () => setPreviewFile(null),
                   "aria-label": "Close exhibit preview",
-                  className: "min-h-[44px] min-w-[44px] flex items-center justify-center text-neutral-400 hover:text-white text-lg font-bold cursor-pointer rounded-lg hover:bg-neutral-800",
+                  className: "btn-secondary min-w-[44px] px-3 text-xs",
                 },
-                "✕",
+                "Close",
               ),
             ),
             h(
               "div",
-              { className: "flex-1 overflow-auto bg-black rounded p-2 flex items-center justify-center min-h-[300px]" },
+              { className: "flex min-h-[300px] flex-1 items-center justify-center overflow-auto rounded-field bg-paper-3 p-2" },
               previewFile.mime.startsWith("image/")
                 ? h("img", {
                     src: previewFile.dataUrl,
@@ -1008,9 +935,9 @@ export default function PanelPage() {
                 {
                   href: previewFile.dataUrl,
                   download: previewFile.name,
-                  className: "px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-xs font-medium",
+                  className: "btn-primary px-4 text-xs",
                 },
-                "Download File",
+                "Download this exhibit",
               ),
             ),
           ),

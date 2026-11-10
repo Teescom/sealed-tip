@@ -30,10 +30,10 @@ describe("KeeperStatus Component (S-10.3)", () => {
     );
     assert.match(html, /Dead \/ Not yet seen/);
     assert.match(html, /role="status"/);
-    assert.match(html, /amber/);
+    assert.match(html, /text-warn/);
   });
 
-  it("renders green 'Active (seen Xm ago)' when last seen < 30 minutes", () => {
+  it("renders the ok tone on 'Active (seen Xm ago)' when last seen < 30 minutes", () => {
     // 5 minutes ago = 300,000 ms ago
     const fiveMinutesAgoMs = baseNow - 5 * 60 * 1000;
     const fiveMinutesAgoNs = (BigInt(fiveMinutesAgoMs) * 1_000_000n).toString();
@@ -45,10 +45,10 @@ describe("KeeperStatus Component (S-10.3)", () => {
       }),
     );
     assert.match(html, /Active \(seen 5m ago\)/);
-    assert.match(html, /emerald/);
+    assert.match(html, /text-ok/);
   });
 
-  it("renders amber 'Delayed (seen Xm ago)' when last seen < 2 hours", () => {
+  it("renders the warn tone on 'Delayed (seen Xm ago)' when last seen < 2 hours", () => {
     // 45 minutes ago = 2,700,000 ms ago (< 120 minutes)
     const fortyFiveMinutesAgoMs = baseNow - 45 * 60 * 1000;
     const fortyFiveMinutesAgoNs = (BigInt(fortyFiveMinutesAgoMs) * 1_000_000n).toString();
@@ -60,10 +60,10 @@ describe("KeeperStatus Component (S-10.3)", () => {
       }),
     );
     assert.match(html, /Delayed \(seen 45m ago\)/);
-    assert.match(html, /amber/);
+    assert.match(html, /text-warn/);
   });
 
-  it("renders red 'Inactive (seen Xh ago)' when last seen >= 2 hours", () => {
+  it("renders the bad tone on 'Inactive (seen Xh ago)' when last seen >= 2 hours", () => {
     // 3 hours ago = 3 * 3600 * 1000 ms ago
     const threeHoursAgoMs = baseNow - 3 * 60 * 60 * 1000;
     const threeHoursAgoNs = (BigInt(threeHoursAgoMs) * 1_000_000n).toString();
@@ -75,7 +75,7 @@ describe("KeeperStatus Component (S-10.3)", () => {
       }),
     );
     assert.match(html, /Inactive \(seen 3h ago\)/);
-    assert.match(html, /red/);
+    assert.match(html, /text-bad/);
   });
 
   it("gracefully falls back on invalid nanosecond string", () => {

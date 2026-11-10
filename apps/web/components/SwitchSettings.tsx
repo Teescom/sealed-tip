@@ -10,6 +10,8 @@ export interface SwitchSettingsProps {
   onToggle?: (enabled: boolean) => void;
 }
 
+const FIELD = "w-full min-h-[44px] rounded-field border border-edge bg-paper px-3 py-2 text-sm text-ink font-mono";
+
 export function SwitchSettings({
   value,
   onChange,
@@ -20,20 +22,16 @@ export function SwitchSettings({
     "section",
     {
       "aria-labelledby": "switch-heading",
-      className: "rounded-xl border border-neutral-700 bg-neutral-900/50 p-4 sm:p-5",
+      className: "card-inset space-y-4 p-4 sm:p-5",
     },
     h(
       "div",
-      { className: "flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2" },
+      { className: "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" },
       h(
         "div",
         null,
-        h("h2", { id: "switch-heading", className: "font-semibold text-neutral-200 text-sm sm:text-base" }, "Dead Man's Switch"),
-        h(
-          "span",
-          { className: "text-xs text-neutral-400 font-mono" },
-          enabled ? "Status: Armed" : "Status: Disabled (Default)",
-        ),
+        h("h2", { id: "switch-heading", className: "text-base font-semibold text-ink" }, "Dead man's switch"),
+        h("p", { className: "text-xs text-ink-muted" }, enabled ? "Armed" : "Not armed"),
       ),
       onToggle &&
         h(
@@ -43,35 +41,31 @@ export function SwitchSettings({
             onClick: () => onToggle(!enabled),
             "aria-pressed": enabled,
             "aria-label": `Toggle dead man's switch. Currently ${enabled ? "armed" : "disabled"}`,
-            className: `min-h-[44px] min-w-[100px] px-4 py-2 rounded-lg text-xs font-semibold flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
-              enabled
-                ? "bg-amber-600 hover:bg-amber-500 text-white shadow-md shadow-amber-950/40"
-                : "bg-neutral-800 text-neutral-300 hover:bg-neutral-700 border border-neutral-700"
-            }`,
+            className: `${enabled ? "btn-primary" : "btn-secondary"} min-h-[44px] shrink-0 px-4 text-sm`,
           },
-          enabled ? "✓ Armed" : "+ Enable Switch",
+          enabled ? "Armed — tap to stand down" : "Enable the switch",
         ),
     ),
     h(
       "p",
-      { className: "text-xs text-neutral-400 leading-relaxed mb-3" },
-      "If you fail to check in within the configured interval plus grace period, the switch triggers and the keeper automatically releases the exhibit decryption keys to non-recused panel members.",
+      { className: "text-xs leading-relaxed text-ink-muted" },
+      "If you stop checking in, the switch triggers at your deadline plus the grace period and the keeper releases the decryption keys to the panel members who were not recused. Nothing happens until then.",
     ),
     enabled &&
       onChange &&
       h(
         "div",
-        { className: "space-y-4 pt-3 border-t border-neutral-800" },
+        { className: "space-y-4 border-t border-rule pt-4" },
         h(
           "div",
-          { className: "grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs" },
+          { className: "grid grid-cols-1 gap-3 text-xs sm:grid-cols-2" },
           h(
             "div",
             null,
             h(
               "label",
-              { htmlFor: "checkin-interval", className: "block text-neutral-300 font-medium mb-1.5" },
-              "Check-in Interval (days)",
+              { htmlFor: "checkin-interval", className: "mb-1 block font-medium text-ink-muted" },
+              "Check in every (days)",
             ),
             h("input", {
               id: "checkin-interval",
@@ -80,8 +74,7 @@ export function SwitchSettings({
               value: value.interval,
               onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
                 onChange({ ...value, interval: e.target.value }),
-              className:
-                "w-full min-h-[44px] bg-black/50 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 font-mono",
+              className: FIELD,
             }),
           ),
           h(
@@ -89,8 +82,8 @@ export function SwitchSettings({
             null,
             h(
               "label",
-              { htmlFor: "grace-period", className: "block text-neutral-300 font-medium mb-1.5" },
-              "Grace Period (days)",
+              { htmlFor: "grace-period", className: "mb-1 block font-medium text-ink-muted" },
+              "Grace period (days)",
             ),
             h("input", {
               id: "grace-period",
@@ -99,8 +92,7 @@ export function SwitchSettings({
               value: value.grace,
               onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
                 onChange({ ...value, grace: e.target.value }),
-              className:
-                "w-full min-h-[44px] bg-black/50 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 font-mono",
+              className: FIELD,
             }),
           ),
         ),
@@ -108,7 +100,7 @@ export function SwitchSettings({
           "label",
           {
             className:
-              "min-h-[44px] flex items-start gap-3 p-3 rounded-lg border border-amber-900/30 bg-amber-950/10 cursor-pointer transition-colors hover:bg-amber-950/20",
+              "flex min-h-[44px] cursor-pointer items-start gap-3 border-l-4 border-l-warn bg-paper p-3",
           },
           h("input", {
             type: "checkbox",
@@ -116,17 +108,16 @@ export function SwitchSettings({
             checked: value.includesRaw,
             onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
               onChange({ ...value, includesRaw: e.target.checked }),
-            className:
-              "mt-1 w-4 h-4 rounded border-neutral-700 text-amber-500 focus:ring-amber-500 cursor-pointer",
+            className: "mt-1 h-4 w-4 shrink-0 rounded-inset border-edge",
           }),
           h(
             "div",
-            { className: "text-xs text-neutral-300 space-y-1" },
-            h("span", { className: "font-medium text-amber-200 block" }, "Include uncleaned raw originals in exhibit"),
+            { className: "space-y-1 text-xs" },
+            h("span", { className: "block font-medium text-ink" }, "Send the raw originals too"),
             h(
               "p",
-              { className: "text-amber-400/90 text-[11px] leading-normal" },
-              "⚠️ Warning: Raw originals contain unstripped metadata. Opting in provides these files to the panel during triage as well.",
+              { className: "leading-normal text-ink-muted" },
+              "The cleaned copy is what the panel normally sees. Opting in also hands them the unsanitised files, metadata and all, including whatever they still reveal about you.",
             ),
           ),
         ),

@@ -296,12 +296,12 @@ export default function ProgrammePage({
   if (loading) {
     return h(
       "div",
-      { className: "min-h-screen bg-neutral-950 text-neutral-100 flex items-center justify-center p-4", role: "status", "aria-live": "polite" },
+      { className: "mx-auto w-full max-w-5xl px-4 py-10 sm:px-6", role: "status", "aria-live": "polite" },
       h(
         "div",
-        { className: "text-center space-y-3" },
-        h("div", { className: "inline-block h-8 w-8 animate-spin rounded-full border-2 border-sky-500 border-t-transparent" }),
-        h("p", { className: "text-sm font-mono text-neutral-400" }, `Loading programme #${idStr} from NEAR...`),
+        { className: "panel flex items-center gap-4 p-5" },
+        h("div", { className: "h-8 w-8 shrink-0 animate-spin rounded-full border-2 border-ask-on-ground border-t-transparent", "aria-hidden": "true" }),
+        h("p", { className: "font-mono text-sm text-on-ground-muted" }, `Loading programme #${idStr} from NEAR…`),
       ),
     );
   }
@@ -309,17 +309,19 @@ export default function ProgrammePage({
   if (error || !data) {
     return h(
       "div",
-      { className: "min-h-screen bg-neutral-950 text-neutral-100 flex items-center justify-center p-4" },
+      { className: "mx-auto w-full max-w-3xl px-4 py-10 sm:px-6" },
       h(
         "div",
-        { className: "max-w-md w-full bg-neutral-900 border border-neutral-800 rounded-xl p-6 text-center space-y-4", role: "alert", "aria-live": "assertive" },
-        h("div", { className: "h-10 w-10 mx-auto rounded-full bg-red-950/40 border border-red-800/60 flex items-center justify-center text-red-400 font-bold", "aria-hidden": "true" }, "!"),
-        h("h1", { className: "text-lg font-bold text-white" }, "Programme Error"),
-        h("p", { className: "text-sm text-neutral-400" }, error ?? "Programme not found"),
+        { className: "card on-paper space-y-4 border-l-4 border-l-bad p-6", role: "alert", "aria-live": "assertive" },
+        h("h1", { className: "display text-[clamp(1.75rem,5vw,2.25rem)] text-bad" }, "Programme error"),
+        h("p", { className: "text-sm text-ink-muted" }, error ?? "Programme not found"),
         h(
-          "div",
-          { className: "pt-2" },
-          h(Link, { href: "/", className: "inline-flex items-center justify-center min-h-[44px] bg-neutral-800 hover:bg-neutral-700 text-white text-xs px-4 py-2 rounded-lg font-medium transition-colors" }, "← Back to Overview"),
+          Link,
+          {
+            href: "/",
+            className: "inline-flex min-h-[44px] items-center justify-center rounded-field border border-edge px-4 text-sm font-semibold text-ink hover:bg-paper-3",
+          },
+          "Back to the programmes list",
         ),
       ),
     );
@@ -329,112 +331,93 @@ export default function ProgrammePage({
 
   return h(
     "div",
-    { className: "min-h-screen bg-neutral-950 text-neutral-100 pb-16" },
-    // Header
+    { className: "mx-auto w-full max-w-5xl px-4 py-10 sm:px-6" },
     h(
-      "header",
-      { className: "border-b border-neutral-800 bg-neutral-900/60 sticky top-0 z-40 backdrop-blur" },
-      h(
-        "div",
-        { className: "max-w-5xl mx-auto px-4 sm:px-6 min-h-[56px] py-2 flex flex-wrap items-center justify-between gap-3" },
-        h(
-          "div",
-          { className: "flex items-center gap-2 sm:gap-3 flex-wrap" },
-          h(Link, { href: "/", className: "inline-flex items-center min-h-[44px] text-neutral-400 hover:text-white text-xs transition-colors" }, "← Sealed Tip"),
-          h("span", { className: "text-neutral-600", "aria-hidden": "true" }, "/"),
-          h("span", { className: "text-xs font-mono font-bold text-sky-400" }, `Programme #${programme.id}`),
-        ),
-        h(
-          "div",
-          { className: "flex items-center gap-2 sm:gap-3 flex-wrap" },
-          h(KeeperStatus, { lastSeenNs: keeper.keeper_last_seen }),
-          h(
-            Link,
-            {
-              href: `/submit/${programme.id}`,
-              className: "inline-flex items-center justify-center min-h-[44px] bg-sky-600 hover:bg-sky-500 text-white text-xs px-3.5 py-1.5 rounded-lg font-semibold transition-colors shadow-sm",
-            },
-            "Submit Anonymous Tip",
-          ),
-        ),
-      ),
-    ),
-    // Main Content
-    h(
-      "main",
-      { id: "main-content", className: "max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-8" },
+      "div",
+      { className: "card on-paper space-y-8 p-5 sm:p-8" },
       // Programme Header & Rules
       h(
         "section",
         { "aria-labelledby": "programme-header", className: "space-y-4" },
         h(
           "div",
-          { className: "flex flex-col sm:flex-row sm:items-center justify-between gap-4" },
+          { className: "flex flex-wrap items-center justify-between gap-3 border-b border-rule pb-3 text-xs" },
+          h(
+            "div",
+            { className: "flex items-center gap-2" },
+            h(Link, { href: "/", className: "inline-flex min-h-[44px] items-center text-ink-muted hover:text-ink" }, "Programmes"),
+            h("span", { className: "text-ink-muted", "aria-hidden": "true" }, "/"),
+            h("span", { className: "datum font-semibold text-ask" }, `Programme #${programme.id}`),
+          ),
+          h(KeeperStatus, { lastSeenNs: keeper.keeper_last_seen }),
+        ),
+        h(
+          "div",
+          { className: "flex flex-col sm:flex-row sm:items-end justify-between gap-4" },
           h(
             "div",
             null,
             h(
               "div",
-              { className: "flex items-center gap-2" },
-              h("h1", { id: "programme-header", className: "text-2xl sm:text-3xl font-extrabold text-white tracking-tight" }, programme.title || `Programme #${programme.id}`),
+              { className: "flex flex-wrap items-center gap-3" },
+              h("h1", { id: "programme-header", className: "display text-[clamp(1.75rem,5vw,2.5rem)] text-ink" }, programme.title || `Programme #${programme.id}`),
               h(
                 "span",
                 {
-                  className: `text-xs px-2 py-0.5 rounded-full font-mono font-medium ${
-                    programme.open
-                      ? "text-emerald-400 bg-emerald-950/40 border border-emerald-800/60"
-                      : "text-neutral-400 bg-neutral-900 border border-neutral-700"
-                  }`,
+                  className: `text-xs font-semibold ${programme.open ? "text-ok" : "text-ink-muted"}`,
                 },
-                programme.open ? "Active" : "Closed",
+                programme.open ? "Open" : "Closed",
               ),
             ),
             h(
-              "p",
-              { className: "text-xs text-neutral-400 font-mono mt-1" },
-              "Funder: ",
-              h("span", { className: "text-neutral-200" }, programme.funder),
-              " • Panel DAO: ",
-              h("span", { className: "text-neutral-200" }, programme.panel_dao),
+              "dl",
+              { className: "mt-2 flex flex-wrap gap-x-6 gap-y-1 text-xs" },
+              h("div", { className: "flex gap-2" }, h("dt", { className: "text-ink-muted" }, "Funder"), h("dd", { className: "datum text-ink" }, programme.funder)),
+              h("div", { className: "flex gap-2" }, h("dt", { className: "text-ink-muted" }, "Panel DAO"), h("dd", { className: "datum text-ink" }, programme.panel_dao)),
             ),
           ),
           h(
             Link,
             {
               href: `/submit/${programme.id}`,
-              className: "inline-flex items-center justify-center min-h-[44px] gap-2 bg-sky-600 hover:bg-sky-500 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition-colors shadow-lg shadow-sky-950/50",
+              className: "btn-primary inline-flex min-h-[48px] items-center justify-center px-5 text-sm",
             },
-            h("span", null, "Submit Anonymous Tip"),
-            h("span", { "aria-hidden": "true" }, "→"),
+            "Submit a tip to this programme",
           ),
         ),
-        // Scope & Rules Box
+        // Scope & rules: the four numbers a tipster actually checks before submitting.
         h(
-          "div",
-          { className: "p-4 rounded-xl border border-neutral-800 bg-neutral-900/40 text-xs space-y-2" },
-          h("span", { className: "text-neutral-400 font-semibold block uppercase tracking-wider text-[10px]" }, "Inspection Scope & Rules"),
+          "dl",
+          { className: "card-inset grid grid-cols-1 gap-x-8 gap-y-2 p-4 text-xs sm:grid-cols-2" },
           h(
             "div",
-            { className: "flex flex-col sm:flex-row sm:items-center justify-between gap-2" },
+            { className: "flex items-baseline justify-between gap-4" },
+            h("dt", { className: "shrink-0 text-ink-muted" }, "Scope"),
             h(
-              "div",
-              { className: "space-y-1 font-mono" },
-              h(
-                "div",
-                { className: "text-neutral-300" },
-                "Scope URI: ",
-                programme.scope_uri.startsWith("http")
-                  ? h("a", { href: programme.scope_uri, target: "_blank", rel: "noopener noreferrer", className: "text-sky-400 hover:underline" }, programme.scope_uri)
-                  : h("span", { className: "text-neutral-200" }, programme.scope_uri),
-              ),
-              h("div", { className: "text-neutral-400 text-[11px]" }, `Proof of Work Target: ${programme.pow_bits} bits difficulty`),
+              "dd",
+              { className: "datum truncate text-right" },
+              programme.scope_uri.startsWith("http")
+                ? h("a", { href: programme.scope_uri, target: "_blank", rel: "noopener noreferrer", className: "text-ask hover:underline" }, programme.scope_uri)
+                : programme.scope_uri,
             ),
-            h(
-              "div",
-              { className: "text-right sm:text-right font-mono" },
-              h("span", { className: "text-neutral-400 block text-[11px]" }, "Max Bounty Per Tip"),
-              h("span", { className: "text-emerald-400 font-bold text-sm" }, formatTokenAmount(programme.max_reward)),
-            ),
+          ),
+          h(
+            "div",
+            { className: "flex items-baseline justify-between gap-4" },
+            h("dt", { className: "text-ink-muted" }, "Proof-of-work difficulty"),
+            h("dd", { className: "datum text-right text-ink" }, `${programme.pow_bits} bits`),
+          ),
+          h(
+            "div",
+            { className: "flex items-baseline justify-between gap-4" },
+            h("dt", { className: "text-ink-muted" }, "Max bounty per tip"),
+            h("dd", { className: "datum text-right text-ink" }, formatTokenAmount(programme.max_reward)),
+          ),
+          h(
+            "div",
+            { className: "flex items-baseline justify-between gap-4" },
+            h("dt", { className: "text-ink-muted" }, "Status"),
+            h("dd", { className: "datum text-right text-ink" }, programme.open ? "Accepting tips" : "Closed"),
           ),
         ),
       ),
@@ -442,30 +425,45 @@ export default function ProgrammePage({
       h(
         "section",
         { "aria-labelledby": "funds-overview", className: "space-y-3" },
-        h("h2", { id: "funds-overview", className: "text-sm font-semibold uppercase tracking-wider text-neutral-400" }, "Escrow & Locked Funds"),
+        h("h2", { id: "funds-overview", className: "text-sm font-semibold text-ink-muted" }, "Escrow"),
         h(
-          "div",
-          { className: "grid grid-cols-1 sm:grid-cols-3 gap-4" },
+          "table",
+          { className: "w-full text-left text-xs" },
           h(
-            "div",
-            { className: "p-4 rounded-xl border border-neutral-800 bg-neutral-900/40 space-y-1" },
-            h("span", { className: "text-xs text-neutral-400 font-mono block" }, "Locked Reward Balance"),
-            h("span", { className: "text-xl font-bold font-mono text-emerald-400 block" }, formatTokenAmount(programme.balance)),
-            h("span", { className: "text-[11px] text-neutral-500" }, "Available to back credible submissions"),
+            "thead",
+            { className: "border-b border-rule text-[11px] uppercase tracking-wider text-ink-muted" },
+            h(
+              "tr",
+              null,
+              h("th", { scope: "col", className: "py-2 pr-4 font-medium" }, "Balance"),
+              h("th", { scope: "col", className: "py-2 text-right font-medium" }, "Amount"),
+              h("th", { scope: "col", className: "hidden py-2 pl-6 font-medium sm:table-cell" }, "What it can be spent on"),
+            ),
           ),
           h(
-            "div",
-            { className: "p-4 rounded-xl border border-neutral-800 bg-neutral-900/40 space-y-1" },
-            h("span", { className: "text-xs text-neutral-400 font-mono block" }, "Reserved (Under Triage)"),
-            h("span", { className: "text-xl font-bold font-mono text-amber-400 block" }, formatTokenAmount(programme.reserved)),
-            h("span", { className: "text-[11px] text-neutral-500" }, "Reserved for accepted or pending tips"),
-          ),
-          h(
-            "div",
-            { className: "p-4 rounded-xl border border-neutral-800 bg-neutral-900/40 space-y-1" },
-            h("span", { className: "text-xs text-neutral-400 font-mono block" }, "Ops & Gas Drip Balance"),
-            h("span", { className: "text-xl font-bold font-mono text-sky-400 block" }, formatNearAmount(programme.ops_balance)),
-            h("span", { className: "text-[11px] text-neutral-500" }, "Subsidises gas drip for anonymous claimers"),
+            "tbody",
+            { className: "divide-y divide-rule" },
+            h(
+              "tr",
+              null,
+              h("th", { scope: "row", className: "py-3 pr-4 font-medium text-ink" }, "Reward escrow"),
+              h("td", { className: "datum py-3 text-right text-base font-semibold text-ok" }, formatTokenAmount(programme.balance)),
+              h("td", { className: "hidden py-3 pl-6 text-ink-muted sm:table-cell" }, "Backs submissions the panel calls credible."),
+            ),
+            h(
+              "tr",
+              null,
+              h("th", { scope: "row", className: "py-3 pr-4 font-medium text-ink" }, "Reserved"),
+              h("td", { className: "datum py-3 text-right text-base font-semibold text-warn" }, formatTokenAmount(programme.reserved)),
+              h("td", { className: "hidden py-3 pl-6 text-ink-muted sm:table-cell" }, "Withheld while a tip is in triage or awaiting a claim."),
+            ),
+            h(
+              "tr",
+              null,
+              h("th", { scope: "row", className: "py-3 pr-4 font-medium text-ink" }, "Ops and gas drip"),
+              h("td", { className: "datum py-3 text-right text-base font-semibold text-ask" }, formatNearAmount(programme.ops_balance)),
+              h("td", { className: "hidden py-3 pl-6 text-ink-muted sm:table-cell" }, "Pays the relayer and the gas a claimer does not have to top up first."),
+            ),
           ),
         ),
       ),
@@ -473,39 +471,23 @@ export default function ProgrammePage({
       h(
         "section",
         { "aria-labelledby": "stats-heading", className: "space-y-3" },
-        h("h2", { id: "stats-heading", className: "text-sm font-semibold uppercase tracking-wider text-neutral-400" }, "Submission Outcomes"),
+        h("h2", { id: "stats-heading", className: "text-sm font-semibold text-ink-muted" }, "Submissions"),
         h(
-          "div",
-          { className: "grid grid-cols-2 sm:grid-cols-5 gap-3 text-center" },
-          h(
-            "div",
-            { className: "p-3 rounded-lg border border-neutral-800 bg-neutral-900/30" },
-            h("span", { className: "text-[11px] text-neutral-400 block" }, "Total Submitted"),
-            h("span", { className: "text-lg font-bold font-mono text-white mt-0.5 block" }, stats.submitted),
-          ),
-          h(
-            "div",
-            { className: "p-3 rounded-lg border border-neutral-800 bg-neutral-900/30" },
-            h("span", { className: "text-[11px] text-neutral-400 block" }, "Under Review"),
-            h("span", { className: "text-lg font-bold font-mono text-sky-400 mt-0.5 block" }, stats.under_review),
-          ),
-          h(
-            "div",
-            { className: "p-3 rounded-lg border border-neutral-800 bg-neutral-900/30" },
-            h("span", { className: "text-[11px] text-neutral-400 block" }, "Accepted"),
-            h("span", { className: "text-lg font-bold font-mono text-emerald-400 mt-0.5 block" }, stats.accepted),
-          ),
-          h(
-            "div",
-            { className: "p-3 rounded-lg border border-neutral-800 bg-neutral-900/30" },
-            h("span", { className: "text-[11px] text-neutral-400 block" }, "Rejected / Dismissed"),
-            h("span", { className: "text-lg font-bold font-mono text-red-400 mt-0.5 block" }, stats.rejected),
-          ),
-          h(
-            "div",
-            { className: "p-3 rounded-lg border border-neutral-800 bg-neutral-900/30 col-span-2 sm:col-span-1" },
-            h("span", { className: "text-[11px] text-neutral-400 block" }, "Bounties Paid"),
-            h("span", { className: "text-lg font-bold font-mono text-teal-400 mt-0.5 block" }, stats.paid),
+          "dl",
+          { className: "grid grid-cols-2 gap-x-8 sm:grid-cols-3" },
+          ...[
+            ["Submitted", stats.submitted, "text-ink"],
+            ["Under review", stats.under_review, "text-ask"],
+            ["Accepted", stats.accepted, "text-ok"],
+            ["Rejected", stats.rejected, "text-bad"],
+            ["Bounties paid", stats.paid, "text-ask"],
+          ].map(([label, value, tone]) =>
+            h(
+              "div",
+              { key: label, className: "border-b border-rule py-3" },
+              h("dt", { className: "text-xs text-ink-muted" }, label),
+              h("dd", { className: `datum text-2xl font-semibold ${tone}` }, value),
+            ),
           ),
         ),
       ),
@@ -515,73 +497,69 @@ export default function ProgrammePage({
         { "aria-labelledby": "tips-list-heading", className: "space-y-3" },
         h(
           "div",
-          { className: "flex items-center justify-between" },
-          h("h2", { id: "tips-list-heading", className: "text-sm font-semibold uppercase tracking-wider text-neutral-400" }, "Public Tip Activity"),
-          h("span", { className: "text-[11px] text-neutral-500 font-mono" }, "Privacy Invariant: CIDs and identities are strictly omitted from public views."),
+          { className: "flex flex-wrap items-baseline justify-between gap-2" },
+          h("h2", { id: "tips-list-heading", className: "text-sm font-semibold text-ink-muted" }, "Tip activity"),
+          h("p", { className: "text-xs text-ink-muted" }, "Tip ids only. Content ids and identities never appear in a public view."),
         ),
         tips.length === 0
           ? h(
-              "div",
-              { className: "p-8 text-center rounded-xl border border-neutral-800 bg-neutral-900/20 space-y-2" },
-              h("p", { className: "text-sm text-neutral-400" }, "No public tips submitted yet to this programme."),
-              h(Link, { href: `/submit/${programme.id}`, className: "inline-flex items-center justify-center min-h-[44px] text-xs text-sky-400 hover:underline font-semibold" }, "Be the first to submit a confidential tip →"),
+              "p",
+              { className: "border-y border-rule py-6 text-sm text-ink-muted" },
+              "Nothing has been submitted to this programme yet. ",
+              h(Link, { href: `/submit/${programme.id}`, className: "min-h-[44px] font-semibold text-ask hover:underline" }, "Be the first to submit a tip"),
             )
           : h(
               "div",
-              { className: "overflow-x-auto rounded-xl border border-neutral-800 bg-neutral-900/40" },
+              { className: "overflow-x-auto" },
               h(
                 "table",
                 { className: "w-full text-left text-xs" },
                 h(
                   "thead",
-                  { className: "bg-neutral-950/60 border-b border-neutral-800 text-[11px] uppercase tracking-wider text-neutral-400 font-mono" },
+                  { className: "border-b border-rule text-[11px] uppercase tracking-wider text-ink-muted" },
                   h(
                     "tr",
                     null,
-                    h("th", { scope: "col", className: "px-4 py-3 font-medium" }, "Tip ID"),
-                    h("th", { scope: "col", className: "px-4 py-3 font-medium" }, "Status"),
-                    h("th", { scope: "col", className: "px-4 py-3 font-medium" }, "Submitted"),
-                    h("th", { scope: "col", className: "px-4 py-3 font-medium" }, "Switch Deadline"),
+                    h("th", { scope: "col", className: "py-2 pr-4 font-medium" }, "Tip"),
+                    h("th", { scope: "col", className: "py-2 pr-4 font-medium" }, "Status"),
+                    h("th", { scope: "col", className: "py-2 pr-4 font-medium" }, "Submitted"),
+                    h("th", { scope: "col", className: "py-2 font-medium" }, "Switch deadline"),
                   ),
                 ),
                 h(
                   "tbody",
-                  { className: "divide-y divide-neutral-800/60 font-mono" },
+                  { className: "divide-y divide-rule" },
                   tips.map((tip) =>
                     h(
                       "tr",
-                      { key: tip.id, className: "hover:bg-neutral-800/30 transition-colors" },
-                      h("td", { className: "px-4 py-3 font-semibold text-white" }, `#${tip.id}`),
-                      h(
-                        "td",
-                        { className: "px-4 py-3" },
-                        h("span", { className: "inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-neutral-800 text-neutral-200" }, getTipStatusLabel(tip.status)),
-                      ),
-                      h("td", { className: "px-4 py-3 text-neutral-400" }, formatAge(tip.submitted_at)),
-                      h("td", { className: "px-4 py-3 text-neutral-400" }, formatDeadline(tip.switch_deadline, tip.switch_triggered)),
+                      { key: tip.id },
+                      h("th", { scope: "row", className: "datum py-3 pr-4 font-semibold text-ink" }, `#${tip.id}`),
+                      h("td", { className: "py-3 pr-4 text-ink" }, getTipStatusLabel(tip.status)),
+                      h("td", { className: "datum py-3 pr-4 text-ink-muted" }, formatAge(tip.submitted_at)),
+                      h("td", { className: "datum py-3 text-ink-muted" }, formatDeadline(tip.switch_deadline, tip.switch_triggered)),
                     ),
                   ),
                 ),
               ),
             ),
       ),
-      // Bottom CTA
+      // The one action this page can lead to.
       h(
-        "section",
-        { className: "p-6 rounded-2xl border border-sky-800/60 bg-gradient-to-r from-sky-950/40 to-neutral-900/60 flex flex-col sm:flex-row items-center justify-between gap-4" },
+        "div",
+        { className: "flex flex-col gap-4 border-t border-rule pt-6 sm:flex-row sm:items-center sm:justify-between" },
         h(
           "div",
-          { className: "space-y-1 text-center sm:text-left" },
-          h("h3", { className: "text-base font-bold text-white" }, "Have confidential evidence to submit?"),
-          h("p", { className: "text-xs text-neutral-300" }, "Your files will be destructive-rasterised in your browser. No wallet or identity needed."),
+          { className: "space-y-1" },
+          h("h3", { className: "display text-[clamp(1.5rem,4vw,2rem)] text-ink" }, "Have evidence to submit?"),
+          h("p", { className: "text-sm text-ink-muted" }, "Files are cleaned and encrypted in your browser. No wallet, no account, no name."),
         ),
         h(
           Link,
           {
             href: `/submit/${programme.id}`,
-            className: "inline-flex items-center justify-center min-h-[44px] bg-sky-600 hover:bg-sky-500 text-white font-semibold text-sm px-6 py-2.5 rounded-xl transition-colors shrink-0 shadow-md",
+            className: "btn-primary inline-flex min-h-[48px] shrink-0 items-center justify-center px-6 text-sm",
           },
-          "Submit Anonymous Tip",
+          "Submit a tip",
         ),
       ),
     ),

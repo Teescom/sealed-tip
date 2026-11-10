@@ -1,39 +1,53 @@
-// What was removed from each file (S-10.4)
+import React from "react";
+import type { BundleReport } from "@sealedtip/core";
+
+const h = React.createElement;
+
 export interface CleaningReportViewProps {
-  report: {
-    files: { name: string; removed: string[]; scanMode?: boolean; pages?: number }[];
-    warnings: string[];
-  };
+  report: BundleReport;
 }
 
+/**
+ * The tipster's own record of what was removed, per file, in the words the cleaner chose (S-10.4).
+ *
+ * Tag names and counts only — `BundleReport` carries no file content, so nothing rendered here can leak an
+ * exhibit into a page that is served.
+ */
 export function CleaningReportView({ report }: CleaningReportViewProps) {
   if (report.files.length === 0 && report.warnings.length === 0) return null;
 
-  return (
-    <div className="rounded-lg border border-emerald-800/40 bg-emerald-950/20 p-4 text-emerald-200 text-sm">
-      <div className="mb-2 font-semibold text-emerald-300">Cleaning Report</div>
-      {report.warnings.map((w, i) => (
-        <div key={i} className="mb-2 text-xs text-amber-400 bg-amber-950/30 p-2 rounded border border-amber-800/30">
-          ⚠️ {w}
-        </div>
-      ))}
-      <div className="space-y-2">
-        {report.files.map((file, i) => (
-          <div key={i} className="rounded bg-black/40 p-2 border border-emerald-900/30">
-            <div className="font-mono text-xs text-emerald-400 font-medium break-all">
-              {file.name} {file.pages ? `(${file.pages} pages)` : ""}
-            </div>
-            {file.removed.length > 0 ? (
-              <div className="mt-1 text-xs text-neutral-300 break-words">
-                <span className="text-emerald-500">Stripped metadata: </span>
-                {file.removed.join(", ")}
-              </div>
-            ) : (
-              <div className="mt-1 text-xs text-neutral-400">No metadata tags found.</div>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
+  return h(
+    "section",
+    { "aria-labelledby": "cleaning-report-title", className: "card-inset space-y-4 p-4 sm:p-5" },
+    h("h2", { id: "cleaning-report-title", className: "text-base font-semibold text-ink" }, "What was taken out"),
+    report.warnings.map((w, i) =>
+      h("p", { key: i, className: "border-l-4 border-l-warn bg-paper p-3 text-xs text-ink" }, w),
+    ),
+    h(
+      "dl",
+      { className: "divide-y divide-rule" },
+      report.files.map((file, i) =>
+        h(
+          "div",
+          {
+            key: i,
+            className:
+              "grid grid-cols-1 gap-x-4 gap-y-1 py-2.5 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]",
+          },
+          h(
+            "dt",
+            { className: "datum min-w-0 break-all text-sm text-ink" },
+            file.name,
+            file.pages ? h("span", { className: "text-ink-muted" }, ` · ${file.pages} pages`) : null,
+            file.scanMode ? h("span", { className: "text-ink-muted" }, " · recomposited scan") : null,
+          ),
+          h(
+            "dd",
+            { className: "text-xs text-ink-muted" },
+            file.removed.length > 0 ? file.removed.join(", ") : "No metadata tags were present.",
+          ),
+        ),
+      ),
+    ),
   );
 }

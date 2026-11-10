@@ -59,7 +59,7 @@ describe("Accessibility & Mobile Pass (S-10.9 / Issue #138)", () => {
       expect(html).toContain('aria-pressed="true"');
       expect(html).toContain('aria-pressed="false"');
       // Accessible instructions
-      expect(html).toContain("Panel Recusal");
+      expect(html).toContain("Panel recusal");
     });
   });
 

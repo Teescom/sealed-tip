@@ -1,7 +1,6 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
   type Payout,
@@ -451,55 +450,20 @@ function ClaimContent() {
   const claimStatus = tip ? isTipClaimable(tip.status) : null;
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100 selection:bg-sky-500/30 selection:text-sky-200">
-      {/* Header */}
-      <header className="border-b border-neutral-800 bg-neutral-900/60 backdrop-blur sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 min-h-[4rem] py-2 flex flex-wrap items-center justify-between gap-2">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-sky-500/20 border border-sky-500/40 flex items-center justify-center font-bold text-sky-400 font-mono text-sm" aria-hidden="true">
-              ST
-            </div>
-            <div>
-              <span className="font-bold tracking-tight text-white block leading-tight text-sm sm:text-base">
-                Sealed Tip
-              </span>
-              <span className="text-[10px] text-neutral-400 uppercase tracking-widest font-mono block">
-                Whistleblower Tip Line
-              </span>
-            </div>
-          </Link>
-
-          <nav aria-label="Navigation" className="flex items-center flex-wrap gap-1 sm:gap-2 text-xs font-medium">
-            <Link href="/p/0" className="min-h-[44px] px-2.5 sm:px-3 text-neutral-300 hover:text-white transition-colors flex items-center justify-center rounded-lg hover:bg-neutral-800/50">
-              Programmes
-            </Link>
-            <Link href="/status" className="min-h-[44px] px-2.5 sm:px-3 text-neutral-300 hover:text-white transition-colors flex items-center justify-center rounded-lg hover:bg-neutral-800/50">
-              Status
-            </Link>
-            <Link href="/claim" className="min-h-[44px] px-2.5 sm:px-3 text-sky-400 font-semibold transition-colors flex items-center justify-center rounded-lg bg-sky-950/40 border border-sky-800/40">
-              Claim
-            </Link>
-            <Link href="/panel" className="min-h-[44px] px-2.5 sm:px-3 text-neutral-300 hover:text-white transition-colors hidden md:flex items-center justify-center rounded-lg hover:bg-neutral-800/50">
-              Panel DAO
-            </Link>
-          </nav>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main id="main-content" className="max-w-3xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold tracking-tight text-white">Claim Reward</h1>
-          <p className="mt-1 text-sm text-neutral-400">
+    <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
+      <div className="card on-paper space-y-6 p-5 sm:p-8">
+        <div>
+          <h1 className="display text-[clamp(1.75rem,5vw,2.25rem)] text-ask">Claim a bounty</h1>
+          <p className="mt-2 text-sm leading-relaxed text-ink-muted">
             Submit your signed claim anonymously. Payouts can be sent to a fresh implicit NEAR address or swapped
             cross-chain via 1Click.
           </p>
         </div>
 
         {/* Credentials Form */}
-        <form onSubmit={handleLookup} className="rounded-xl border border-neutral-800 bg-neutral-900/50 p-6 space-y-5">
+        <form onSubmit={handleLookup} className="card-inset space-y-5 p-5">
           <div>
-            <label htmlFor="tipId" className="block text-xs font-medium uppercase tracking-wider text-neutral-300 mb-1">
+            <label htmlFor="tipId" className="block text-xs font-medium text-ink-muted mb-1">
               Tip ID
             </label>
             <input
@@ -510,18 +474,18 @@ function ClaimContent() {
               value={tipIdInput}
               onChange={(e) => setTipIdInput(e.target.value)}
               placeholder="e.g. 0"
-              className="w-full min-h-[44px] bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 focus:outline-none focus:border-sky-500 font-mono"
+              className="w-full min-h-[44px] bg-paper border border-edge rounded-field px-3 py-2 text-sm text-ink placeholder:text-ink-muted font-mono"
             />
           </div>
 
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label htmlFor="words" className="block text-xs font-medium uppercase tracking-wider text-neutral-300">
-                24 Recovery Words
+              <label htmlFor="words" className="block text-xs text-ink-muted">
+                Recovery words
               </label>
               <span
                 className={`text-xs font-mono ${
-                  wordCount === 24 ? "text-emerald-400" : wordCount > 0 ? "text-amber-400" : "text-neutral-500"
+                  wordCount === 24 ? "text-ok" : wordCount > 0 ? "text-warn" : "text-ink-muted"
                 }`}
               >
                 {wordCount} / 24 words
@@ -533,14 +497,14 @@ function ClaimContent() {
               rows={3}
               value={wordsInput}
               onChange={(e) => setWordsInput(e.target.value)}
-              placeholder="paste your 24 words separated by spaces..."
-              className="w-full bg-neutral-900 border border-neutral-700 rounded-lg p-3 text-sm text-neutral-100 placeholder-neutral-500 focus:outline-none focus:border-sky-500 font-mono"
+              placeholder="paste your 24 words separated by spaces…"
+              className="w-full bg-paper border border-edge rounded-field p-3 text-sm text-ink placeholder:text-ink-muted font-mono"
             />
           </div>
 
           <div>
-            <label htmlFor="passphrase" className="block text-xs font-medium uppercase tracking-wider text-neutral-300 mb-1">
-              Passphrase <span className="text-neutral-500 normal-case font-normal">(optional, if used during submit)</span>
+            <label htmlFor="passphrase" className="block text-xs font-medium text-ink-muted mb-1">
+              Passphrase <span className="text-ink-muted normal-case font-normal">(optional, if used during submit)</span>
             </label>
             <input
               id="passphrase"
@@ -548,90 +512,78 @@ function ClaimContent() {
               value={passphraseInput}
               onChange={(e) => setPassphraseInput(e.target.value)}
               placeholder="leave empty if none was set"
-              className="w-full min-h-[44px] bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 focus:outline-none focus:border-sky-500"
+              className="w-full min-h-[44px] bg-paper border border-edge rounded-field px-3 py-2 text-sm text-ink placeholder:text-ink-muted"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full min-h-[48px] py-3 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-semibold text-sm transition disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed shadow-md"
+            className="btn-primary w-full py-3 text-sm disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {loading ? "Verifying Credentials..." : "Check Claim Eligibility"}
+            {loading ? "Checking your words…" : "Check whether this tip can be claimed"}
           </button>
         </form>
 
         {/* Global Error Banner */}
         {error && (
-          <div className="mt-6 rounded-lg border border-red-500/40 bg-red-950/20 p-4 text-sm text-red-200">
-            <span className="font-semibold block mb-0.5">Error</span>
-            {error}
-          </div>
+          <p className="mt-6 border-l-4 border-l-bad bg-paper p-4 text-sm text-bad">{error}</p>
         )}
 
         {/* Credential Warning Banner */}
         {credentialWarning && (
-          <div className="mt-6 rounded-lg border border-amber-500/50 bg-amber-950/30 p-4 text-sm text-amber-200">
-            <div className="font-semibold text-amber-300 flex items-center gap-2">
-              <svg className="w-5 h-5 text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span>Tip credentials do not match this Tip ID</span>
-            </div>
-            <p className="mt-1 text-xs text-amber-300/90">
-              The public key derived from your words does not match the claim key for Tip #{tip?.id}.
+          <div className="mt-6 border-l-4 border-l-warn bg-paper p-4">
+            <h3 className="text-sm font-semibold text-ink">These words do not match tip #{tip?.id}</h3>
+            <p className="mt-1 text-xs text-ink-muted">
+              The public key derived from your words is not the claim key recorded for this tip. Check you pasted all
+              24, in order.
             </p>
           </div>
         )}
 
         {/* Ineligibility Reason Banner */}
         {tip && claimStatus && !claimStatus.claimable && (
-          <div className="mt-6 rounded-xl border border-neutral-800 bg-neutral-900/60 p-6">
-            <div className="flex items-center gap-3 mb-2">
-              <span className="h-2.5 w-2.5 rounded-full bg-amber-400"></span>
-              <h2 className="text-base font-semibold text-white">Claim Not Available Yet</h2>
-            </div>
-            <p className="text-sm text-neutral-300 mb-4">{claimStatus.reason}</p>
-            <div className="text-xs text-neutral-500 border-t border-neutral-800 pt-3">
-              Tip #{tip.id} (Programme #{tip.programme_id}) · Only tips approved by the Sputnik DAO panel with an
-              Accepted reward greater than 0 can be claimed.
-            </div>
+          <div className="mt-6 card-inset p-6">
+            <h2 className="display text-[clamp(1.25rem,4vw,1.6rem)] text-ink">This tip cannot be claimed yet</h2>
+            <p className="mt-2 text-sm text-ink-muted">{claimStatus.reason}</p>
+            <dl className="mt-4 divide-y divide-rule border-t border-rule text-xs">
+              <div className="flex items-baseline justify-between gap-4 py-2">
+                <dt className="text-ink-muted">Tip</dt>
+                <dd className="datum text-ink">#{tip.id}</dd>
+              </div>
+              <div className="flex items-baseline justify-between gap-4 py-2">
+                <dt className="text-ink-muted">Programme</dt>
+                <dd className="datum text-ink">#{tip.programme_id}</dd>
+              </div>
+            </dl>
+            <p className="mt-3 text-xs text-ink-muted">
+              Only a tip the panel has approved, with a reward greater than zero, can be claimed.
+            </p>
           </div>
         )}
 
         {/* Claim Submission Success */}
         {claimSuccess && (
-          <div className="mt-8 rounded-xl border border-emerald-500/40 bg-emerald-950/20 p-6 space-y-4">
-            <div className="flex items-center gap-2 text-emerald-300 font-bold text-lg">
-              <svg className="w-6 h-6 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span>Claim Submitted Successfully!</span>
-            </div>
+          <div className="mt-8 card-inset space-y-4 p-6">
+            <h2 className="display text-[clamp(1.25rem,4vw,1.6rem)] text-ink">Claim submitted</h2>
 
-            <p className="text-sm text-emerald-200">
-              Claim submitted to relayer queue (anonymity delay active until{" "}
-              <span className="font-mono font-semibold">{new Date(claimSuccess.queuedUntil).toLocaleString()}</span>).
+            <p className="text-sm text-ink-muted">
+              The relayer holds it until{" "}
+              <span className="datum text-ink">{new Date(claimSuccess.queuedUntil).toLocaleString()}</span>, so the
+              payout is not timed to your submission.
             </p>
 
-            <div className="rounded-lg border border-amber-500/30 bg-amber-950/20 p-3 text-xs text-amber-300">
-              <span className="font-semibold block mb-0.5">Note on Payout Delivery:</span>
-              Testnet funds and gas drip will be sent automatically by the contract upon relay.
-            </div>
+            <p className="border-l-4 border-l-warn bg-paper p-3 text-xs text-ink-muted">
+              On testnet the contract sends the funds and enough gas to use them once the relay runs.
+            </p>
 
-            <div className="text-xs font-mono text-neutral-400 pt-2 border-t border-neutral-800">
-              Payout Destination:{" "}
+            <div className="text-xs pt-2 border-t border-rule">
+              <span className="text-ink-muted">Payout destination: </span>
               {"Near" in claimSuccess.payout
-                ? `NEAR Account: ${claimSuccess.payout.Near.account}`
-                : `Cross-Chain Deposit: ${claimSuccess.payout.Intents.deposit_address} (Memo: ${claimSuccess.payout.Intents.memo ?? "none"})`}
+                ? claimSuccess.payout.Near.account
+                : `${claimSuccess.payout.Intents.deposit_address}${
+                    claimSuccess.payout.Intents.memo ? ` · memo ${claimSuccess.payout.Intents.memo}` : ""
+                  }`}
             </div>
           </div>
         )}
@@ -640,58 +592,56 @@ function ClaimContent() {
         {tip && claimStatus?.claimable && !claimSuccess && (
           <div className="mt-8 space-y-6">
             {/* Reward Summary */}
-            <div className="rounded-xl border border-emerald-500/30 bg-emerald-950/10 p-6">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                  <span className="text-xs uppercase tracking-wider text-emerald-400 font-medium">Eligible Reward</span>
-                  <div className="text-2xl font-bold font-mono text-emerald-300">
-                    {claimStatus.reward} token units
-                  </div>
+            <div className="card-inset p-5 sm:p-6">
+              <p className="text-xs text-ink-muted">Approved reward</p>
+              <p className="display mt-1 text-[clamp(2rem,7vw,3rem)] leading-none text-ok">
+                {claimStatus.reward}
+              </p>
+              <dl className="mt-4 divide-y divide-rule border-t border-rule text-xs">
+                <div className="flex items-baseline justify-between gap-4 py-2">
+                  <dt className="text-ink-muted">Tip</dt>
+                  <dd className="datum text-ink">#{tip.id}</dd>
                 </div>
-                <div className="text-right">
-                  <span className="text-xs text-neutral-400 block">Tip Reference</span>
-                  <span className="font-mono text-sm text-neutral-200">Tip #{tip.id}</span>
-                </div>
-              </div>
+              </dl>
             </div>
 
             {/* Destination Selection */}
-            <div className="rounded-xl border border-neutral-800 bg-neutral-900/50 p-6 space-y-6">
+            <div className="card-inset p-6 space-y-6">
               <div>
-                <h2 className="text-base font-semibold text-white mb-1">Select Payout Method</h2>
-                <p className="text-xs text-neutral-400">
-                  Choose how you would like to receive the funds. To preserve your anonymity, use a fresh destination
-                  address that has never interacted with any identity-linked accounts.
+                <h2 className="text-base font-semibold text-ink mb-1">Where should the reward go?</h2>
+                <p className="text-xs text-ink-muted">
+                  Use an address that has never touched an account tied to you. A wallet you already sign in to can
+                  identify this payout.
                 </p>
               </div>
 
               {/* Tabs */}
-              <div className="flex flex-col sm:flex-row border-b border-neutral-800 gap-1 sm:gap-0" role="tablist">
+              <div className="flex flex-col border-b border-rule sm:flex-row" role="tablist">
                 <button
                   type="button"
                   role="tab"
                   aria-selected={payoutOption === "near"}
                   onClick={() => setPayoutOption("near")}
-                  className={`min-h-[44px] pb-3 px-4 text-xs font-semibold uppercase tracking-wider border-b-2 transition flex items-center justify-center cursor-pointer ${
+                  className={`min-h-[44px] pb-3 px-4 text-xs font-semibold border-b-2 transition flex items-center justify-center cursor-pointer ${
                     payoutOption === "near"
-                      ? "border-sky-500 text-sky-400 bg-sky-950/20 sm:bg-transparent"
-                      : "border-transparent text-neutral-400 hover:text-neutral-200"
+                      ? "border-ask text-ink"
+                      : "border-transparent text-ink-muted hover:text-ink"
                   }`}
                 >
-                  Option A: Fresh NEAR Account (Testnet)
+                  A fresh NEAR account (testnet)
                 </button>
                 <button
                   type="button"
                   role="tab"
                   aria-selected={payoutOption === "crosschain"}
                   onClick={() => setPayoutOption("crosschain")}
-                  className={`min-h-[44px] pb-3 px-4 text-xs font-semibold uppercase tracking-wider border-b-2 transition flex items-center justify-center cursor-pointer ${
+                  className={`min-h-[44px] pb-3 px-4 text-xs font-semibold border-b-2 transition flex items-center justify-center cursor-pointer ${
                     payoutOption === "crosschain"
-                      ? "border-sky-500 text-sky-400 bg-sky-950/20 sm:bg-transparent"
-                      : "border-transparent text-neutral-400 hover:text-neutral-200"
+                      ? "border-ask text-ink"
+                      : "border-transparent text-ink-muted hover:text-ink"
                   }`}
                 >
-                  Option B: Cross-Chain 1Click (Mainnet)
+                  Cross-chain, over 1Click (mainnet)
                 </button>
               </div>
 
@@ -699,40 +649,31 @@ function ClaimContent() {
               {payoutOption === "near" && (
                 <div className="space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <span className="text-xs text-neutral-300 font-medium">Implicit Anonymous Address</span>
+                    <span className="text-xs text-ink-muted">Generate one in this browser</span>
                     <button
                       type="button"
                       onClick={handleGenerateFreshAccount}
                       aria-label="Generate a new anonymous Ed25519 keypair and implicit NEAR account"
-                      className="min-h-[44px] px-3.5 py-2 rounded-lg bg-sky-600/30 hover:bg-sky-600/50 border border-sky-500/40 text-sky-300 text-xs font-semibold transition flex items-center justify-center cursor-pointer shrink-0"
+                      className="btn-primary px-3.5 text-xs shrink-0"
                     >
-                      + Generate Fresh Anonymous Account
+                      Generate a fresh account
                     </button>
                   </div>
 
                   {/* Generated Account Details */}
                   {generatedAccount && (
-                    <div className="rounded-lg border border-amber-500/40 bg-amber-950/20 p-4 space-y-3">
-                      <div className="flex items-center gap-2 text-amber-300 font-semibold text-xs uppercase tracking-wider">
-                        <svg className="w-4 h-4 text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                          <path
-                            fillRule="evenodd"
-                            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        <span>SAVE THIS PRIVATE KEY SECURELY!</span>
-                      </div>
-                      <p className="text-xs text-amber-200/90">
+                    <div className="card-inset border-l-4 border-l-warn p-4 space-y-3">
+                      <h3 className="text-sm font-semibold text-ink">Save this private key now</h3>
+                      <p className="text-xs text-warn">
                         This is a fresh anonymous NEAR account generated entirely in your browser. Nobody else has this key.
                         You will need it to access your reward funds. Sealed Tip cannot recover it for you.
                       </p>
 
                       <div className="space-y-2 text-xs font-mono">
                         <div>
-                          <span className="text-neutral-400 block text-[10px] uppercase">Account ID (64-char Hex)</span>
+                          <span className="block text-xs text-ink-muted">Account id (64-char hex)</span>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <span className="bg-black/50 p-2 rounded border border-neutral-800 text-neutral-200 break-all select-all flex-1">
+                            <span className="datum flex-1 rounded-inset border border-edge bg-paper p-2 text-ink select-all">
                               {generatedAccount.accountId}
                             </span>
                             <button
@@ -743,17 +684,17 @@ function ClaimContent() {
                                 setTimeout(() => setCopiedAccount(false), 2000);
                               }}
                               aria-label="Copy generated account ID"
-                              className="min-h-[44px] min-w-[60px] px-3 py-2 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs shrink-0 flex items-center justify-center cursor-pointer border border-neutral-700"
+                              className="btn-secondary min-w-[72px] px-3 text-xs shrink-0"
                             >
-                              {copiedAccount ? "Copied!" : "Copy"}
+                              {copiedAccount ? "Copied" : "Copy account id"}
                             </button>
                           </div>
                         </div>
 
                         <div>
-                          <span className="text-neutral-400 block text-[10px] uppercase">Private Key</span>
+                          <span className="block text-xs text-ink-muted">Private key</span>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <span className="bg-black/50 p-2 rounded border border-neutral-800 text-amber-300 break-all select-all flex-1">
+                            <span className="datum flex-1 rounded-inset border border-edge bg-paper p-2 text-warn select-all">
                               {generatedAccount.secretKey}
                             </span>
                             <button
@@ -764,9 +705,9 @@ function ClaimContent() {
                                 setTimeout(() => setCopiedKey(false), 2000);
                               }}
                               aria-label="Copy generated private key"
-                              className="min-h-[44px] min-w-[60px] px-3 py-2 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs shrink-0 flex items-center justify-center cursor-pointer border border-neutral-700"
+                              className="btn-secondary min-w-[72px] px-3 text-xs shrink-0"
                             >
-                              {copiedKey ? "Copied!" : "Copy"}
+                              {copiedKey ? "Copied" : "Copy private key"}
                             </button>
                           </div>
                         </div>
@@ -775,7 +716,7 @@ function ClaimContent() {
                   )}
 
                   <div>
-                    <label htmlFor="nearAccount" className="block text-xs uppercase tracking-wider text-neutral-400 mb-1">
+                    <label htmlFor="nearAccount" className="block text-xs text-ink-muted mb-1">
                       Destination NEAR Account ID
                     </label>
                     <input
@@ -785,7 +726,7 @@ function ClaimContent() {
                       value={nearAccountId}
                       onChange={(e) => setNearAccountId(e.target.value)}
                       placeholder="e.g. 64-hex implicit address or fresh-account.testnet"
-                      className="w-full bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 focus:outline-none focus:border-sky-500 font-mono"
+                      className="w-full bg-paper border border-edge rounded-field px-3 py-2 text-sm text-ink placeholder:text-ink-muted font-mono"
                     />
                   </div>
                 </div>
@@ -795,14 +736,14 @@ function ClaimContent() {
               {payoutOption === "crosschain" && (
                 <div className="space-y-4">
                   <div>
-                    <label htmlFor="chain" className="block text-xs uppercase tracking-wider text-neutral-400 mb-1">
+                    <label htmlFor="chain" className="block text-xs text-ink-muted mb-1">
                       Destination Chain &amp; Asset
                     </label>
                     <select
                       id="chain"
                       value={destinationChain}
                       onChange={(e) => setDestinationChain(e.target.value)}
-                      className="w-full bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-neutral-100 focus:outline-none focus:border-sky-500"
+                      className="w-full bg-paper border border-edge rounded-field px-3 py-2 text-sm text-ink"
                     >
                       <option value="Tron USDT">Tron (USDT - TRC20)</option>
                       <option value="Ethereum USDC">Ethereum (USDC - ERC20)</option>
@@ -812,7 +753,7 @@ function ClaimContent() {
                   </div>
 
                   <div>
-                    <label htmlFor="crosschainAddress" className="block text-xs uppercase tracking-wider text-neutral-400 mb-1">
+                    <label htmlFor="crosschainAddress" className="block text-xs text-ink-muted mb-1">
                       Recipient Address on {destinationChain}
                     </label>
                     <input
@@ -821,7 +762,7 @@ function ClaimContent() {
                       value={crosschainRecipient}
                       onChange={(e) => setCrosschainRecipient(e.target.value)}
                       placeholder="e.g. T... (Tron) or 0x... (Ethereum/Arbitrum)"
-                      className="w-full bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 focus:outline-none focus:border-sky-500 font-mono"
+                      className="w-full bg-paper border border-edge rounded-field px-3 py-2 text-sm text-ink placeholder:text-ink-muted font-mono"
                     />
                   </div>
 
@@ -829,40 +770,40 @@ function ClaimContent() {
                     type="button"
                     onClick={handleGetQuote}
                     disabled={quoteLoading || !crosschainRecipient.trim()}
-                    className="py-2 px-4 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-sky-400 border border-neutral-700 text-xs font-semibold transition disabled:opacity-40"
+                    className="btn-secondary px-4 text-xs disabled:cursor-not-allowed disabled:opacity-40"
                   >
-                    {quoteLoading ? "Querying 1Click Quote..." : "Get Cross-Chain Quote Preview"}
+                    {quoteLoading ? "Querying the quote…" : "Preview the cross-chain quote"}
                   </button>
 
                   {/* Quote Preview */}
                   {quote && (
-                    <div className="rounded-lg border border-neutral-700 bg-black/40 p-4 space-y-2 text-xs">
-                      <div className="font-semibold text-neutral-200">1Click Cross-Chain Quote Preview</div>
-                      <div className="grid grid-cols-2 gap-2 text-neutral-300">
-                        <div>
-                          <span className="text-neutral-500 block">Est. Payout Amount:</span>
-                          <span className="font-mono font-medium text-emerald-400">
+                    <div className="card-inset p-4">
+                      <h3 className="text-sm font-semibold text-ink">Quote from 1Click</h3>
+                      <dl className="mt-2 divide-y divide-rule">
+                        <div className="flex items-baseline justify-between gap-4 py-2">
+                          <dt className="shrink-0 text-xs text-ink-muted">Estimated payout</dt>
+                          <dd className="datum text-ok">
                             {quote.estimatedAmount} {quote.destinationAsset}
-                          </span>
+                          </dd>
                         </div>
-                        <div>
-                          <span className="text-neutral-500 block">Deposit Address:</span>
-                          <span className="font-mono text-neutral-200 break-all">{quote.depositAddress}</span>
+                        <div className="flex items-baseline justify-between gap-4 py-2">
+                          <dt className="shrink-0 text-xs text-ink-muted">Deposit address</dt>
+                          <dd className="datum text-right break-all text-ink">{quote.depositAddress}</dd>
                         </div>
                         {quote.memo && (
-                          <div className="col-span-2">
-                            <span className="text-neutral-500 block">Memo:</span>
-                            <span className="font-mono text-neutral-400 break-all">{quote.memo}</span>
+                          <div className="flex items-baseline justify-between gap-4 py-2">
+                            <dt className="shrink-0 text-xs text-ink-muted">Memo</dt>
+                            <dd className="datum text-right break-all text-ink-muted">{quote.memo}</dd>
                           </div>
                         )}
-                      </div>
+                      </dl>
                     </div>
                   )}
                 </div>
               )}
 
               {/* Submit Claim Button */}
-              <div className="pt-4 border-t border-neutral-800">
+              <div className="pt-4 border-t border-rule">
                 <button
                   type="button"
                   onClick={handleSubmitClaim}
@@ -871,23 +812,23 @@ function ClaimContent() {
                     (payoutOption === "near" && !nearAccountId.trim()) ||
                     (payoutOption === "crosschain" && !quote)
                   }
-                  aria-label="Submit signed claim to relayer queue"
-                  className="w-full min-h-[48px] py-3.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer shadow-md"
+                  aria-label="Submit this claim for payout"
+                  className="btn-primary w-full py-3.5 text-sm disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  {claimSubmitting ? "Signing & Submitting Claim to Relayer..." : "Submit Claim for Payout"}
+                  {claimSubmitting ? "Signing your claim…" : "Submit for payout"}
                 </button>
               </div>
             </div>
           </div>
         )}
-      </main>
+      </div>
     </div>
   );
 }
 
 export default function ClaimPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-neutral-950 p-8 text-neutral-400">Loading Claim...</div>}>
+    <Suspense fallback={<p className="mx-auto w-full max-w-3xl px-4 py-10 text-sm text-on-ground-muted sm:px-6">Loading claim…</p>}>
       <ClaimContent />
     </Suspense>
   );

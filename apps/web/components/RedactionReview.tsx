@@ -16,37 +16,41 @@ export function RedactionReview({ suggestions, onAccept, onReject }: RedactionRe
     "section",
     {
       "aria-labelledby": "ai-redaction-title",
-      className: "rounded-xl border border-purple-800/40 bg-purple-950/20 p-4 sm:p-5 text-purple-200 text-sm",
+      className: "card-inset space-y-4 p-4 sm:p-5",
     },
     h(
       "div",
-      { className: "flex items-center justify-between mb-1" },
-      h("h2", { id: "ai-redaction-title", className: "font-semibold text-purple-300 text-sm sm:text-base" }, "AI Redaction Suggestions"),
-      h("span", { className: "text-xs font-mono text-purple-400" }, `${suggestions.length} suggestion${suggestions.length === 1 ? "" : "s"}`),
+      { className: "flex flex-wrap items-baseline justify-between gap-2" },
+      h("h2", { id: "ai-redaction-title", className: "text-base font-semibold text-ink" }, "AI redaction suggestions"),
+      h(
+        "span",
+        { className: "datum text-xs text-ink-muted" },
+        `${suggestions.length} suggestion${suggestions.length === 1 ? "" : "s"}`,
+      ),
     ),
     h(
       "p",
-      { className: "mb-3 text-xs text-purple-300/80 leading-relaxed" },
-      "Review flagged identity-revealing phrases identified by the verifiable NEAR AI TEE enclave.",
+      { className: "text-xs leading-relaxed text-ink-muted" },
+      "The enclave ran inside confidential computing and returned these spans. Nothing it flags leaves the tip until you accept it, and it misses things: read your own text too.",
     ),
     h(
-      "div",
-      { className: "space-y-3" },
+      "ul",
+      { className: "divide-y divide-rule" },
       suggestions.map((s, idx) =>
         h(
-          "div",
-          { key: idx, className: "rounded-lg bg-black/50 p-3 border border-purple-900/40 text-xs space-y-2" },
+          "li",
+          { key: idx, className: "space-y-2 py-3" },
           h(
             "div",
-            { className: "flex flex-col sm:flex-row sm:items-center justify-between gap-1.5" },
-            h("span", { className: "text-red-400 font-mono line-through break-all" }, `"${s.span}"`),
-            h("span", { className: "text-emerald-400 font-mono font-medium break-all" }, `→ "${s.replacement}"`),
+            { className: "flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm" },
+            h("span", { className: "datum break-all text-ink-muted line-through" }, `"${s.span}"`),
+            h("span", { className: "datum break-all font-semibold text-ink", "aria-label": "Replacement" }, s.replacement),
           ),
-          h("p", { className: "text-neutral-400 text-[11px] italic leading-normal" }, s.reason),
+          h("p", { className: "text-xs text-ink-muted" }, s.reason),
           (onAccept || onReject) &&
             h(
               "div",
-              { className: "pt-2 flex flex-col sm:flex-row gap-2 sm:justify-end border-t border-purple-900/30" },
+              { className: "flex flex-col gap-2 sm:flex-row sm:justify-end" },
               onReject &&
                 h(
                   "button",
@@ -54,10 +58,9 @@ export function RedactionReview({ suggestions, onAccept, onReject }: RedactionRe
                     type: "button",
                     onClick: () => onReject(idx),
                     "aria-label": `Keep original text "${s.span}" and discard suggestion`,
-                    className:
-                      "min-h-[44px] px-3.5 py-2 bg-neutral-800 text-neutral-200 rounded-lg hover:bg-neutral-700 text-xs font-medium transition-colors flex items-center justify-center cursor-pointer border border-neutral-700",
+                    className: "btn-secondary min-h-[44px] px-3.5 text-xs",
                   },
-                  "Keep Original",
+                  "Keep the original",
                 ),
               onAccept &&
                 h(
@@ -66,10 +69,9 @@ export function RedactionReview({ suggestions, onAccept, onReject }: RedactionRe
                     type: "button",
                     onClick: () => onAccept(idx),
                     "aria-label": `Accept replacement "${s.replacement}" for "${s.span}"`,
-                    className:
-                      "min-h-[44px] px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-500 text-xs font-semibold transition-colors flex items-center justify-center cursor-pointer shadow-sm",
+                    className: "btn-primary min-h-[44px] px-4 text-xs",
                   },
-                  "✓ Accept Replacement",
+                  "Accept the replacement",
                 ),
             ),
         ),
