@@ -14,7 +14,8 @@ export default function LandingPage() {
     <div className="selection:bg-ask selection:text-paper">
       <section aria-labelledby="hero-title" className="mx-auto w-full max-w-6xl px-4 pt-12 pb-10 sm:px-6 sm:pt-20">
         <p className="mb-4 text-[11px] uppercase tracking-[0.22em] text-on-ground-muted">
-          NEAR testnet. Hackathon build. No contract has run on a live chain.
+          NEAR testnet. Hackathon build. Both contracts are live on testnet. No tip has been through
+          them yet.
         </p>
         <h1
           id="hero-title"
@@ -162,9 +163,9 @@ export default function LandingPage() {
           <div className="card-inset p-5">
             <h3 className="text-sm font-semibold text-ink">Not yet proved</h3>
             <p className="mt-3 text-[13px] leading-relaxed text-ink-muted">
-              The switch is written, tested, and has never run against a live contract. Deploying it is the
-              next step, and it needs testnet funds. Until that happens, treat every on-chain behaviour on
-              this page as tested rather than demonstrated.
+              Both contracts are deployed and initialised on testnet, and programme 0 holds 1,000 tUSDC
+              in escrow. No tip has been submitted through them, so the switch, a triage vote and a
+              claim have run in tests and a sandbox chain, not on this deployment.
             </p>
             <p className="mt-4 text-[13px] leading-relaxed text-ink-muted">
               The quote endpoint that would show a cross-chain payout is still a stub answering 501.
@@ -397,7 +398,7 @@ const PROOF = [
   {
     claim: "Contracts enforce escrow and the switch",
     evidence: "258 Rust tests, 176 of them contract units, 55 in a sandbox chain",
-    gap: "No contract has been deployed. The deploy script has only ever run as a read-only plan.",
+    gap: "Deployed on testnet 2026-11-10, but no tip has gone through them yet: escrow release, the switch and the claim are still demonstrated in tests and a sandbox chain only.",
   },
   {
     claim: "No third-party loads",

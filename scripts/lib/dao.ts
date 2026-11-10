@@ -156,6 +156,24 @@ export const daoProposalBond = async (net: Net, dao: string): Promise<bigint> =>
   parseDaoPolicy(await view(net, dao, "get_policy")).proposalBond;
 
 /**
+ * A DAO that has just been created answers `get_last_proposal_id` with 0 whether it holds no
+ * proposals or exactly one, id 0 — so a vote cannot trust that read to mean the proposal exists.
+ * This waits until it can be read back, and refuses rather than voting on an id that is not there.
+ */
+export const waitForProposal = async (
+  read: (id: number) => Promise<unknown>,
+  id: number,
+  { attempts = 30, intervalMs = 1_000 }: { attempts?: number; intervalMs?: number } = {},
+): Promise<void> => {
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    const proposal = await read(id);
+    if (proposal !== null && proposal !== undefined) return;
+    if (attempt < attempts) await new Promise((resolve) => setTimeout(resolve, intervalMs));
+  }
+  throw new Error(`proposal ${id} still cannot be read after ${attempts} attempts — the propose transaction did not land`);
+};
+
+/**
  * Who this DAO says it is.
  */
 export const daoIdentity = async (net: Net, dao: string): Promise<DaoIdentity> => {

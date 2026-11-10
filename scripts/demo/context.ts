@@ -35,7 +35,7 @@ export const createDemoContext = async (overrideEnv?: Record<string, string>): P
   }
 
   const network = envMap.NEAR_NETWORK || "testnet";
-  const rpcUrl = envMap.NEAR_RPC_URL || "https://rpc.testnet.near.org";
+  const rpcUrl = envMap.NEAR_RPC_URL || "https://rpc.testnet.fastnear.com";
   const sealedtipContract = envMap.SEALEDTIP_CONTRACT || "sealedtip.st-hack-f8d075.testnet";
   const tokenContract = envMap.TOKEN_CONTRACT || "tusdc.st-hack-f8d075.testnet";
   const panelDao = envMap.PANEL_DAO || "sealedtip-panel.sputnik-v2.testnet";

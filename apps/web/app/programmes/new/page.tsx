@@ -174,7 +174,7 @@ export default function NewProgrammePage() {
     } else {
       setConfig({
         network: "testnet",
-        rpcUrl: "https://rpc.testnet.near.org",
+        rpcUrl: "https://rpc.testnet.fastnear.com",
         contractId: "sealedtip.testnet",
         apiUrl: "http://localhost:8787",
         tokenContract: "usdc.testnet",
