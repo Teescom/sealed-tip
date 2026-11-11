@@ -16,8 +16,9 @@ sealed-tip/
 ├── project_structure.md          # this file
 ├── ROADMAP.md                    # live task list + status — UPDATE IN EVERY CONTRIBUTION
 ├── tools/roadmap.py              # updates ROADMAP rows; recomputes the header after merges
+├── tools/render_demo_video.py    # renders 1080p demo video MP4 with FFmpeg and headless Chrome
 ├── docs/ISSUES.md                # index of GitHub issues by phase, wave and roadmap ID
-├── docs/p12/                     # Phase 12 outward deliverables (X post, demo video script, hackathon form, Vercel guide, handoff)
+├── docs/p12/                     # Phase 12 outward deliverables (X post, demo video script & MP4, hackathon form, Vercel guide, handoff)
 ├── README.md  LICENSE
 ├── package.json  pnpm-workspace.yaml  tsconfig.base.json  tsconfig.json
 ├── eslint.config.mjs  .prettierrc  .editorconfig  .nvmrc  .gitignore
