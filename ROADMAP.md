@@ -259,6 +259,7 @@ Sealed Tip is **100% ready** when all of these are true:
 ## 6. Changelog (newest first)
 | Date | Tasks | Change | Tests |
 |---|---|---|---|
+| 2026-11-11 | S-12.2, S-12.4, `README.md`, `ROADMAP.md` | Streamlined README to focus exclusively on project objective, architecture flow, and execution/verification instructions ("Do X, See Y"), removing historical narrative and merge backlog stories. | docs only |
 | 2026-11-11 | S-12.2, S-12.4, `README.md`, `ROADMAP.md` | Updated README with live Vercel production deployment URLs (https://sealed-tip-ten.vercel.app), 1080p demo video deliverables (docs/p12/demo-video.mp4), updated test counts (258 Rust + 418 TS), live testnet contract coordinates, and settled 1Click wire findings. | docs only |
 | 2026-11-11 | S-12.5, `ROADMAP.md`, `docs/p12/*` | Deployed production web app via Vercel CLI (`pyper01/sealed-tip`) to https://sealed-tip-ten.vercel.app with testnet contract bindings and dynamic per-request CSP nonce. All 7 application routes return HTTP 200. Updated Phase 12 documentation. | All 7 routes return HTTP 200; CSP verified live |
 | 2026-11-11 | S-12.7, S-12.9, `ROADMAP.md`, `docs/p12/*` | Approved X launch thread (S-12.7) and finalized hackathon submission form (S-12.9) with live testnet deployment coordinates (`sealedtip.st-deployer-f8d075.testnet`). Closed GitHub Issues #155 and #156. Rows flipped 🟡→✅. All 156 repository issues are now closed. | All 258 Rust and 418 TS tests pass; pnpm demo 8/8 pass |
