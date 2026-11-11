@@ -1,11 +1,32 @@
-# Sealed Tip
+<div align="center">
 
-**Anonymous whistleblower tip line on NEAR: rewards locked in advance, evidence sanitized in the browser and in an attested hardware TEE, multichain payouts to burner addresses, and an autonomous dead man's switch.**
+  <img src="docs/assets/pfp.png" alt="Sealed Tip Logo" width="140" height="140" style="border-radius: 32px;" />
 
-> **NEAR Hackathon 2026** · Track: **Privacy & Private AI** · Deadline: 14 Nov 2026, 23:59 UTC  
-> **Live Web App:** [https://sealed-tip-ten.vercel.app](https://sealed-tip-ten.vercel.app) (mirror: [https://sealed-tip.vercel.app](https://sealed-tip.vercel.app))  
-> **Demo Video:** [`docs/p12/demo-video.mp4`](docs/p12/demo-video.mp4) (1080p, 115s) · [Script](docs/p12/demo-video-script.md)  
-> **Repository:** [https://github.com/Teescom/sealed-tip](https://github.com/Teescom/sealed-tip)
+  <h1>SEALED TIP</h1>
+
+  <p>
+    <strong>Anonymous Whistleblower Tip Line on NEAR Protocol</strong><br>
+    <em>Rewards locked in advance · Evidence sanitized in-browser · Verifiable TEE AI · Multichain payouts · Dead man's switch</em>
+  </p>
+
+  <p>
+    <a href="https://github.com/Teescom/sealed-tip/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Teescom/sealed-tip/ci.yml?branch=main&label=CI%20Checks&logo=github&style=flat-square" alt="CI Status" /></a>
+    <a href="https://sealed-tip-ten.vercel.app"><img src="https://img.shields.io/badge/Vercel-Live%20App-000000?style=flat-square&logo=vercel" alt="Vercel Deployment" /></a>
+    <a href="https://near.org"><img src="https://img.shields.io/badge/NEAR%20Hackathon%202026-Privacy%20%26%20Private%20AI-00EC97?style=flat-square&logo=near&logoColor=000000" alt="NEAR Track" /></a>
+    <img src="https://img.shields.io/badge/Tests-676%20Passing-10B981?style=flat-square" alt="Test Suite" />
+    <img src="https://img.shields.io/badge/PRD%20§8%20Demo-8%2F8%20Passed-10B981?style=flat-square" alt="Demo Status" />
+    <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License" /></a>
+  </p>
+
+  <p>
+    <a href="https://sealed-tip-ten.vercel.app"><b>🌐 Live Application</b></a> •
+    <a href="docs/p12/demo-video.mp4"><b>🎥 Demo Video (115s)</b></a> •
+    <a href="ROADMAP.md"><b>🗺️ Roadmap</b></a> •
+    <a href="ARCHITECTURE.md"><b>📐 Architecture</b></a> •
+    <a href="docs/p12/hackathon-submission.md"><b>📜 Hackathon Form</b></a>
+  </p>
+
+</div>
 
 ---
 

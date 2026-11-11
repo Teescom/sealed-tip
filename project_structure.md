@@ -17,7 +17,9 @@ sealed-tip/
 ├── ROADMAP.md                    # live task list + status — UPDATE IN EVERY CONTRIBUTION
 ├── tools/roadmap.py              # updates ROADMAP rows; recomputes the header after merges
 ├── tools/render_demo_video.py    # renders 1080p demo video MP4 with FFmpeg and headless Chrome
+├── tools/generate_pfp.py         # generates brand PFP avatar SVG and 512x512 PNG
 ├── docs/ISSUES.md                # index of GitHub issues by phase, wave and roadmap ID
+├── docs/assets/                  # brand assets (pfp.svg, pfp.png)
 ├── docs/p12/                     # Phase 12 outward deliverables (X post, demo video script & MP4, hackathon form, Vercel guide, handoff)
 ├── README.md  LICENSE
 ├── package.json  pnpm-workspace.yaml  tsconfig.base.json  tsconfig.json
