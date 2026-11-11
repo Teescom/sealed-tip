@@ -14,7 +14,7 @@
 * **Repository URL:** `https://github.com/Teescom/sealed-tip`
 * **License:** MIT (`LICENSE` included in repository root)
 * **Demo Video URL:** `<INSERT_YOUTUBE_OR_LOOM_LINK>` (≤ 2 minutes, following `docs/p12/demo-video-script.md`)
-* **Live Web App URL:** `https://sealed-tip.vercel.app` (testnet)
+* **Live Web App URL:** `https://sealed-tip-ten.vercel.app` (or `https://sealed-tip.vercel.app`, testnet)
 * **Contract Accounts (Testnet):**
   - **Escrow & Tip Lifecycle Contract:** `sealedtip.st-deployer-f8d075.testnet`
   - **Test Token (tUSDC):** `tusdc.st-deployer-f8d075.testnet`
@@ -109,7 +109,7 @@ pnpm verify-attestation -- --fetch deepseek-ai/DeepSeek-V4.1-Flash-1017
 #### Live Testnet Exploration
 - **Deployed Escrow Contract:** `sealedtip.st-deployer-f8d075.testnet`
 - **Sputnik DAO Council:** `st-panel-f8d075.sputnik-v2.testnet`
-- **Web App:** Visit `https://sealed-tip.vercel.app` (or `http://localhost:3000` via `pnpm relayer && pnpm --filter @sealedtip/web dev`):
+- **Web App:** Visit `https://sealed-tip-ten.vercel.app` (or `https://sealed-tip.vercel.app`):
   1. Open Programme 1 (`/p/1`): Inspect on-chain locked bounty.
   2. Go to `/submit/1`: Upload a dirty PDF; inspect the instant client-side cleaning report.
   3. View `/panel`: Observe reviewer triage and cryptographic recusal separation.

@@ -14,7 +14,7 @@
 - **Tone:** Technical, high-conviction, rigorous, and privacy-first. No hype or marketing fluff; emphasize mathematical guarantees, verified enclaves, and code reproducibility.
 - **Key Links:**
   - **Repository:** `https://github.com/Teescom/sealed-tip`
-  - **Live Web App:** `https://sealed-tip.vercel.app` (or custom domain)
+  - **Live Web App:** `https://sealed-tip-ten.vercel.app` (or `https://sealed-tip.vercel.app`)
   - **Demo Video:** `https://youtu.be/<VIDEO_ID>`
 
 ---
@@ -175,7 +175,7 @@ Tested & Verifiable:
 
 Explore the project:
 GitHub: https://github.com/Teescom/sealed-tip
-Live App: https://sealed-tip.vercel.app
+Live App: https://sealed-tip-ten.vercel.app (or https://sealed-tip.vercel.app)
 Demo Video: https://youtu.be/<VIDEO_ID>
 ```
 

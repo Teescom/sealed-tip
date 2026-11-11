@@ -8,7 +8,7 @@
 
 ## 1. Overview & Architecture
 
-The Sealed Tip web tier is a **Next.js 16 (v16.4.4 App Router)** application styled with **Tailwind CSS v4** residing in `apps/web`. It integrates with internal workspace packages:
+The Sealed Tip web tier is deployed to Vercel production at **`https://sealed-tip-ten.vercel.app`** (and `https://sealed-tip.vercel.app`). It is a **Next.js 16 (v16.4.4 App Router)** application styled with **Tailwind CSS v4** residing in `apps/web`. It integrates with internal workspace packages:
 - `@sealedtip/core`: Contract schemas, zod validators, and JSON-RPC view client.
 - `@sealedtip/crypto`: Client key derivation, ed25519 signing, XChaCha20-Poly1305 encryption, and PoW solver.
 - `@sealedtip/clean`: Client-side rasterization and forensic metadata stripping (PDF/images).
