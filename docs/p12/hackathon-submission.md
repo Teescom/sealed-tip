@@ -16,9 +16,9 @@
 * **Demo Video URL:** `<INSERT_YOUTUBE_OR_LOOM_LINK>` (≤ 2 minutes, following `docs/p12/demo-video-script.md`)
 * **Live Web App URL:** `https://sealed-tip.vercel.app` (testnet)
 * **Contract Accounts (Testnet):**
-  - **Escrow & Tip Lifecycle Contract:** `sealedtip.st-hack-f8d075.testnet`
-  - **Test Token (tUSDC):** `tusdc.st-hack-f8d075.testnet`
-  - **Panel Sputnik DAO v2:** `sealedtip-panel.sputnik-v2.testnet`
+  - **Escrow & Tip Lifecycle Contract:** `sealedtip.st-deployer-f8d075.testnet`
+  - **Test Token (tUSDC):** `tusdc.st-deployer-f8d075.testnet`
+  - **Panel Sputnik DAO v2:** `st-panel-f8d075.sputnik-v2.testnet`
   - **RPC Endpoint:** `https://rpc.testnet.fastnear.com`
 
 ---
@@ -107,8 +107,8 @@ pnpm verify-attestation -- --fetch deepseek-ai/DeepSeek-V4.1-Flash-1017
 ```
 
 #### Live Testnet Exploration
-- **Deployed Escrow Contract:** `sealedtip.st-hack-f8d075.testnet`
-- **Sputnik DAO Council:** `sealedtip-panel.sputnik-v2.testnet`
+- **Deployed Escrow Contract:** `sealedtip.st-deployer-f8d075.testnet`
+- **Sputnik DAO Council:** `st-panel-f8d075.sputnik-v2.testnet`
 - **Web App:** Visit `https://sealed-tip.vercel.app` (or `http://localhost:3000` via `pnpm relayer && pnpm --filter @sealedtip/web dev`):
   1. Open Programme 1 (`/p/1`): Inspect on-chain locked bounty.
   2. Go to `/submit/1`: Upload a dirty PDF; inspect the instant client-side cleaning report.

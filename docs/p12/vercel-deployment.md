@@ -40,8 +40,8 @@ Configure these environment variables in the Vercel Project Settings (**Environm
 |---|---|---|---|
 | `NEXT_PUBLIC_NEAR_NETWORK` | Yes | `testnet` | Target NEAR blockchain environment (`testnet` / `mainnet`). |
 | `NEXT_PUBLIC_NEAR_RPC_URL` | Yes | `https://rpc.testnet.fastnear.com` | FastNEAR high-throughput JSON-RPC endpoint. **Do NOT use `rpc.testnet.near.org`** (it returns 429 CORS errors on browser preflight). |
-| `NEXT_PUBLIC_SEALEDTIP_CONTRACT` | Yes | `sealedtip.st-hack-f8d075.testnet` | Deployed Sealed Tip escrow contract on testnet. |
-| `NEXT_PUBLIC_TOKEN_CONTRACT` | Yes | `tusdc.st-hack-f8d075.testnet` | Deployed mock tUSDC test token contract. |
+| `NEXT_PUBLIC_SEALEDTIP_CONTRACT` | Yes | `sealedtip.st-deployer-f8d075.testnet` | Deployed Sealed Tip escrow contract on testnet. |
+| `NEXT_PUBLIC_TOKEN_CONTRACT` | Yes | `tusdc.st-deployer-f8d075.testnet` | Deployed mock tUSDC test token contract. |
 | `NEXT_PUBLIC_API_URL` | Yes | `https://api.sealedtip.example.com` (or relayer host) | Host for stateless blob storage, relayer queue, and AI redaction proxy. Falls back to `http://localhost:8787` if omitted. |
 
 > [!NOTE]
@@ -115,8 +115,8 @@ Issue #153 requires proving the app **works on a phone**. Verify against this ch
    ```
    NEXT_PUBLIC_NEAR_NETWORK = testnet
    NEXT_PUBLIC_NEAR_RPC_URL = https://rpc.testnet.fastnear.com
-   NEXT_PUBLIC_SEALEDTIP_CONTRACT = sealedtip.st-hack-f8d075.testnet
-   NEXT_PUBLIC_TOKEN_CONTRACT = tusdc.st-hack-f8d075.testnet
+   NEXT_PUBLIC_SEALEDTIP_CONTRACT = sealedtip.st-deployer-f8d075.testnet
+   NEXT_PUBLIC_TOKEN_CONTRACT = tusdc.st-deployer-f8d075.testnet
    NEXT_PUBLIC_API_URL = https://api.sealedtip.example.com
    ```
 5. Click **Deploy**.
