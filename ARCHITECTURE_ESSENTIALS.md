@@ -43,7 +43,7 @@
 
 ## Payout
 - **Testnet:** `Payout::Near{fresh implicit}`.
-- **Mainnet:** `Payout::Intents{deposit_address, memo}` from a 1Click quote (USDC on NEAR to any chain). Verify the deposit method with $1 on day 2; fall back to `Near`.
+- **Mainnet:** `Payout::Intents{deposit_address, memo}` from a 1Click quote (USDC on NEAR to any chain; measured live with INTENTS deposit and $100 swap limit); fallback is `Near`.
 
 ## NEAR AI Cloud calls
 - **Attestation:** `GET /v1/attestation/report?model&provider=near&signing_algo=ecdsa&nonce` with header `x-no-aliasing: true`.
@@ -85,7 +85,7 @@
 
 ## Verify
 - **E2EE from the browser: settled 2026-11-05** (ARCHITECTURE §14.4).
-- The 1Click NEP-141 deposit method (day 2).
+- **The 1Click NEP-141 deposit method: settled 2026-11-10** (ARCHITECTURE §8, §14.1). Measured against live Defuse API: requires INTENTS deposit, returns 64-hex deposit address, $100 swap minimum. Testnet deployment uses Payout::Near.
 - **OutLayer can host the keeper: settled 2026-11-09** (ARCHITECTURE §14.8). Not the daemon — a run is one-shot and capped at 60-180s and there is no scheduler. It can host the release step, with their untrusted external scheduler outside the enclave and `view()`/`call()` inside it.
 
 ## Confirmed

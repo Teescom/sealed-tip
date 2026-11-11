@@ -256,7 +256,7 @@ what follows each one is what was measured or decided when the route was written
   instead of filling one in. The tipster signs `Payout::Intents`; track progress with
   `GET /v0/status?depositAddress=…`. The cheapest live quote measured was **$100** (a $50 request was
   refused with "Temporary swap limits: minimum swap amount is $100"), which a 500 tUSDC demo reward clears.
-- **VERIFY with $1 on day 2** that a plain `ft_transfer` to the deposit address is the correct NEP-141 deposit. If not, mainnet payout falls back to `Payout::Near`, followed by a swap the tipster does themselves.
+- **Settled 2026-11-10 (S-0.6):** live measurement against `https://1click.chaindefuser.com/v0` confirmed that `depositType: "INTENTS"` with `dry: false` returns a 64-hex intent `depositAddress`. 1Click currently enforces a temporary **$100 minimum swap amount** (requests under 100,000,000 base units are refused with HTTP 400). Payout via `ft_transfer` to the returned `depositAddress` with memo is implemented in `contracts/sealedtip/src/token.rs` and proxied in `apps/api/src/quote/oneclick.ts`. On testnet, the product operates with `Payout::Near` (zero external dependencies).
 
 ## 9. Services
 **tip-api**
@@ -341,7 +341,7 @@ The full list lives in `.env.example` (source of truth). Change both together.
 | B3 | Cleaning gaps (incremental PDF updates, embedded EXIF, rsid, printer dots) | Rasterise PDFs; re-encode images; scan mode; refuse DOCX | Applied |
 | B4 | E2EE availability | Decision: stateless proxy, optional AI step, honest UI copy; E2EE replaces it if the day-1 spike succeeds | Applied — spike succeeded, see §14.4 |
 | B5 | Fresh payout account unusable | `storage_deposit` plus `gas_drip` from `ops_balance` | Applied |
-| B6 | 1Click NEP-141 deposit method | $1 mainnet test on day 2; fall back to `Payout::Near` | Pending verification |
+| B6 | 1Click NEP-141 deposit method | 1Click measured live (INTENTS deposit, $100 swap limit); fall back to `Payout::Near` | Applied |
 | B7 | Timestamp linkage | Random relayer delay | Applied |
 | B8 | Canonical JSON fragility | Borsh plus domain tag; shared vectors | Applied |
 | B9 | Relayer/keeper single point of failure | 2 relayers; keeper heartbeat shown publicly | Applied |
