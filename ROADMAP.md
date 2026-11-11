@@ -259,6 +259,7 @@ Sealed Tip is **100% ready** when all of these are true:
 ## 6. Changelog (newest first)
 | Date | Tasks | Change | Tests |
 |---|---|---|---|
+| 2026-11-11 | S-12.2, S-12.4, `README.md`, `ROADMAP.md` | Removed step-by-step command reference table, repository map, and contributing section from README per maintainer request to keep documentation concise and focused on objective and quickstart execution. | docs only |
 | 2026-11-11 | S-12.2, S-12.4, `README.md`, `project_structure.md`, `tools/generate_pfp.py` | Added brand profile picture (pfp.svg/pfp.png), centered README header with SEALED TIP title, status badges (CI, Vercel, NEAR Track, tests, demo, license), and navigation links. | docs only |
 | 2026-11-11 | S-12.2, S-12.4, `README.md`, `ROADMAP.md` | Streamlined README to focus exclusively on project objective, architecture flow, and execution/verification instructions ("Do X, See Y"), removing historical narrative and merge backlog stories. | docs only |
 | 2026-11-11 | S-12.2, S-12.4, `README.md`, `ROADMAP.md` | Updated README with live Vercel production deployment URLs (https://sealed-tip-ten.vercel.app), 1080p demo video deliverables (docs/p12/demo-video.mp4), updated test counts (258 Rust + 418 TS), live testnet contract coordinates, and settled 1Click wire findings. | docs only |

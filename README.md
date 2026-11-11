@@ -131,39 +131,6 @@ pnpm spam
 
 ---
 
-## Step-by-Step Command Reference ("Do X, See Y")
-
-| Command | Action (Do X) | Expected Result (See Y) |
-|---|---|---|
-| `pnpm build:contract` | Compile contracts to WebAssembly | Builds `target/near/sealedtip/sealedtip.wasm` (275 KB) and `target/near/mock_ft/mock_ft.wasm` (152 KB). |
-| `pnpm build` | Full workspace build | Compiles contracts, type-checks all 7 workspace packages, and builds Next.js 16 production bundle (`apps/web`). |
-| `pnpm test` | Run entire test suite | **676 tests pass** (258 Rust unit + sandbox tests, 418 TypeScript workspace tests) with **0 failed, 0 skipped, 0 ignored**. |
-| `pnpm lint` | Run code quality checks | `cargo fmt --check`, `clippy -D warnings`, `eslint`, and `tsc -b` all pass with 0 errors and 0 warnings. |
-| `pnpm demo` | Execute PRD §8 acceptance story | Simulates all 8 acceptance steps end-to-end in ~1.3s: (1) programme creation & escrow deposit, (2) dirty file cleaning, (3) tip submission with 12-bit PoW, (4) triage reserving funds, (5) Sputnik DAO resolution, (6) unreserved fund withdrawal, (7) anonymous claim with gas drip, and (8) dead man's switch trigger. Exits 0. |
-| `pnpm spam` | Execute anti-spam stress test | Submits 20 spam tips (10 low-PoW, 10 dismissed). Proves contract reserves 0 funds for spam and 100% of unreserved funds remain safe. |
-| `pnpm relayer` & `pnpm --filter @sealedtip/web dev` | Run local web app & relayer | Starts stateless relayer API at `http://localhost:8787` and Next.js frontend at `http://localhost:3000`. |
-| `pnpm verify-attestation -- --fetch <model>` | Verify live TEE hardware quote | Fetches Intel TDX attestation quote from NEAR AI Cloud and verifies DCAP quote, nonce binding, and ECDSA signature offline (54+ checks pass). |
-| `pnpm sign-statement` | Offline identity statement proof | Signs an identity assertion statement using the tipster's ed25519 secret and verifies it against the on-chain claim public key without revealing recovery words. |
-
----
-
-## Repository Map
-
-| Directory / Package | Description |
-|---|---|
-| `contracts/sealedtip/` | Escrow, proof-of-work, tip lifecycle, and dead man's switch smart contract (Rust, `near-sdk` 5.30). |
-| `contracts/mock-ft/` | NEP-141/145/148 test token (`tUSDC`) for escrow testing. |
-| `packages/crypto/` | Client crypto: BIP39 recovery words, HKDF key derivation, ed25519 action signing, XChaCha20 encryption, and 12-bit PoW solver. |
-| `packages/clean/` | Browser evidence sanitization: PDF canvas rasterization, EXIF/GPS stripping, and scan-mode tracking dot suppression. |
-| `packages/core/` | Shared types, zod schemas, view-call RPC client, and exhibit bundle envelope. |
-| `apps/web/` | Next.js 16 whistleblower & panel web interface (`/`, `/submit`, `/claim`, `/panel`, `/status`, `/programmes`). |
-| `apps/api/` | Stateless gateway: IP-stripping middleware (`noLogs`), relayer submission queue, and ciphertext blob proxy. |
-| `apps/keeper/` | Autonomous keeper daemon: heartbeat pings and dead man's switch key release. |
-| `docs/p12/` | Outward hackathon deliverables: demo video MP4, script, X launch thread, submission answers, and deployment guides. |
-| `tools/` | Utility scripts: `roadmap.py` (task tracker) and `render_demo_video.py` (headless Chrome + FFmpeg demo video generator). |
-
----
-
 ## Technical Limitations & Residual Risks
 
 1. **24-Word Custody:** Anyone who possesses the 24 recovery words controls the tip and can claim the reward. Treat recovery phrases like secret keys.
@@ -181,14 +148,6 @@ pnpm spam
 - **Vendored Code:** Sputnik DAO v2 wasm (`contracts/sealedtip/res/SPUTNIK_VERSION.txt`).
 - **AI Tooling Disclosure:** Code, documentation, and tests were co-authored with AI coding agents following specifications in `AGENTS.md`, `ARCHITECTURE.md`, and `ROADMAP.md`. Maintainer owns architecture, code review, manual verification, testnet deployments, and secret management. Commits carry zero AI attribution trailers.
 - **Single Entry:** Sealed Tip is our sole entry in the NEAR Hackathon 2026.
-
----
-
-## Contributing
-
-- Read `AGENTS.md` before contributing.
-- Every contribution must update `ROADMAP.md` in the same change: task row and Changelog line.
-- Work is tracked in GitHub issues (index: `docs/ISSUES.md`).
 
 ---
 
