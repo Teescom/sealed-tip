@@ -49,6 +49,19 @@ export const quoteRoutes = (deps: QuoteDeps): Hono => {
     return c.json(outcome.quote, 200, { "cache-control": "no-store" });
   });
 
+  app.get("/status", async (c) => {
+    if (deps.quoter === null) {
+      return c.json({ error: "the 1Click quote proxy is not configured on this service" }, 503);
+    }
+    const depositAddress = c.req.query("depositAddress");
+    if (depositAddress === undefined || depositAddress.length === 0) {
+      return c.json({ error: "depositAddress is required, as the quote returned it" }, 400);
+    }
+    const outcome = await deps.quoter.status(depositAddress);
+    if (!outcome.ok) return c.json({ error: outcome.error }, outcome.status);
+    return c.json({ status: outcome.state, detail: outcome.detail }, 200, { "cache-control": "no-store" });
+  });
+
   app.all("*", (c) => c.json({ error: "not found" }, 404));
 
   return app;

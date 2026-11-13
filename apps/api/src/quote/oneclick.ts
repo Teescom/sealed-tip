@@ -6,9 +6,16 @@
 //     `destinationAsset`, `amount`, `refundTo`, `refundType`, `recipient`, `recipientType` and `deadline`.
 //     Posting an empty object answers 400 with that list, which is how the set was learned rather than
 //     copied from a blog.
-//   · a NEAR origin with `depositType: "ORIGIN_CHAIN"` answers 400 `{"message":"Internal server error"}`.
-//     The same request with `depositType` and `refundType` `INTENTS` answers 201, so that is what this
-//     proxy sends. ARCHITECTURE §8 documented ORIGIN_CHAIN and has been corrected to match the live API.
+//   · `depositType` decides how the money moves, and it has to be the way the contract actually pays.
+//     `ORIGIN_CHAIN` is paid by transferring the token to `quote.depositAddress` on NEAR, which is exactly
+//     what `claim_paid_promise` in `contracts/sealedtip/src/token.rs` does. `INTENTS` is the opposite: the
+//     docs say to skip the on-chain transfer and sign an intent instead, so a transfer against an
+//     `INTENTS` quote is paid and never credited. This proxy sends `ORIGIN_CHAIN`.
+//   · the field that fails is `refundType: "ORIGIN_CHAIN"` (500), not `depositType`. Measured 2026-11-13
+//     one field at a time: ORIGIN_CHAIN+INTENTS answers 201, INTENTS+INTENTS answers 201, and either
+//     request with `refundType: ORIGIN_CHAIN` answers 500 `{"message":"Internal server error"}`. The
+//     earlier note here changed both fields at once and read the difference as a verdict on
+//     `depositType` — which would have sent an on-chain transfer against a quote that cannot accept one.
 //   · the numbers live under `quote`: `amountOut` in base units and `amountOutFormatted`. A quote with
 //     `dry: false` also carries `quote.depositAddress` — a 64-hex intents account, with no memo — and a
 //     `dry: true` quote carries no deposit address at all. This proxy always asks for a real quote
@@ -101,7 +108,16 @@ export interface OneClickOptions {
 
 export interface Quoter {
   quote(body: unknown): Promise<QuoteOutcome>;
+  /**
+   * `GET /v0/status` for a deposit the claim already signed. Without it a tipster can choose a cross-chain
+   * payout and then have no way to see whether it landed — the claim page is the only surface they have.
+   */
+  status(depositAddress: string): Promise<StatusOutcome>;
 }
+
+export type StatusOutcome =
+  | { readonly ok: true; readonly state: string; readonly detail: Record<string, unknown> }
+  | { readonly ok: false; readonly status: 400 | 502; readonly error: string };
 
 const describe = (issues: readonly z.ZodIssue[]): string =>
   issues.map((issue) => `${issue.path.map(String).join(".")}: ${issue.message}`).join("; ");
@@ -140,7 +156,7 @@ export const createQuoter = (options: OneClickOptions): Quoter => {
         swapType: "EXACT_INPUT",
         slippageTolerance: parsed.data.slippageTolerance ?? DEFAULT_SLIPPAGE_BPS,
         originAsset,
-        depositType: "INTENTS",
+        depositType: "ORIGIN_CHAIN",
         destinationAsset,
         amount: parsed.data.amount,
         refundTo: parsed.data.refundTo ?? options.refundTo,
@@ -199,6 +215,39 @@ export const createQuoter = (options: OneClickOptions): Quoter => {
           destinationAsset: parsed.data.destinationAsset,
         },
       };
+    },
+
+    status: async (depositAddress: string): Promise<StatusOutcome> => {
+      // Checked before the call, not after: the address is the only thing this route carries, and a
+      // malformed one is a caller error that should cost nothing and name no upstream.
+      if (!/^[0-9a-f]{64}$/.test(depositAddress)) {
+        return { ok: false, status: 400, error: "depositAddress must be 64 lowercase hex characters" };
+      }
+      let response: Response;
+      try {
+        response = await send(`${base}/status?depositAddress=${depositAddress}`, {
+          method: "GET",
+          headers: { authorization: `Bearer ${options.apiKey}` },
+          signal: AbortSignal.timeout(timeoutMs),
+        });
+      } catch (error) {
+        const timeout = error instanceof Error && error.name === "TimeoutError";
+        return { ok: false, status: 502, error: timeout ? `1Click did not answer within ${timeoutMs}ms` : "1Click could not be reached" };
+      }
+      const text = await response.text();
+      if (!response.ok) {
+        // The status and the upstream message only; never the address we asked about.
+        const stated = asString(field(readJson(text), "message"));
+        const detail = stated === undefined ? "" : `: ${stated.slice(0, 200)}`;
+        return { ok: false, status: 502, error: `1Click answered ${response.status}${detail}` };
+      }
+      const data = readJson(text);
+      const state = asString(field(data, "status")) ?? "UNKNOWN";
+      // A status body is an object; anything else (an HTML error page, a bare string) is reported as an
+      // unknown state rather than pretending to have parsed one.
+      const detail =
+        typeof data === "object" && data !== null && !Array.isArray(data) ? (data as Record<string, unknown>) : {};
+      return { ok: true, state, detail };
     },
   };
 };

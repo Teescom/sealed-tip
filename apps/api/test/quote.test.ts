@@ -81,7 +81,7 @@ test("the request is the one the live API accepted, field for field", async () =
     swapType: "EXACT_INPUT",
     slippageTolerance: 100,
     originAsset: ASSETS["USDC.near"],
-    depositType: "INTENTS",
+    depositType: "ORIGIN_CHAIN",
     destinationAsset: ASSETS["Tron USDT"],
     amount: "150000000",
     refundTo: "sealedtip.testnet",
@@ -261,4 +261,49 @@ test("a successful quote is returned through the real app and cached by nobody",
 
   const get = await app.request("/quote");
   assert.equal(get.status, 404, "a GET has nothing to answer with");
+});
+
+test("a claim's deposit address can be tracked, and the answer names only its state", async () => {
+  const sent: Sent[] = [];
+  const quoter = createQuoter({
+    apiKey: KEY,
+    refundTo: "sealedtip.testnet",
+    base: "https://quote.test",
+    fetchFn: async (url, init) => {
+      sent.push({ url, init });
+      return json({ status: "SUCCESS", destination: "tron", amountOut: "1019666" });
+    },
+  });
+  const app = createApp({ blobs: memoryBlobStore(1024), relay: new Hono(), ai: new Hono(), quote: quoteRoutes({ quoter }) });
+  const address = "5d57ab149dfe88d29f3dab3fc06ba6911e8b3a135ce0eeb6ab7b227abbb75f84";
+
+  const response = await app.request(`/quote/status?depositAddress=${address}`);
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("cache-control"), "no-store", "a status that is cached is a status that lies");
+  const body = (await response.json()) as { status: string };
+  assert.equal(body.status, "SUCCESS");
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0]?.url, `https://quote.test/status?depositAddress=${address}`);
+});
+
+test("a malformed deposit address is refused before anything upstream is called", async () => {
+  const sent: Sent[] = [];
+  const quoter = createQuoter({
+    apiKey: KEY,
+    refundTo: "sealedtip.testnet",
+    base: "https://quote.test",
+    fetchFn: async (url, init) => {
+      sent.push({ url, init });
+      return json({ status: "SUCCESS" });
+    },
+  });
+  const app = createApp({ blobs: memoryBlobStore(1024), relay: new Hono(), ai: new Hono(), quote: quoteRoutes({ quoter }) });
+
+  for (const bad of ["", "not-hex", "A".repeat(64), "a".repeat(63)]) {
+    const response = await app.request(`/quote/status?depositAddress=${bad}`);
+    assert.equal(response.status, 400, `accepted ${JSON.stringify(bad)}`);
+    const body = (await response.json()) as { error: string };
+    if (bad.length > 0) assert.ok(!body.error.includes(bad), "the refusal repeated the address");
+  }
+  assert.equal(sent.length, 0, "a caller error must not reach 1Click");
 });

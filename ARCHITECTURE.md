@@ -247,16 +247,29 @@ what follows each one is what was measured or decided when the route was written
     integer string, `refundTo` (a NEAR account; the proxy defaults it to the contract that paid out), and
     `deadline` (an ISO timestamp the proxy sets to ten minutes out).
 
-  **Measured 2026-11-10, which corrected this section.** The live API's own 400 lists the required fields,
-  and it answered a NEAR origin with `depositType: "ORIGIN_CHAIN"` — what this section said before — with
-  `400 {"message":"Internal server error"}`. The same request with `INTENTS` answered `201`. A quote with
-  `dry: false` carries `quote.depositAddress` (a 64-hex intents account, no memo); a `dry: true` quote
-  carries no address at all. The proxy therefore always asks for a real quote, flattens the answer into
-  `{depositAddress, memo, estimatedAmount, destinationAsset}`, and refuses a reply without an address
-  instead of filling one in. The tipster signs `Payout::Intents`; track progress with
-  `GET /v0/status?depositAddress=…`. The cheapest live quote measured was **$100** (a $50 request was
-  refused with "Temporary swap limits: minimum swap amount is $100"), which a 500 tUSDC demo reward clears.
-- **Settled 2026-11-10 (S-0.6):** live measurement against `https://1click.chaindefuser.com/v0` confirmed that `depositType: "INTENTS"` with `dry: false` returns a 64-hex intent `depositAddress`. 1Click currently enforces a temporary **$100 minimum swap amount** (requests under 100,000,000 base units are refused with HTTP 400). Payout via `ft_transfer` to the returned `depositAddress` with memo is implemented in `contracts/sealedtip/src/token.rs` and proxied in `apps/api/src/quote/oneclick.ts`. On testnet, the product operates with `Payout::Near` (zero external dependencies).
+  **Re-measured 2026-11-13, which corrected this section twice.** The first measurement changed
+  `depositType` and `refundType` together, saw `201`, and concluded that a NEAR origin requires
+  `depositType: "INTENTS"`. That was wrong: the two fields answer different questions. Measured one at a
+  time, `ORIGIN_CHAIN` + `INTENTS` answers `201`, `INTENTS` + `INTENTS` answers `201`, and either request
+  with `refundType: "ORIGIN_CHAIN"` answers `500 {"message":"Internal server error"}`. The field that
+  fails is `refundType` — which this section never asked for.
+  This is not a naming detail. `INTENTS` and `ORIGIN_CHAIN` describe opposite movements: the docs say an
+  `INTENTS` deposit **skips the on-chain transfer** and is paid by signing an intent instead, while
+  `ORIGIN_CHAIN` is paid by transferring the token to `quote.depositAddress` — exactly what
+  `claim_paid_promise` in `contracts/sealedtip/src/token.rs` does. The proxy therefore sends
+  `depositType: "ORIGIN_CHAIN"` with `refundType: "INTENTS"`; against an `INTENTS` quote its `ft_transfer`
+  would have been paid and never credited.
+  A quote with `dry: false` carries `quote.depositAddress` (a 64-hex intents account, no memo); a
+  `dry: true` quote carries no address at all, so the proxy always asks for a real quote, flattens the
+  answer into `{depositAddress, memo, estimatedAmount, destinationAsset}`, and refuses a reply without an
+  address instead of filling one in. The tipster signs `Payout::Intents`; track progress with
+  `GET /v0/status?depositAddress=…`. The floor is **not $100**: a 1.00 USDC request is refused with
+  "Amount is too low for bridge, try at least 1870833", so USDC→Tron USDT costs **1.870833 USDC** at the
+  cheapest, and the number moves with the route. `pnpm verify:1click` reads that floor out of the live
+  refusal rather than hardcoding it, and checks the request shape, the deposit type and the 64-hex address
+  without moving funds. It cannot check that 1Click credits and bridges a deposit, because **NEAR Intents
+  has no testnet deployment** — 1Click's quickstart says so plainly, and `intents.testnet` holds no code.
+- **Settled 2026-11-13 (S-0.6):** live measurement against `https://1click.chaindefuser.com/v0` confirmed that `depositType: "ORIGIN_CHAIN"` with `dry: false` returns a 64-hex `depositAddress`, and that `refundType` has to stay `INTENTS`. The floor for USDC.near→Tron USDT is **1.870833 USDC**, not the $100 recorded earlier. Payout via `ft_transfer` to the returned `depositAddress` with memo is implemented in `contracts/sealedtip/src/token.rs` and proxied in `apps/api/src/quote/oneclick.ts`. The crediting and bridging step has **never been exercised**: there is no testnet NEAR Intents, so it needs ~1.87 USDC of mainnet funds. On testnet the product operates with `Payout::Near` (zero external dependencies) and does not use this rail.
 
 ## 9. Services
 **tip-api**
@@ -266,6 +279,7 @@ what follows each one is what was measured or decided when the route was written
 | `POST /relay/:action` | Queue signed actions; random delay; per-IP-less rate limit (token bucket keyed by claim pubkey + global) |
 | `POST /ai/redact` | Stateless proxy plus attestation bundle (built, S-8.5); answers 503 with no API key and keeps nothing |
 | `POST /quote` | 1Click quote proxy (built, S-8.6); answers 503 with no API key, 502 on an upstream failure, and caches nothing |
+| `GET /quote/status?depositAddress=` | tracks a deposit the claim already signed: validates the 64-hex address before calling anything, proxies `GET /v0/status`, answers `no-store`, and never repeats the address in an error. 503 with no API key, like `/quote` |
 
 - Run **2 relayer instances** with separate accounts, both allow-listed.
 - The `noLogs` middleware drops IPs and bodies; a test asserts it.
@@ -341,7 +355,7 @@ The full list lives in `.env.example` (source of truth). Change both together.
 | B3 | Cleaning gaps (incremental PDF updates, embedded EXIF, rsid, printer dots) | Rasterise PDFs; re-encode images; scan mode; refuse DOCX | Applied |
 | B4 | E2EE availability | Decision: stateless proxy, optional AI step, honest UI copy; E2EE replaces it if the day-1 spike succeeds | Applied — spike succeeded, see §14.4 |
 | B5 | Fresh payout account unusable | `storage_deposit` plus `gas_drip` from `ops_balance` | Applied |
-| B6 | 1Click NEP-141 deposit method | 1Click measured live (INTENTS deposit, $100 swap limit); fall back to `Payout::Near` | Applied |
+| B6 | 1Click NEP-141 deposit method | 1Click measured live (ORIGIN_CHAIN deposit, ~1.87 USDC floor, no testnet for NEAR Intents); fall back to `Payout::Near` | Applied |
 | B7 | Timestamp linkage | Random relayer delay | Applied |
 | B8 | Canonical JSON fragility | Borsh plus domain tag; shared vectors | Applied |
 | B9 | Relayer/keeper single point of failure | 2 relayers; keeper heartbeat shown publicly | Applied |
