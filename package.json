@@ -1,9 +1,12 @@
 {
   "name": "sealed-tip",
   "private": true,
-  "description": "Pay whistleblowers without ever learning who they are — on NEAR",
+  "description": "Pay whistleblowers without ever learning who they are \u2014 on NEAR",
   "license": "MIT",
-  "engines": { "node": ">=22", "pnpm": ">=9" },
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=9"
+  },
   "scripts": {
     "build": "pnpm build:contract && pnpm -r build",
     "build:contract": "cargo near build non-reproducible-wasm --manifest-path contracts/sealedtip/Cargo.toml && cargo near build non-reproducible-wasm --manifest-path contracts/mock-ft/Cargo.toml",
@@ -20,8 +23,11 @@
     "deploy:testnet": "pnpm --filter @sealedtip/scripts exec tsx deploy-testnet.ts",
     "seed": "pnpm --filter @sealedtip/scripts exec tsx seed.ts",
     "demo": "pnpm --filter @sealedtip/scripts exec tsx demo.ts",
+    "live": "pnpm --filter @sealedtip/scripts exec tsx live-e2e.ts",
     "spam": "pnpm --filter @sealedtip/scripts exec tsx spam.ts",
     "verify-attestation": "pnpm --filter @sealedtip/scripts exec tsx verify-attestation.ts",
+    "verify:1click": "pnpm --filter @sealedtip/scripts exec tsx verify-1click-quote.ts",
+    "audit:web": "node tools/audit-web.mjs",
     "sign-statement": "pnpm --filter @sealedtip/scripts exec tsx sign-statement.ts",
     "gen-vectors": "pnpm --filter @sealedtip/scripts exec tsx gen-vectors.ts",
     "make:fixtures": "pnpm --filter @sealedtip/clean exec tsx tools/make-fixtures.ts"

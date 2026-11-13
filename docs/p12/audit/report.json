@@ -1,0 +1,308 @@
+[
+  {
+    "route": "/",
+    "viewport": "mobile-390",
+    "title": "Sealed Tip — Anonymous Whistleblower Tip Line",
+    "textLength": 7338,
+    "text": "Skip to main content\nSEALED TIP\nMenu\n\nNEAR TESTNET. HACKATHON BUILD. BOTH CONTRACTS ARE LIVE ON TESTNET, AND THE WHOLE STORY HAS RUN THERE: A TIP TRIAGED, RESOLVED BY THE DAO AND PAID, AND A FIRED SWITCH RELEASED BY THE KEEPER.\n\nA TIP LINE WHOSE SERVERS CANNOT READ YOUR FILES\n\nEvidence is cleaned inside your browser, encrypted before it leaves, and stored as ciphertext. The server that receives it keeps no logs, sets no cookies, and loads nothing that is not part of this build. A reward is held in escrow on-chain before anyone reads what you sent.\n\nSubmit a tip\nWhat gives a document away\nWHAT GIVES A DOCUMENT AWAY\n\nLeaked files carry identifying detail their authors never meant to publish. This is what the cleaner in this build does with each of it. Nothing here is a promise about formats we do not handle.\n\nPDF metadata and revision history\n\nEach page is rasterised to pixels at 150 dpi and re-encoded as JPEG at quality 0.85, then rebuilt as a new document. The text layer, the embedded fonts, the producer string, and the creation and modification timestamps do not survive, because there is nothing left to carry them.\n\nRasterising is the only step that removes the things a PDF can hide: invisible text layers, attached files, and the XMP packet that records who saved it last.\n\nPhoto GPS and camera identity\n\nJPEG and PNG go through decode, canvas, re-encode. EXIF, XMP and IPTC are ",
+    "scriptCount": 25,
+    "scriptsWithoutNonce": 0,
+    "externalReferences": [],
+    "cspHeaders": [
+      "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'nonce-YzZhM2I2MDEtNTcxNS00NGUwLTkxNjgtODMyZDg0MWVkYmQ3'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' http://localhost:8787 https://rpc.testnet.fastnear.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; worker-src 'self' blob:"
+    ],
+    "origins": [
+      "http://localhost:3000"
+    ],
+    "thirdPartyOrigins": [],
+    "consoleErrors": [],
+    "cspViolations": [],
+    "networkFailures": [],
+    "screenshot": "docs/p12/audit/mobile-390_.png"
+  },
+  {
+    "route": "/status",
+    "viewport": "mobile-390",
+    "title": "Sealed Tip — Anonymous Whistleblower Tip Line",
+    "textLength": 491,
+    "text": "Skip to main content\nSEALED TIP\nMenu\nCHECK TIP STATUS\n\nEnter your Tip ID and 24-word recovery phrase to view live status, check in with the dead man's switch, or retract before review. Key verification runs entirely in your browser.\n\nTip ID\n24 Recovery Words\n0 / 24 words\nPassphrase (optional, if used during submit)\nCheck the status\n\nSealed Tip is MIT licensed and built for the NEAR Privacy & Private AI track. It runs on testnet.\n\nNo logs. No cookies. No trackers. No third-party scripts.",
+    "scriptCount": 15,
+    "scriptsWithoutNonce": 0,
+    "externalReferences": [],
+    "cspHeaders": [
+      "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'nonce-M2UxNWQ4ZWItZTAzZS00OGQ5LThjZGQtZDQ5ZGIwZDdiZWU1'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' http://localhost:8787 https://rpc.testnet.fastnear.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; worker-src 'self' blob:"
+    ],
+    "origins": [
+      "http://localhost:3000"
+    ],
+    "thirdPartyOrigins": [],
+    "consoleErrors": [],
+    "cspViolations": [],
+    "networkFailures": [],
+    "screenshot": "docs/p12/audit/mobile-390_status.png"
+  },
+  {
+    "route": "/claim",
+    "viewport": "mobile-390",
+    "title": "Sealed Tip — Anonymous Whistleblower Tip Line",
+    "textLength": 570,
+    "text": "Skip to main content\nSEALED TIP\nMenu\nCLAIM A BOUNTY\n\nSubmit your signed claim anonymously. A testnet NEAR payout works in this build. The cross-chain route through 1Click needs the tip API to hold a 1Click key; until this deployment does, this page will say so rather than show a made-up rate.\n\nTip ID\nRecovery words\n0 / 24 words\nPassphrase (optional, if used during submit)\nCheck whether this tip can be claimed\n\nSealed Tip is MIT licensed and built for the NEAR Privacy & Private AI track. It runs on testnet.\n\nNo logs. No cookies. No trackers. No third-party scripts.",
+    "scriptCount": 15,
+    "scriptsWithoutNonce": 0,
+    "externalReferences": [],
+    "cspHeaders": [
+      "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'nonce-ZjE5OGI1Y2UtMDZkZC00ZmE0LWJiMzctYTI3NjQ0NDg4ODMz'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' http://localhost:8787 https://rpc.testnet.fastnear.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; worker-src 'self' blob:"
+    ],
+    "origins": [
+      "http://localhost:3000"
+    ],
+    "thirdPartyOrigins": [],
+    "consoleErrors": [],
+    "cspViolations": [],
+    "networkFailures": [],
+    "screenshot": "docs/p12/audit/mobile-390_claim.png"
+  },
+  {
+    "route": "/panel",
+    "viewport": "mobile-390",
+    "title": "Sealed Tip — Anonymous Whistleblower Tip Line",
+    "textLength": 505,
+    "text": "Skip to main content\nSEALED TIP\nMenu\nPANEL REVIEW\n\nUnseal an evidence bundle in your own browser, vote on credibility, and sponsor the DAO proposal that pays the bounty.\n\nContract sealedtip.st-hack-f8d075.testnet\n\n1. Panel Member Credentials\nPanel member account *\nX25519 Private Key (Hex or Base64) *\n2. Tip Inspection\nTip ID to Inspect\nFetch tip\n\nSealed Tip is MIT licensed and built for the NEAR Privacy & Private AI track. It runs on testnet.\n\nNo logs. No cookies. No trackers. No third-party scripts.",
+    "scriptCount": 20,
+    "scriptsWithoutNonce": 0,
+    "externalReferences": [],
+    "cspHeaders": [
+      "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'nonce-ZDBlMzVkZTUtZjMwMy00ZDEwLTk2ZmQtZmVkYWUzYWM2ZDcz'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' http://localhost:8787 https://rpc.testnet.fastnear.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; worker-src 'self' blob:"
+    ],
+    "origins": [
+      "http://localhost:3000"
+    ],
+    "thirdPartyOrigins": [],
+    "consoleErrors": [],
+    "cspViolations": [],
+    "networkFailures": [],
+    "screenshot": "docs/p12/audit/mobile-390_panel.png"
+  },
+  {
+    "route": "/programmes/new",
+    "viewport": "mobile-390",
+    "title": "Sealed Tip — Anonymous Whistleblower Tip Line",
+    "textLength": 3395,
+    "text": "Skip to main content\nSEALED TIP\nMenu\nFUND A PROGRAMME\n\nSet the scope and the bounty cap, lock the reward escrow, and hand adjudication to a panel of accounts you choose.\n\nContract sealedtip.st-hack-f8d075.testnet\n\nWhat happens to the money\nNothing is locked when a tip arrives\nA submission reserves no reward funds, so a junk tip cannot freeze the pool. What it costs the tipster is CPU: the proof-of-work puzzle.\nA reserve is taken at triage\nWhen an appointed panel member marks a tip credible, exactly max_reward is reserved from the programme balance. No earlier.\nUnreserved funds stay yours\nbalance − reserved can be moved at any time with withdraw_unreserved, including while another tip is under review.\nA dismissal returns the reserve\nDismissed or rejected: the whole reserve comes back in that call. Accepted below max_reward: the unused part comes back then, and the reward part is freed when the tipster claims.\n1. Programme Configuration\nProgramme title *\nScope URI (Rules, Boundaries & Policy Document) *\nWhat a tip must be about\nMax Reward per Tip (USDC) *\n\nBase units (6 decimals): 5000000000\n\nStarting reward pool (USDC)\n\nTotal fund deposited via NEP-141: 10000000000\n\nOps balance (NEAR) *\n\nCovers gas drips (0.05 NEAR per payout) and NEP-141 destination storage deposits.\n\nPanel DAO account *\n\nCouncil responsible for appointing reviewers and voting on tip resolution.\n\nReward token c",
+    "scriptCount": 15,
+    "scriptsWithoutNonce": 0,
+    "externalReferences": [],
+    "cspHeaders": [
+      "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'nonce-ZWQ5YjIwZWUtMmI0My00MWRiLWI3MGEtZjRmZDk5MmVkNWJi'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' http://localhost:8787 https://rpc.testnet.fastnear.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; worker-src 'self' blob:"
+    ],
+    "origins": [
+      "http://localhost:3000"
+    ],
+    "thirdPartyOrigins": [],
+    "consoleErrors": [],
+    "cspViolations": [],
+    "networkFailures": [],
+    "screenshot": "docs/p12/audit/mobile-390_programmes_new.png"
+  },
+  {
+    "route": "/p/0",
+    "viewport": "mobile-390",
+    "title": "Sealed Tip — Anonymous Whistleblower Tip Line",
+    "textLength": 1092,
+    "text": "Skip to main content\nSEALED TIP\nMenu\nProgrammes\n/\nProgramme #0\n\nKeeper\nInactive (seen 6h ago)\n\nOPEN-SOURCE AUDIT BOUNTY (DEMO)\nOpen\nFunder\nfunder.st-hack-f8d075.testnet\nPanel DAO\nsealedtip-panel.sputnik-v2.testnet\nSubmit a tip to this programme\nScope\nhttps://scope.example.org/audit-rules\nProof-of-work difficulty\n12 bits\nMax bounty per tip\n500 USDC\nStatus\nAccepting tips\nEscrow\nBALANCE\tAMOUNT\nReward escrow\t600 USDC\nReserved\t0 USDC\nOps and gas drip\t0.4487 NEAR\nSubmissions\nSubmitted\n4\nUnder review\n0\nAccepted\n0\nRejected\n0\nBounties paid\n1\nTip activity\n\nTip ids only. Content ids and identities never appear in a public view.\n\nTIP\tSTATUS\tSUBMITTED\tSWITCH DEADLINE\n#0\tPaid\t6h ago\tNone\n#1\tSubmitted\t6h ago\tTriggered (Expired)\n#2\tSubmitted\t6h ago\tTriggered (Expired)\n#3\tSubmitted\t30m ago\tNone\n#4\tSubmitted\t3m ago\tNone\nHAVE EVIDENCE TO SUBMIT?\n\nFiles are cleaned and encrypted in your browser. No wallet, no account, no name.\n\nSubmit a tip\n\nSealed Tip is MIT licensed and built for the NEAR Privacy & Private AI track. It runs on testnet.\n\nNo logs. No cookies. No trackers. No third-party scripts.",
+    "scriptCount": 18,
+    "scriptsWithoutNonce": 0,
+    "externalReferences": [],
+    "cspHeaders": [
+      "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'nonce-MGIwYjc0YzgtNTI3ZC00YzIzLTg4OGEtMWExNDVlNTJlMzU0'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' http://localhost:8787 https://rpc.testnet.fastnear.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; worker-src 'self' blob:"
+    ],
+    "origins": [
+      "http://localhost:3000",
+      "https://rpc.testnet.fastnear.com"
+    ],
+    "thirdPartyOrigins": [
+      "https://rpc.testnet.fastnear.com"
+    ],
+    "consoleErrors": [],
+    "cspViolations": [],
+    "networkFailures": [],
+    "screenshot": "docs/p12/audit/mobile-390_p_0.png"
+  },
+  {
+    "route": "/submit/0",
+    "viewport": "mobile-390",
+    "title": "Sealed Tip — Anonymous Whistleblower Tip Line",
+    "textLength": 1430,
+    "text": "Skip to main content\nSEALED TIP\nMenu\nBack to Open-source audit bounty (demo)\nSUBMIT A TIP\nProgramme\n#0\nMax reward\n500 USDC\nPanel\n3 members\nProof of work\n12 bits\nPrivacy promise: You have no account. Your browser cleans the metadata, encrypts the evidence with keys that never leave this page, and hands the signed submission to a relayer so the request on chain is not yours.\nTip Title *\nDetailed Narrative *\n\nBe cautious of stylometry or unique details that only you could know.\n\nEvidence\nChoose files\n\nPDFs, PNG or JPEG. A PDF is rasterised page by page, so anything a viewer could recover from its revision history is gone; an image is re-encoded without its EXIF.\n\nPanel recusal\n3 active / 3 total\n\nExclude panel members with conflicts of interest. Recused members receive no encryption keys. Per Invariant 6, at least 2 non-recused members must remain.\n\npanel1.st-hack-f8d075.testnet\nOn the panel\nRecuse\npanel2.st-hack-f8d075.testnet\nOn the panel\nRecuse\npanel3.st-hack-f8d075.testnet\nOn the panel\nRecuse\nDead man's switch\n\nNot armed\n\nEnable the switch\n\nIf you stop checking in, the switch triggers at your deadline plus the grace period and the keeper releases the decryption keys to the panel members who were not recused. Nothing happens until then.\n\nSubmit the tip\n\nSealed Tip is MIT licensed and built for the NEAR Privacy & Private AI track. It runs on testnet.\n\nNo logs. No cookies. No tra",
+    "scriptCount": 17,
+    "scriptsWithoutNonce": 0,
+    "externalReferences": [],
+    "cspHeaders": [
+      "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'nonce-YzNmNzhkMjEtYmYwYy00MjZmLWFhODctZTFjY2ExM2Q4OTk3'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' http://localhost:8787 https://rpc.testnet.fastnear.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; worker-src 'self' blob:"
+    ],
+    "origins": [
+      "http://localhost:3000",
+      "https://rpc.testnet.fastnear.com"
+    ],
+    "thirdPartyOrigins": [
+      "https://rpc.testnet.fastnear.com"
+    ],
+    "consoleErrors": [],
+    "cspViolations": [],
+    "networkFailures": [],
+    "screenshot": "docs/p12/audit/mobile-390_submit_0.png"
+  },
+  {
+    "route": "/",
+    "viewport": "desktop-1440",
+    "title": "Sealed Tip — Anonymous Whistleblower Tip Line",
+    "textLength": 7412,
+    "text": "Skip to main content\nSEALED TIP\nANONYMOUS TIP LINE\nProgrammes\nStatus\nClaim\nPanel\nFund a programme\nSubmit a tip\n\nNEAR TESTNET. HACKATHON BUILD. BOTH CONTRACTS ARE LIVE ON TESTNET, AND THE WHOLE STORY HAS RUN THERE: A TIP TRIAGED, RESOLVED BY THE DAO AND PAID, AND A FIRED SWITCH RELEASED BY THE KEEPER.\n\nA TIP LINE WHOSE SERVERS CANNOT READ YOUR FILES\n\nEvidence is cleaned inside your browser, encrypted before it leaves, and stored as ciphertext. The server that receives it keeps no logs, sets no cookies, and loads nothing that is not part of this build. A reward is held in escrow on-chain before anyone reads what you sent.\n\nSubmit a tip\nWhat gives a document away\nWHAT GIVES A DOCUMENT AWAY\n\nLeaked files carry identifying detail their authors never meant to publish. This is what the cleaner in this build does with each of it. Nothing here is a promise about formats we do not handle.\n\nPDF metadata and revision history\n\nEach page is rasterised to pixels at 150 dpi and re-encoded as JPEG at quality 0.85, then rebuilt as a new document. The text layer, the embedded fonts, the producer string, and the creation and modification timestamps do not survive, because there is nothing left to carry them.\n\nRasterising is the only step that removes the things a PDF can hide: invisible text layers, attached files, and the XMP packet that records who saved it last.\n\nPhoto GPS and camera identity\n\n",
+    "scriptCount": 25,
+    "scriptsWithoutNonce": 0,
+    "externalReferences": [],
+    "cspHeaders": [
+      "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'nonce-OWFhNTM0ZDYtYmM3Yy00YjJiLTg3N2MtMGE5MzI5ZTdhOWMz'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' http://localhost:8787 https://rpc.testnet.fastnear.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; worker-src 'self' blob:"
+    ],
+    "origins": [
+      "http://localhost:3000"
+    ],
+    "thirdPartyOrigins": [],
+    "consoleErrors": [],
+    "cspViolations": [],
+    "networkFailures": [],
+    "screenshot": "docs/p12/audit/desktop-1440_.png"
+  },
+  {
+    "route": "/status",
+    "viewport": "desktop-1440",
+    "title": "Sealed Tip — Anonymous Whistleblower Tip Line",
+    "textLength": 565,
+    "text": "Skip to main content\nSEALED TIP\nANONYMOUS TIP LINE\nProgrammes\nStatus\nClaim\nPanel\nFund a programme\nSubmit a tip\nCHECK TIP STATUS\n\nEnter your Tip ID and 24-word recovery phrase to view live status, check in with the dead man's switch, or retract before review. Key verification runs entirely in your browser.\n\nTip ID\n24 Recovery Words\n0 / 24 words\nPassphrase (optional, if used during submit)\nCheck the status\n\nSealed Tip is MIT licensed and built for the NEAR Privacy & Private AI track. It runs on testnet.\n\nNo logs. No cookies. No trackers. No third-party scripts.",
+    "scriptCount": 13,
+    "scriptsWithoutNonce": 0,
+    "externalReferences": [],
+    "cspHeaders": [
+      "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'nonce-NzAwYzY4NTYtNGJlNC00YmE3LWFhYzYtYzhjMzM5NWI1NTgz'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' http://localhost:8787 https://rpc.testnet.fastnear.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; worker-src 'self' blob:"
+    ],
+    "origins": [
+      "http://localhost:3000"
+    ],
+    "thirdPartyOrigins": [],
+    "consoleErrors": [],
+    "cspViolations": [],
+    "networkFailures": [],
+    "screenshot": "docs/p12/audit/desktop-1440_status.png"
+  },
+  {
+    "route": "/claim",
+    "viewport": "desktop-1440",
+    "title": "Sealed Tip — Anonymous Whistleblower Tip Line",
+    "textLength": 644,
+    "text": "Skip to main content\nSEALED TIP\nANONYMOUS TIP LINE\nProgrammes\nStatus\nClaim\nPanel\nFund a programme\nSubmit a tip\nCLAIM A BOUNTY\n\nSubmit your signed claim anonymously. A testnet NEAR payout works in this build. The cross-chain route through 1Click needs the tip API to hold a 1Click key; until this deployment does, this page will say so rather than show a made-up rate.\n\nTip ID\nRecovery words\n0 / 24 words\nPassphrase (optional, if used during submit)\nCheck whether this tip can be claimed\n\nSealed Tip is MIT licensed and built for the NEAR Privacy & Private AI track. It runs on testnet.\n\nNo logs. No cookies. No trackers. No third-party scripts.",
+    "scriptCount": 15,
+    "scriptsWithoutNonce": 0,
+    "externalReferences": [],
+    "cspHeaders": [
+      "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'nonce-MzNmM2E1NTYtYTVkZi00NTQ4LWFkYjAtNGViNmU3OGQyOTAz'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' http://localhost:8787 https://rpc.testnet.fastnear.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; worker-src 'self' blob:"
+    ],
+    "origins": [
+      "http://localhost:3000"
+    ],
+    "thirdPartyOrigins": [],
+    "consoleErrors": [],
+    "cspViolations": [],
+    "networkFailures": [],
+    "screenshot": "docs/p12/audit/desktop-1440_claim.png"
+  },
+  {
+    "route": "/panel",
+    "viewport": "desktop-1440",
+    "title": "Sealed Tip — Anonymous Whistleblower Tip Line",
+    "textLength": 579,
+    "text": "Skip to main content\nSEALED TIP\nANONYMOUS TIP LINE\nProgrammes\nStatus\nClaim\nPanel\nFund a programme\nSubmit a tip\nPANEL REVIEW\n\nUnseal an evidence bundle in your own browser, vote on credibility, and sponsor the DAO proposal that pays the bounty.\n\nContract sealedtip.st-hack-f8d075.testnet\n\n1. Panel Member Credentials\nPanel member account *\nX25519 Private Key (Hex or Base64) *\n2. Tip Inspection\nTip ID to Inspect\nFetch tip\n\nSealed Tip is MIT licensed and built for the NEAR Privacy & Private AI track. It runs on testnet.\n\nNo logs. No cookies. No trackers. No third-party scripts.",
+    "scriptCount": 22,
+    "scriptsWithoutNonce": 0,
+    "externalReferences": [],
+    "cspHeaders": [
+      "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'nonce-NjYxZmQzMmYtNDY5NS00MTE3LWJlYmEtYmVlYWMxMTRhZWE3'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' http://localhost:8787 https://rpc.testnet.fastnear.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; worker-src 'self' blob:"
+    ],
+    "origins": [
+      "http://localhost:3000"
+    ],
+    "thirdPartyOrigins": [],
+    "consoleErrors": [],
+    "cspViolations": [],
+    "networkFailures": [],
+    "screenshot": "docs/p12/audit/desktop-1440_panel.png"
+  },
+  {
+    "route": "/programmes/new",
+    "viewport": "desktop-1440",
+    "title": "Sealed Tip — Anonymous Whistleblower Tip Line",
+    "textLength": 3469,
+    "text": "Skip to main content\nSEALED TIP\nANONYMOUS TIP LINE\nProgrammes\nStatus\nClaim\nPanel\nFund a programme\nSubmit a tip\nFUND A PROGRAMME\n\nSet the scope and the bounty cap, lock the reward escrow, and hand adjudication to a panel of accounts you choose.\n\nContract sealedtip.st-hack-f8d075.testnet\n\nWhat happens to the money\nNothing is locked when a tip arrives\nA submission reserves no reward funds, so a junk tip cannot freeze the pool. What it costs the tipster is CPU: the proof-of-work puzzle.\nA reserve is taken at triage\nWhen an appointed panel member marks a tip credible, exactly max_reward is reserved from the programme balance. No earlier.\nUnreserved funds stay yours\nbalance − reserved can be moved at any time with withdraw_unreserved, including while another tip is under review.\nA dismissal returns the reserve\nDismissed or rejected: the whole reserve comes back in that call. Accepted below max_reward: the unused part comes back then, and the reward part is freed when the tipster claims.\n1. Programme Configuration\nProgramme title *\nScope URI (Rules, Boundaries & Policy Document) *\nWhat a tip must be about\nMax Reward per Tip (USDC) *\n\nBase units (6 decimals): 5000000000\n\nStarting reward pool (USDC)\n\nTotal fund deposited via NEP-141: 10000000000\n\nOps balance (NEAR) *\n\nCovers gas drips (0.05 NEAR per payout) and NEP-141 destination storage deposits.\n\nPanel DAO account *\n\nCouncil responsi",
+    "scriptCount": 15,
+    "scriptsWithoutNonce": 0,
+    "externalReferences": [],
+    "cspHeaders": [
+      "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'nonce-ODJiYzE3ZGUtN2ZmNy00M2RjLTlmN2MtYzFkMjAxMzliMjI3'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' http://localhost:8787 https://rpc.testnet.fastnear.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; worker-src 'self' blob:"
+    ],
+    "origins": [
+      "http://localhost:3000"
+    ],
+    "thirdPartyOrigins": [],
+    "consoleErrors": [],
+    "cspViolations": [],
+    "networkFailures": [],
+    "screenshot": "docs/p12/audit/desktop-1440_programmes_new.png"
+  },
+  {
+    "route": "/p/0",
+    "viewport": "desktop-1440",
+    "title": "Sealed Tip — Anonymous Whistleblower Tip Line",
+    "textLength": 1359,
+    "text": "Skip to main content\nSEALED TIP\nANONYMOUS TIP LINE\nProgrammes\nStatus\nClaim\nPanel\nFund a programme\nSubmit a tip\nProgrammes\n/\nProgramme #0\n\nKeeper\nInactive (seen 6h ago)\n\nOPEN-SOURCE AUDIT BOUNTY (DEMO)\nOpen\nFunder\nfunder.st-hack-f8d075.testnet\nPanel DAO\nsealedtip-panel.sputnik-v2.testnet\nSubmit a tip to this programme\nScope\nhttps://scope.example.org/audit-rules\nProof-of-work difficulty\n12 bits\nMax bounty per tip\n500 USDC\nStatus\nAccepting tips\nEscrow\nBALANCE\tAMOUNT\tWHAT IT CAN BE SPENT ON\nReward escrow\t600 USDC\tBacks submissions the panel calls credible.\nReserved\t0 USDC\tWithheld while a tip is in triage or awaiting a claim.\nOps and gas drip\t0.4487 NEAR\tPays the relayer and the gas a claimer does not have to top up first.\nSubmissions\nSubmitted\n4\nUnder review\n0\nAccepted\n0\nRejected\n0\nBounties paid\n1\nTip activity\n\nTip ids only. Content ids and identities never appear in a public view.\n\nTIP\tSTATUS\tSUBMITTED\tSWITCH DEADLINE\n#0\tPaid\t6h ago\tNone\n#1\tSubmitted\t6h ago\tTriggered (Expired)\n#2\tSubmitted\t6h ago\tTriggered (Expired)\n#3\tSubmitted\t31m ago\tNone\n#4\tSubmitted\t4m ago\tNone\nHAVE EVIDENCE TO SUBMIT?\n\nFiles are cleaned and encrypted in your browser. No wallet, no account, no name.\n\nSubmit a tip\n\nSealed Tip is MIT licensed and built for the NEAR Privacy & Private AI track. It runs on testnet.\n\nNo logs. No cookies. No trackers. No third-party scripts.",
+    "scriptCount": 14,
+    "scriptsWithoutNonce": 0,
+    "externalReferences": [],
+    "cspHeaders": [
+      "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'nonce-OWI0NGZlOWQtNjFlOC00OTcyLTllNWUtM2IxOTQ1OTEyNjlk'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' http://localhost:8787 https://rpc.testnet.fastnear.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; worker-src 'self' blob:"
+    ],
+    "origins": [
+      "http://localhost:3000",
+      "https://rpc.testnet.fastnear.com"
+    ],
+    "thirdPartyOrigins": [
+      "https://rpc.testnet.fastnear.com"
+    ],
+    "consoleErrors": [],
+    "cspViolations": [],
+    "networkFailures": [],
+    "screenshot": "docs/p12/audit/desktop-1440_p_0.png"
+  },
+  {
+    "route": "/submit/0",
+    "viewport": "desktop-1440",
+    "title": "Sealed Tip — Anonymous Whistleblower Tip Line",
+    "textLength": 1504,
+    "text": "Skip to main content\nSEALED TIP\nANONYMOUS TIP LINE\nProgrammes\nStatus\nClaim\nPanel\nFund a programme\nSubmit a tip\nBack to Open-source audit bounty (demo)\nSUBMIT A TIP\nProgramme\n#0\nMax reward\n500 USDC\nPanel\n3 members\nProof of work\n12 bits\nPrivacy promise: You have no account. Your browser cleans the metadata, encrypts the evidence with keys that never leave this page, and hands the signed submission to a relayer so the request on chain is not yours.\nTip Title *\nDetailed Narrative *\n\nBe cautious of stylometry or unique details that only you could know.\n\nEvidence\nChoose files\n\nPDFs, PNG or JPEG. A PDF is rasterised page by page, so anything a viewer could recover from its revision history is gone; an image is re-encoded without its EXIF.\n\nPanel recusal\n3 active / 3 total\n\nExclude panel members with conflicts of interest. Recused members receive no encryption keys. Per Invariant 6, at least 2 non-recused members must remain.\n\npanel1.st-hack-f8d075.testnet\nOn the panel\nRecuse\npanel2.st-hack-f8d075.testnet\nOn the panel\nRecuse\npanel3.st-hack-f8d075.testnet\nOn the panel\nRecuse\nDead man's switch\n\nNot armed\n\nEnable the switch\n\nIf you stop checking in, the switch triggers at your deadline plus the grace period and the keeper releases the decryption keys to the panel members who were not recused. Nothing happens until then.\n\nSubmit the tip\n\nSealed Tip is MIT licensed and built for the NEAR Pr",
+    "scriptCount": 20,
+    "scriptsWithoutNonce": 0,
+    "externalReferences": [],
+    "cspHeaders": [
+      "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'nonce-NjBhYjAwZjgtYzQ3Zi00MTc0LWJiYmEtNzlkZTY3OTAxMGQ5'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' http://localhost:8787 https://rpc.testnet.fastnear.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; worker-src 'self' blob:"
+    ],
+    "origins": [
+      "http://localhost:3000",
+      "https://rpc.testnet.fastnear.com"
+    ],
+    "thirdPartyOrigins": [
+      "https://rpc.testnet.fastnear.com"
+    ],
+    "consoleErrors": [],
+    "cspViolations": [],
+    "networkFailures": [],
+    "screenshot": "docs/p12/audit/desktop-1440_submit_0.png"
+  }
+]

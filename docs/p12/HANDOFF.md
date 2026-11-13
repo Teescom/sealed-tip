@@ -1,5 +1,14 @@
 # Sealed Tip — Session Handoff & Testnet Verification Report
 
+> **Superseded 2026-11-13.** This file records the 2026-11-10 session and is kept as history, not as status.
+> Three of its claims no longer hold: the five "open issues" it lists are all closed (the repo has 0 open issues),
+> Vercel is deployed (`https://sealed-tip-ten.vercel.app` answers 200), and the canonical deployment is
+> `st-hack-f8d075.testnet` — the coordinates below under `st-deployer-f8d075.testnet` are a retired earlier
+> deployment that no key here opens. For current status read the header of `ROADMAP.md`; for the live evidence read
+> the 2026-11-13 Changelog entries and `scripts/live-e2e.ts`.
+
+
+
 **Date:** 2026-11-10  
 **Phase:** Phase 12 (Outward Launch & Testnet Verification)  
 **Status:** Must 90/104 (87%) · Overall 94/111 (85%)  
