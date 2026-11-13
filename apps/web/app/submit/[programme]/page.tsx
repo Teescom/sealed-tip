@@ -8,6 +8,7 @@ import { type RedactionBundle } from "@sealedtip/crypto";
 import { createTipApi } from "@/lib/api";
 import { readPublicConfig, type PublicConfig } from "@/lib/config";
 import { domCanvasHost } from "@/lib/dom-canvas-host";
+import { formatTokenAmount } from "@/app/p/[id]/page";
 import {
   submitTipFlow,
   type FileInput,
@@ -368,7 +369,7 @@ export default function SubmitPage({
           </div>
           <div className="flex gap-2">
             <dt className="text-ink-muted">Max reward</dt>
-            <dd className="datum text-ink">{programme.max_reward}</dd>
+            <dd className="datum text-ink">{formatTokenAmount(programme.max_reward)}</dd>
           </div>
           <div className="flex gap-2">
             <dt className="text-ink-muted">Panel</dt>

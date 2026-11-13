@@ -14,8 +14,8 @@ export default function LandingPage() {
     <div className="selection:bg-ask selection:text-paper">
       <section aria-labelledby="hero-title" className="mx-auto w-full max-w-6xl px-4 pt-12 pb-10 sm:px-6 sm:pt-20">
         <p className="mb-4 text-[11px] uppercase tracking-[0.22em] text-on-ground-muted">
-          NEAR testnet. Hackathon build. Both contracts are live on testnet. No tip has been through
-          them yet.
+          NEAR testnet. Hackathon build. Both contracts are live on testnet. Tips have been
+          relayed to them; no reward has been paid yet.
         </p>
         <h1
           id="hero-title"
@@ -164,11 +164,13 @@ export default function LandingPage() {
             <h3 className="text-sm font-semibold text-ink">Not yet proved</h3>
             <p className="mt-3 text-[13px] leading-relaxed text-ink-muted">
               Both contracts are deployed and initialised on testnet, and programme 0 holds 1,000 tUSDC
-              in escrow. No tip has been submitted through them, so the switch, a triage vote and a
-              claim have run in tests and a sandbox chain, not on this deployment.
+              in escrow. Test tips have been submitted through both relayers and the keeper has posted a
+              heartbeat, and that is all: a triage vote, a switch release and a claim have run in tests
+              and a sandbox chain, not on a live deployment.
             </p>
             <p className="mt-4 text-[13px] leading-relaxed text-ink-muted">
-              The quote endpoint that would show a cross-chain payout is still a stub answering 501.
+              The quote route that would show a cross-chain payout is built, and answers 503 until the
+              tip API is given a 1Click key. No cross-chain payout has been made.
             </p>
           </div>
         </div>
@@ -387,7 +389,7 @@ const DESTINATIONS = [
 const PROOF = [
   {
     claim: "Ciphertext-only storage",
-    evidence: "apps/api privacy middleware, 106 tests",
+    evidence: "apps/api privacy middleware, 121 tests",
     gap: "The API has never served a real tipster. It runs locally.",
   },
   {
@@ -398,7 +400,7 @@ const PROOF = [
   {
     claim: "Contracts enforce escrow and the switch",
     evidence: "258 Rust tests, 176 of them contract units, 55 in a sandbox chain",
-    gap: "Deployed on testnet 2026-11-10, but no tip has gone through them yet: escrow release, the switch and the claim are still demonstrated in tests and a sandbox chain only.",
+    gap: "Deployed on testnet 2026-11-10. Submissions and a keeper heartbeat have run there; triage, escrow release, the switch and the claim are still demonstrated in tests and a sandbox chain only.",
   },
   {
     claim: "No third-party loads",
