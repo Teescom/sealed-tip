@@ -38,7 +38,7 @@ sealed-tip/
 │   ├── web/                      # Next.js (strict CSP; no third-party loads)
 │   ├── api/                      # Hono: blobs (ciphertext only), relayer queue, AI proxy, quotes — noLogs everywhere
 │   └── keeper/                   # switch keeper: heartbeat, view-polled trigger watch, re-seal to non-recused, release
-├── scripts/                      # deploy, seed, demo, spam, verify-attestation, sign-statement, gen-vectors
+├── scripts/                      # deploy, seed, demo, spam, verify-attestation, verify-1click-quote, sign-statement, gen-vectors
 ├── spikes/                       # day-1 verification (ohttp-browser: WebCrypto OHTTP), hand-run, in no workspace
 ├── fixtures/                     # vectors.json (TS↔Rust), fictional files
 └── docs/screenshots/
@@ -131,7 +131,11 @@ res/                     # pinned sputnikdao2.wasm + SPUTNIK_VERSION.txt
 | `apps/keeper/test/support.ts` | the no-network fakes: chain, blobs, calls, real X25519 members | a test never needs a port, a node, a `.env` or a timer |
 | `scripts/lib/app-cert.ts` | Node-only verify of the dstack X.509 chain in `info.app_cert`: leaf → App CA → KMS CA, validity, and the quote's MRTD + RTMR0-3 + compose hash embedded in the signed leaf | stays out of `packages/crypto` because that package must be browser-safe |
 | `scripts/lib/redaction-report.ts` | what a stored redaction bundle proves, as one pure function: the crypto package's checks plus the caller's app-cert chain, the `attestation_hash`, and the `unchecked` gaps in the order a judge reads them | the CLI prints it and `scripts/test/redaction-report.test.ts` asserts its shape, so "verified" cannot be printed over an unverifiable signature |
-| `scripts/*`, `scripts/demo/*` | deploy, seed, demo (PRD §8 acceptance test steps 1-8), spam (anti-spam stress test), verify-attestation, sign-statement, gen-vectors | fictional data only |
+| `scripts/lib/oneclick-quote.ts` | the pure half of `verify-1click-quote.ts`: the `POST /v0/quote` body this project sends, the 64-hex deposit-address rule, the deposit/refund pairing the live API accepts, and the parser for the floor it states in a refusal | no network, so `scripts/test/oneclick-quote.test.ts` can grade the rules a live probe depends on |
+| `scripts/verify-1click-quote.ts` | `pnpm verify:1click`: the free stand-in for the mainnet deposit check. Asserts the request shape, the `ORIGIN_CHAIN` deposit type, a 64-hex deposit address and the floor the API currently enforces, against the production API | moves no funds - a quote returns an address, only a deposit spends one - and states that crediting is untestable because NEAR Intents has no testnet |
+| `scripts/live-e2e.ts` | `pnpm live -- --stage …`: drives the deployed contract through heartbeat, submit, triage, resolve and claim with the relayer's own wire format, so each stage is measured on chain rather than simulated | testnet only - `openNet` refuses a node that does not answer `testnet`; the tipster key is derived from a fixed label so stages run days apart sign as the same person |
+| `tools/audit-web.mjs` | `pnpm audit:web`: drives the installed Chrome over CDP to record the CSP header, the origins, console errors and nonce coverage of every route at phone and desktop widths, writes `docs/p12/audit/report.json` and a screenshot per page, and can type the real 24 words into /status to prove that page works | no dependency added; a headless pass is not a substitute for a hand on a phone, and the note says so |
+| `scripts/*`, `scripts/demo/*` | deploy, seed, demo (PRD §8 acceptance test steps 1-8), live-e2e, spam (anti-spam stress test), verify-attestation, verify-1click-quote, sign-statement, gen-vectors | fictional data only |
 
 Tests use `node:test` via `tsx`. Web tests use Vitest.
 
@@ -146,7 +150,7 @@ Tests use `node:test` via `tsx`. Web tests use Vitest.
 | `make:fixtures` | regenerate `fixtures/files/` and re-verify every leak in them |
 | `lint` | fmt, clippy `-D warnings`, ESLint, `tsc -b` |
 | `dev` / `relayer` / `keeper` | local services |
-| `deploy:testnet`, `seed`, `demo`, `spam`, `verify-attestation`, `sign-statement`, `gen-vectors` | `scripts/*.ts` |
+| `deploy:testnet`, `seed`, `demo`, `live`, `audit:web`, `spam`, `verify-attestation`, `verify:1click`, `sign-statement`, `gen-vectors` | `scripts/*.ts` |
 
 ## 5. Dependency direction
 - `contracts/*` has no TS dependencies.

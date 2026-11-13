@@ -42,7 +42,7 @@ Whistleblowers take immense personal risks to report misconduct, but traditional
 - **Verifiable Private AI (NEAR AI Cloud TEE):** Optional redaction runs in an Intel TDX confidential enclave over OHTTP. The enclave issues hardware attestation quotes and ECDSA completion signatures verifiable offline.
 - **Contract-Enforced Escrow:** Bounties are locked in a NEP-141 contract in advance. Tips require client-side 12-bit Proof-of-Work. Funds are reserved only upon credible triage by appointed reviewers, preventing funder rug-pulls.
 - **Decentralized Governance:** Sputnik DAO v2 council (2-of-3 quorum) adjudicates final reward payouts. Tipsters can recuse compromised reviewers; recused members receive zero decryption keys.
-- **Multichain Payouts:** Claim rewards to fresh anonymous NEAR implicit accounts with an automated gas drip, or bridge to Ethereum, Solana, or Tron via 1Click cross-chain intents.
+- **Multichain Payouts:** Claim rewards to fresh anonymous NEAR implicit accounts with an automated gas drip, or to a 1Click cross-chain quote for Ethereum, Solana or Tron. The 1Click rail is implemented and its quotes are verified live, but a deposit has never been completed end to end — see Limitations.
 - **Autonomous Dead Man's Switch:** If a whistleblower misses scheduled check-in deadlines, an autonomous keeper daemon releases the decryption keys to non-recused panel members.
 
 ---
@@ -51,12 +51,16 @@ Whistleblowers take immense personal risks to report misconduct, but traditional
 
 | Component | Account / URL | Details |
 |---|---|---|
-| **Escrow & Tip Contract** | `sealedtip.st-deployer-f8d075.testnet` | 275 KB wasm deployed; manages tips, PoW, escrow, and switch |
-| **Mock Token (tUSDC)** | `tusdc.st-deployer-f8d075.testnet` | NEP-141 token (6 decimals) |
-| **Sputnik DAO v2 Panel** | `st-panel-f8d075.sputnik-v2.testnet` | 2-of-3 council quorum policy |
+| **Escrow & Tip Contract** | `sealedtip.st-hack-f8d075.testnet` | wasm deployed and seeded; programme 0 escrowed 1,000 tUSDC. The live run paid tip 0 on 2026-11-13 |
+| **Mock Token (tUSDC)** | `tusdc.st-hack-f8d075.testnet` | NEP-141 token (6 decimals) |
+| **Sputnik DAO v2 Panel** | `sealedtip-panel.sputnik-v2.testnet` | 2-of-3 council (panel1–3); executed the `resolve_tip` that accepted tip 0 |
 | **Web Application** | `https://sealed-tip-ten.vercel.app` | Production deployment on Vercel with dynamic per-request CSP nonces |
-| **Relayer A & B** | `rel1.` / `rel2.st-deployer-f8d075.testnet` | Alternate transaction submissions on-chain |
-| **Keeper Daemon** | `keeper.st-deployer-f8d075.testnet` | On-chain heartbeat & automated switch trigger execution |
+| **Relayer A & B** | `rel1.` / `rel2.st-hack-f8d075.testnet` | Both signed on chain: relayer A the tip submission, relayer B the claim |
+| **Keeper Daemon** | `keeper.st-hack-f8d075.testnet` | Heartbeat on chain, and detected a fired switch in 8.45 s to release the keys |
+
+These are the coordinates in `.env` and in `NEXT_PUBLIC_SEALEDTIP_CONTRACT`, so the site and the scripts agree.
+An earlier deployment under `st-deployer-f8d075.testnet` (and its `st-panel-f8d075` DAO) still exists on testnet
+but is retired: no key for it is held here and nothing reads it.
 
 ---
 
@@ -127,6 +131,18 @@ pnpm demo
 
 # 7. Run anti-spam stress test
 pnpm spam
+
+# 8. Run the same story against the deployed testnet contract, one stage at a time
+#    (needs the .env from `deploy:testnet` + `seed`; testnet only, refuses a non-testnet node)
+pnpm live -- --stage heartbeat
+pnpm live -- --stage submit
+pnpm live -- --stage triage  --tip 0
+pnpm live -- --stage resolve --tip 0
+pnpm live -- --stage claim   --tip 0
+
+# 9. Audit the served web app in a real browser (needs Chrome; writes docs/p12/audit/)
+pnpm --filter @sealedtip/web build && pnpm --filter @sealedtip/web start
+pnpm audit:web
 ```
 
 ---
@@ -138,6 +154,7 @@ pnpm spam
 3. **Printer Tracking Dots:** Software thresholding suppresses known printer dot patterns, but cannot guarantee 100% suppression against proprietary hardware micro-dot variants.
 4. **Keeper Trust:** The dead man's switch relies on an appointed keeper to re-seal switch keys. In production, this daemon will run inside an audited confidential TEE enclave.
 5. **Smart Contract Code:** While verified across 258 unit and integration tests, contracts are built for hackathon testnet demonstration and have not received an external third-party security audit.
+6. **1Click Cross-Chain Payout:** The quote path is verified against the live API (`pnpm verify:1click` checks the request shape, the deposit type, the 64-hex deposit address and the current floor without moving funds), and the contract pays it with a plain `ft_transfer`. Nobody has completed a deposit, because NEAR Intents has no testnet deployment and the cheapest quote costs about 1.87 USDC of real funds — so 1Click crediting and bridging the deposit is the one step that remains unproven. The testnet app does not depend on it: it pays `Payout::Near`.
 
 ---
 
