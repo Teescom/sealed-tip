@@ -14,8 +14,8 @@ export default function LandingPage() {
     <div className="selection:bg-ask selection:text-paper">
       <section aria-labelledby="hero-title" className="mx-auto w-full max-w-6xl px-4 pt-12 pb-10 sm:px-6 sm:pt-20">
         <p className="mb-4 text-[11px] uppercase tracking-[0.22em] text-on-ground-muted">
-          NEAR testnet. Hackathon build. Both contracts are live on testnet. Tips have been
-          relayed to them; no reward has been paid yet.
+          NEAR testnet. Hackathon build. Both contracts are live on testnet, and the whole story has
+          run there: a tip triaged, resolved by the DAO and paid, and a fired switch released by the keeper.
         </p>
         <h1
           id="hero-title"
@@ -161,12 +161,12 @@ export default function LandingPage() {
             </ul>
           </div>
           <div className="card-inset p-5">
-            <h3 className="text-sm font-semibold text-ink">Not yet proved</h3>
+            <h3 className="text-sm font-semibold text-ink">What is proved, and what is not</h3>
             <p className="mt-3 text-[13px] leading-relaxed text-ink-muted">
-              Both contracts are deployed and initialised on testnet, and programme 0 holds 1,000 tUSDC
-              in escrow. Test tips have been submitted through both relayers and the keeper has posted a
-              heartbeat, and that is all: a triage vote, a switch release and a claim have run in tests
-              and a sandbox chain, not on a live deployment.
+              The whole story has run on testnet against the deployed contracts: a tip submitted through
+              one relayer, triaged by a panel member (500 tUSDC reserved), resolved by a 2-of-3 DAO vote
+              at 400 tUSDC, and claimed through the other relayer into a fresh implicit account. In a
+              second run a fired switch was detected by the keeper in 8.45 s and released three keys.
             </p>
             <p className="mt-4 text-[13px] leading-relaxed text-ink-muted">
               The quote route that would show a cross-chain payout is built, and answers 503 until the
@@ -400,11 +400,11 @@ const PROOF = [
   {
     claim: "Contracts enforce escrow and the switch",
     evidence: "258 Rust tests, 176 of them contract units, 55 in a sandbox chain",
-    gap: "Deployed on testnet 2026-11-10. Submissions and a keeper heartbeat have run there; triage, escrow release, the switch and the claim are still demonstrated in tests and a sandbox chain only.",
+    gap: "Exercised on testnet 2026-11-13, not only in tests: submission, a triage reserve of 500 tUSDC, a 2-of-3 DAO resolve at 400 tUSDC, a claim paid into a fresh implicit account, and a switch the keeper released 8.45 s after it fired. `pnpm live` re-runs each stage. There has been no external audit.",
   },
   {
     claim: "No third-party loads",
-    evidence: "Per-request CSP nonce, 7 tests, and a served-page audit with zero console violations",
-    gap: "Audited on localhost. The panel-side Tor deployment is not checked.",
+    evidence: "Per-request CSP nonce, 7 tests, and a headless-Chrome audit of 7 routes at 390 px and 1440 px: one CSP header per document, every inline script nonced, zero console or policy violations, and no origin but this one plus the RPC on the two pages that read chain state",
+    gap: "Audited against a local production build. The public Vercel deployment and a Tor-only visit are not covered by that run.",
   },
 ];
