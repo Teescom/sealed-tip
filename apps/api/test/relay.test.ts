@@ -69,7 +69,7 @@ interface Harness {
   readonly app: ReturnType<typeof relayRoutes>;
   readonly limiter: RateLimiter;
   readonly reads: number[];
-  pending: () => number;
+  pending: () => Promise<number>;
 }
 
 /**
@@ -181,7 +181,7 @@ test("a call naming a tip the chain does not have is refused before anything is 
   const res = await post(h.app, "retract", actionBody());
   assert.equal(res.status, 404);
   assert.match(await res.text(), /no tip 7/);
-  assert.equal(h.pending(), 0);
+  assert.equal(await h.pending(), 0);
 });
 
 test("a node we cannot reach is a 502, not a 404", async () => {
@@ -189,7 +189,7 @@ test("a node we cannot reach is a 502, not a 404", async () => {
   const res = await post(h.app, "checkin", actionBody());
   assert.equal(res.status, 502);
   assert.match(await res.text(), /rpc unreachable/);
-  assert.equal(h.pending(), 0);
+  assert.equal(await h.pending(), 0);
 });
 
 test("a submission is never a chain read: there is no tip id to look up yet", async () => {
@@ -197,7 +197,7 @@ test("a submission is never a chain read: there is no tip id to look up yet", as
   const res = await post(h.app, "submit_tip", submitBody());
   assert.equal(res.status, 202);
   assert.equal(h.reads.length, 0);
-  assert.equal(h.pending(), 1);
+  assert.equal(await h.pending(), 1);
 });
 
 // --- the gate itself -------------------------------------------------------------------------
@@ -238,7 +238,7 @@ test("a flood with no global capacity is refused before a chain read or a queue 
   assert.equal(res.status, 429);
   assert.match(await res.text(), /at capacity/);
   assert.equal(h.reads.length, 0);
-  assert.equal(h.pending(), 0);
+  assert.equal(await h.pending(), 0);
 });
 
 test("a rate-limited caller is told how long to wait and keeps its action", async () => {
@@ -248,7 +248,7 @@ test("a rate-limited caller is told how long to wait and keeps its action", asyn
   const second = await post(h.app, "checkin", actionBody());
   assert.equal(second.status, 429);
   assert.equal(second.headers.get("Retry-After"), "60");
-  assert.equal(h.pending(), 1, "a refused action must not have been queued");
+  assert.equal(await h.pending(), 1, "a refused action must not have been queued");
 });
 
 test("a full queue answers 503 instead of growing memory", async () => {
@@ -266,7 +266,7 @@ test("an action body is capped, because a signed action is a few hundred bytes",
     body: JSON.stringify(submitBody({ recused: Array.from({ length: 4000 }, (_, i) => `member${i}.testnet`) })),
   });
   assert.equal(res.status, 413);
-  assert.equal(h.pending(), 0);
+  assert.equal(await h.pending(), 0);
 });
 
 test("a body that is not JSON is a 400, not a crash", async () => {

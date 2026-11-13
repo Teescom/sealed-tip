@@ -39,6 +39,16 @@ const Shape = z.object({
   ONECLICK_API_KEY: Optional(Required),
   /** Comma-separated origins the tipster page is served from; the browser blocks the API without this. */
   WEB_ORIGIN: Optional(Required),
+
+  // The two knobs that move the API from a laptop demo to a deployment (S-8.3, S-8.4). Each is optional
+  // and empty means off, so the demo still runs from process memory. Vercel Blob is the ciphertext store;
+  // Vercel KV (Upstash Redis) is the durable relay queue that a cron drains, because serverless cannot
+  // hold a setTimeout across invocations.
+  BLOB_READ_WRITE_TOKEN: Optional(Required),
+  KV_REST_API_URL: Optional(z.url()),
+  KV_REST_API_TOKEN: Optional(Required),
+  /** The Vercel Cron sends this in an Authorization header, so only the cron can flush the queue. */
+  CRON_SECRET: Optional(Required),
 });
 
 const issueName = (issue: z.core.$ZodIssue): string => issue.path.map(String).join(".") || "(root)";
@@ -80,6 +90,9 @@ const crossChecks = (env: Env): Problem[] => {
   }
   if (env.BLOB_STORE_URL !== undefined && env.BLOB_TOKEN === undefined) {
     problems.push({ name: "BLOB_TOKEN", reason: "is required once BLOB_STORE_URL points at an external store" });
+  }
+  if (env.KV_REST_API_URL !== undefined && env.KV_REST_API_TOKEN === undefined) {
+    problems.push({ name: "KV_REST_API_TOKEN", reason: "is required once KV_REST_API_URL points at the durable queue store" });
   }
   return problems;
 };

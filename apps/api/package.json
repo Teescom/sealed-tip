@@ -12,6 +12,8 @@
   "dependencies": {
     "@hono/node-server": "^2.1.6",
     "@sealedtip/core": "workspace:*",
+    "@vercel/blob": "^2.9.0",
+    "@vercel/kv": "^3.0.0",
     "hono": "^4.13.16",
     "near-api-js": "^7.4.0",
     "zod": "^4.6.7"

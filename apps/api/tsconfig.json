@@ -1,1 +1,12 @@
-{ "extends": "../../tsconfig.base.json", "compilerOptions": { "composite": true, "outDir": "dist" }, "include": ["src", "test"] }
+{
+ "extends": "../../tsconfig.base.json",
+ "compilerOptions": {
+  "composite": true,
+  "outDir": "dist"
+ },
+ "include": [
+  "src",
+  "test",
+  "api"
+ ]
+}

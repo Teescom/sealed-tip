@@ -73,7 +73,7 @@ export const relayRoutes = (deps: RelayDeps): Hono => {
 
     const queued: QueuedAction = { method: verdict.ticket.method, args: verdict.ticket.args };
     try {
-      return c.json(deps.queue.enqueue(queued), 202);
+      return c.json(await deps.queue.enqueue(queued), 202);
     } catch (error) {
       if (error instanceof QueueFullError) return c.json({ error: "relay queue is full" }, 503);
       // Anything else is our bug, and the queue did not take the action. Saying so is better than a 503

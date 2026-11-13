@@ -38,21 +38,21 @@ test("an action is sent once, after its delay, with the arguments the gate valid
       return { txHash: `tx-${sent.length}` };
     },
   });
-  queue.enqueue(action("claim"));
-  assert.equal(queue.pending(), 1);
+  await queue.enqueue(action("claim"));
+  assert.equal(await queue.pending(), 1);
   assert.equal(sent.length, 0, "the queue sent before its delay");
   await queue.idle();
   assert.equal(sent.length, 1);
   assert.ok(sent[0]!.at >= 25, `the delay was ${sent[0]!.at}ms`);
   assert.deepEqual(sent[0]!.action, { method: "claim", args: { tip_id: 1 } });
-  assert.equal(queue.pending(), 0);
+  assert.equal(await queue.pending(), 0);
 });
 
-test("queuedUntil is when the action is expected on chain, which is what the 202 answers", () => {
+test("queuedUntil is when the action is expected on chain, which is what the 202 answers", async () => {
   let clock = 1_000;
   const queue = createQueue({ delayMs: () => 500, send: async () => ({ txHash: "t" }), now: () => clock });
   clock = 4_000;
-  assert.deepEqual(queue.enqueue(action()), { queuedUntil: 4500 });
+  assert.deepEqual(await queue.enqueue(action()), { queuedUntil: 4500 });
 });
 
 test("a relayer that throws is reported and does not become an unhandled rejection", async () => {
@@ -72,14 +72,14 @@ test("a relayer that throws is reported and does not become an unhandled rejecti
       },
       onUndelivered: (a, error) => dropped.push({ action: a, error }),
     });
-    queue.enqueue(action("retract"));
+    await queue.enqueue(action("retract"));
     await queue.idle();
     await tick(10);
     assert.equal(seen.length, 0, `an unhandled rejection reached the process: ${String(seen[0])}`);
     assert.equal(dropped.length, 1);
     assert.equal(dropped[0]!.action.method, "retract");
     assert.match(String(dropped[0]!.error), /relayer out of gas/);
-    assert.equal(queue.pending(), 0, "a failed send must still release its slot");
+    assert.equal(await queue.pending(), 0, "a failed send must still release its slot");
   } finally {
     process.off("unhandledRejection", onRejection);
   }
@@ -94,7 +94,7 @@ test("the undelivered sink never sees the arguments, because it writes to a log"
     },
     onUndelivered: (a, error) => reported.push(`${a.method}: ${String(error)}`),
   });
-  queue.enqueue({ method: "claim", args: { tip_id: 7, signature: "a-signature-that-must-not-be-logged" } });
+  await queue.enqueue({ method: "claim", args: { tip_id: 7, signature: "a-signature-that-must-not-be-logged" } });
   await queue.idle();
   assert.deepEqual(reported, ["claim: Error: no"]);
 });
@@ -103,17 +103,17 @@ test("a flood stops at the cap instead of growing memory", async () => {
   // The delay is 0 and `send` never settles, so the three accepted actions are genuinely *waiting*
   // without leaving a timer that would keep this process alive for a minute.
   const queue = createQueue({ delayMs: () => 0, send: () => new Promise<never>(() => {}), maxPending: 3 });
-  for (let i = 0; i < 3; i++) queue.enqueue(action());
-  assert.equal(queue.pending(), 3);
-  assert.throws(() => queue.enqueue(action()), QueueFullError);
-  assert.throws(() => queue.enqueue(action()), /relay queue is full \(3 actions waiting\)/);
+  for (let i = 0; i < 3; i++) await queue.enqueue(action());
+  assert.equal(await queue.pending(), 3);
+  await assert.rejects(queue.enqueue(action()), QueueFullError);
+  await assert.rejects(queue.enqueue(action()), /relay queue is full \(3 actions waiting\)/);
 });
 
 test("idle resolves once nothing is waiting, and only then", async () => {
   const queue = createQueue({ delayMs: () => 20, send: async () => ({ txHash: "t" }) });
   await queue.idle();
-  queue.enqueue(action());
-  queue.enqueue(action());
+  await queue.enqueue(action());
+  await queue.enqueue(action());
   let settled = false;
   const waiting = queue.idle().then(() => {
     settled = true;
@@ -121,11 +121,11 @@ test("idle resolves once nothing is waiting, and only then", async () => {
   await tick(5);
   assert.equal(settled, false, "idle resolved while two actions were still waiting");
   await waiting;
-  assert.equal(queue.pending(), 0);
+  assert.equal(await queue.pending(), 0);
 });
 
 test("an empty queue is idle immediately, so the demo script cannot deadlock on it", async () => {
   const queue = createQueue({ delayMs: () => 0, send: async () => ({ txHash: "t" }) });
   await queue.idle();
-  assert.equal(queue.pending(), 0);
+  assert.equal(await queue.pending(), 0);
 });

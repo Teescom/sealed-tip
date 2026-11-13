@@ -44,8 +44,8 @@ export interface QueueOptions {
 
 export interface RelayQueue {
   /** Schedules the action and returns the chain-clock estimate of when it will have been sent. */
-  enqueue(action: QueuedAction): { queuedUntil: number };
-  pending(): number;
+  enqueue(action: QueuedAction): Promise<{ queuedUntil: number }>;
+  pending(): Promise<number>;
   /** Resolves once nothing is waiting. For the demo script, which must not read the chain too early. */
   idle(): Promise<void>;
 }
@@ -82,7 +82,7 @@ export const createQueue = (options: QueueOptions): RelayQueue => {
   };
 
   return {
-    enqueue: (action) => {
+    enqueue: async (action) => {
       if (waiting >= maxPending) throw new QueueFullError(maxPending);
       const delay = options.delayMs();
       const queuedUntil = now() + delay;
@@ -90,7 +90,7 @@ export const createQueue = (options: QueueOptions): RelayQueue => {
       setTimeout(() => void fire(action), delay);
       return { queuedUntil };
     },
-    pending: () => waiting,
+    pending: async () => waiting,
     idle: () => (waiting === 0 ? Promise.resolve() : new Promise<void>((resolve) => quiet.push(resolve))),
   };
 };
