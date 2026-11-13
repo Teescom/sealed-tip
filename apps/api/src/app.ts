@@ -2,6 +2,7 @@
 // route through the same wiring — including the middleware — without binding a port (S-8.1, S-8.3).
 import { Hono } from "hono";
 
+import { cors } from "./middleware/cors.js";
 import { noLogs } from "./middleware/no-logs.js";
 import { blobRoutes } from "./routes/blob.js";
 import type { BlobStore } from "./store/blob.js";
@@ -18,11 +19,19 @@ export interface AppDeps {
   readonly ai: Hono;
   /** Same reason again: the quote proxy holds the 1Click key, and a test drives it against a fake transport. */
   readonly quote: Hono;
+  /**
+   * Origins the browser may call from. Optional so every existing test keeps working, and defaulted to the
+   * two local ones because that is where the page runs during development (`middleware/cors.ts`).
+   */
+  readonly origins?: readonly string[];
 }
 
 export const createApp = (deps: AppDeps): Hono => {
   const app = new Hono();
-  // First, and on `*`, so no route can be added later that skips it.
+  // CORS first: a preflight must be answered before anything that could reject it, and no route may be
+  // added later that skips it.
+  app.use("*", cors(deps.origins));
+  // Then, and on `*`, so no route can be added later that skips it.
   app.use("*", noLogs);
   app.get("/health", (c) => c.json({ ok: true }));
   app.route("/blob", blobRoutes(deps.blobs));

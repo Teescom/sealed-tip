@@ -37,6 +37,8 @@ const Shape = z.object({
   NEAR_AI_API_KEY: Optional(Required),
   NEAR_AI_MODEL: Optional(Required),
   ONECLICK_API_KEY: Optional(Required),
+  /** Comma-separated origins the tipster page is served from; the browser blocks the API without this. */
+  WEB_ORIGIN: Optional(Required),
 });
 
 const issueName = (issue: z.core.$ZodIssue): string => issue.path.map(String).join(".") || "(root)";

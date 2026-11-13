@@ -91,7 +91,15 @@ const quote = quoteRoutes({
 });
 
 serve({
-  fetch: createApp({ blobs: memoryBlobStore(env.BLOB_MAX_BYTES), relay, ai, quote }).fetch,
+  fetch: createApp({
+    blobs: memoryBlobStore(env.BLOB_MAX_BYTES),
+    relay,
+    ai,
+    quote,
+    ...(env.WEB_ORIGIN === undefined
+      ? {}
+      : { origins: env.WEB_ORIGIN.split(",").map((value) => value.trim()).filter((value) => value.length > 0) }),
+  }).fetch,
   port: env.API_PORT,
 });
 console.log(`tip-api listening on ${env.API_PORT} for ${env.SEALEDTIP_CONTRACT} on ${env.NEAR_NETWORK}`);
